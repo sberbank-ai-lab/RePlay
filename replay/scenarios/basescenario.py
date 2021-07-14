@@ -187,7 +187,8 @@ class BaseScenario(BaseRecommender):
         param_grid: Optional[Dict[str, Dict[str, List[Any]]]] = None,
         criterion: Metric = NDCG(),
         k: int = 10,
-        budget: int = 10,
+        budget: Optional[int] = 10,
+        timeout: Optional[int] = None,
     ) -> Tuple[Dict[str, Any]]:
         """
         Подбирает лучшие гиперпараметры с помощью optuna для обеих моделей
@@ -204,11 +205,16 @@ class BaseScenario(BaseRecommender):
         :param criterion: метрика, которая будет оптимизироваться
         :param k: количество рекомендаций для каждого пользователя
         :param budget: количество попыток при поиске лучших гиперпараметров
+        :param timeout: время для оптимизации в минутах
         :return: словари оптимальных параметров
         """
         if param_grid is None:
             param_grid = {"main": None, "cold": None}
         self.logger.info("Optimizing main model...")
+        if timeout is not None:
+            main_time, fallback_time = split_train_time(timeout, 0.8)
+        else:
+            main_time, fallback_time = None, None
         params = self._optimize(
             train,
             test,
@@ -218,6 +224,7 @@ class BaseScenario(BaseRecommender):
             criterion,
             k,
             budget,
+            main_time,
         )
         if not isinstance(params, tuple):
             self.set_params(**params)
@@ -232,6 +239,7 @@ class BaseScenario(BaseRecommender):
                 criterion,
                 k,
                 budget,
+                fallback_time,
             )
             if not isinstance(cold_params, tuple):
                 self.cold_model.set_params(**cold_params)
@@ -250,5 +258,18 @@ class BaseScenario(BaseRecommender):
         criterion: Metric = NDCG(),
         k: int = 10,
         budget: int = 10,
+        timeout: Optional[int] = None,
     ):
         pass
+
+
+def split_train_time(time, proportion=0.7):
+    """
+    Разделить время в указанной пропорции
+
+    :param time: время в минутах
+    :param proportion:  доля разделения
+    :return: два числа в указанных долях
+    """
+    train_time = int(time * proportion)
+    return train_time, time - train_time

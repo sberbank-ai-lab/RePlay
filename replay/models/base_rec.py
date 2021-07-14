@@ -79,7 +79,8 @@ class BaseRecommender(ABC):
         param_grid: Optional[Dict[str, List[Any]]] = None,
         criterion: Metric = NDCG(),
         k: int = 10,
-        budget: int = 10,
+        budget: Optional[int] = 10,
+        timeout: Optional[int] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Подбирает лучшие гиперпараметры с помощью optuna.
@@ -94,6 +95,7 @@ class BaseRecommender(ABC):
         :param criterion: метрика, которая будет оптимизироваться
         :param k: количество рекомендаций для каждого пользователя
         :param budget: количество попыток при поиске лучших гиперпараметров
+        :param timeout: время для оптимизации в минутах
         :return: словарь оптимальных параметров
         """
         if self._search_space is None:
@@ -138,7 +140,7 @@ class BaseRecommender(ABC):
             criterion=criterion,
             k=k,
         )
-        self.study.optimize(objective, budget)
+        self.study.optimize(objective, budget, timeout * 60)
         return self.study.best_params
 
     @staticmethod

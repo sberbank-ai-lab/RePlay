@@ -6,8 +6,10 @@ from pyspark.sql import DataFrame
 from replay.constants import AnyDataFrame
 from replay.metrics import Metric, NDCG
 from replay.models import PopRec
+
 from replay.models.base_rec import BaseRecommender
-from replay.scenarios.basescenario import BaseScenario
+from replay.scenarios.basescenario import BaseScenario, split_train_time
+
 from replay.utils import fallback
 
 
@@ -49,7 +51,8 @@ class Fallback(BaseScenario):
         param_grid: Optional[Dict[str, Dict[str, List[Any]]]] = None,
         criterion: Metric = NDCG(),
         k: int = 10,
-        budget: int = 10,
+        budget: Optional[int] = 10,
+        timeout: Optional[int] = None,
     ) -> Tuple[Dict[str, Any]]:
         """
         Подбирает лучшие гиперпараметры с помощью optuna для обоих моделей
@@ -66,11 +69,13 @@ class Fallback(BaseScenario):
         :param criterion: метрика, которая будет оптимизироваться
         :param k: количество рекомендаций для каждого пользователя
         :param budget: количество попыток при поиске лучших гиперпараметров
+        :param timeout: время для оптимизации в минутах
         :return: словари оптимальных параметров
         """
         if param_grid is None:
             param_grid = {"main": None, "fallback": None}
         self.logger.info("Optimizing main model...")
+        main_time, fallback_time = split_train_time(timeout, proportion=0.9)
         params = self.main_model.optimize(
             train,
             test,
@@ -80,6 +85,7 @@ class Fallback(BaseScenario):
             criterion,
             k,
             budget,
+            main_time,
         )
         self.main_model.set_params(**params)
         if self.fb_model._search_space is not None:
@@ -93,6 +99,7 @@ class Fallback(BaseScenario):
                 criterion,
                 k,
                 budget,
+                fallback_time,
             )
             self.fb_model.set_params(**fb_params)
         else:

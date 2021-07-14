@@ -13,7 +13,6 @@ from typing import Optional, Union
 
 import pyspark.sql.functions as sf
 from pyspark.sql import DataFrame, Window
-from pyspark.sql.types import TimestampType
 
 from replay.splitters.base_splitter import (
     Splitter,
@@ -58,12 +57,8 @@ class DateSplitter(Splitter):
             )
         else:
             test_start = self.test_start
-        train = log.filter(
-            sf.col("timestamp") < sf.lit(test_start).cast(TimestampType())
-        )
-        test = log.filter(
-            sf.col("timestamp") >= sf.lit(test_start).cast(TimestampType())
-        )
+        train = log.filter(sf.col("timestamp") < sf.lit(test_start))
+        test = log.filter(sf.col("timestamp") >= sf.lit(test_start))
         return train, test
 
 

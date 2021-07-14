@@ -4,3 +4,4 @@
 """
 from replay.scenarios.two_stages_scenario import TwoStagesScenario
 from replay.scenarios.fallback import Fallback
+from replay.scenarios.auto import autorec
