@@ -14,3 +14,8 @@ Fallback
 .. autoclass:: replay.scenarios.TwoStagesScenario
    :special-members: __init__
    :members: get_recs
+
+AutoRecSys
+-----------
+
+.. autofunction:: replay.scenarios.autorec

@@ -60,6 +60,16 @@ def log(spark):
     )
 
 
+@pytest.fixture
+def ml1m():
+    df = pd.read_csv(
+        "ml1m.dat",
+        names=["user_id", "item_id", "relevance", "timestamp"],
+        sep="\t",
+    )
+    return df
+
+
 def unify_dataframe(data_frame: DataFrame):
     pandas_df = data_frame.toPandas()
     columns_to_sort_by: List[str] = []
