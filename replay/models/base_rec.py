@@ -11,7 +11,7 @@
 import collections
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Union, Sequence, Tuple
 
 import pandas as pd
 from optuna import create_study
@@ -26,30 +26,6 @@ from replay.metrics import Metric, NDCG
 from replay.optuna_objective import SplitData, MainObjective
 from replay.session_handler import State
 from replay.utils import get_top_k_recs, convert2spark
-
-
-def convert2spark_all(
-    log: Optional[AnyDataFrame] = None,
-    user_features: Optional[AnyDataFrame] = None,
-    item_features: Optional[AnyDataFrame] = None,
-) -> Tuple[Optional[DataFrame], ...]:
-    """
-    Конвертация в spark основных датафреймов
-
-    :param log: лог взаимодействий пользователей и объектов,
-        spark- или pandas-датафрейм с колонками
-        ``[user_id, item_id, timestamp, relevance]``
-    :param user_features: признаки пользователей,
-        spark- или pandas-датафрейм с колонкой  ``user_id`` и колонками с признаками пользователей
-    :param item_features: признаки объектов,
-        spark- или pandas-датафрейм с колонкой  ``item_id`` и колонками с признаками объектов
-    :return: spark-датафреймы log, item_features, user_features
-    """
-    return (
-        convert2spark(log),
-        convert2spark(user_features),
-        convert2spark(item_features),
-    )
 
 
 class BaseRecommender(ABC):
@@ -197,18 +173,19 @@ class BaseRecommender(ABC):
         :return:
         """
         self.logger.debug("Начало обучения %s", type(self).__name__)
-        log, user_features, item_features = convert2spark_all(
-            log, user_features, item_features
-        )
+        log, user_features, item_features = [
+            convert2spark(df) for df in [log, user_features, item_features]
+        ]
 
         if "user_indexer" not in self.__dict__ or force_reindex:
             self.logger.debug("Предварительная стадия обучения (pre-fit)")
             self._create_indexers(log, user_features, item_features)
         self.logger.debug("Основная стадия обучения (fit)")
 
-        log, user_features, item_features = self._convert_index_all(
-            log, user_features, item_features
-        )
+        log, user_features, item_features = [
+            self._convert_index(df)
+            for df in [log, user_features, item_features]
+        ]
         self._fit(log, user_features, item_features)
 
     def _create_indexers(
@@ -278,29 +255,6 @@ class BaseRecommender(ABC):
         :return:
         """
 
-    def _convert_index_all(
-        self,
-        log: Optional[AnyDataFrame] = None,
-        user_features: Optional[AnyDataFrame] = None,
-        item_features: Optional[AnyDataFrame] = None,
-    ) -> Tuple[Optional[DataFrame], ...]:
-        """
-        Переиндексирование объектов и пользователей
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками
-            ``[user_id, item_id, timestamp, relevance]``
-        :param user_features: признаки пользователей,
-            спарк-датафрейм с колонкой  ``user_id`` и колонками с признаками пользователей
-        :param item_features: признаки объектов,
-            спарк-датафрейм с колонкой  ``item_id`` и колонками с признаками объектов
-         :return: спарк-датафреймы log, item_features, user_features
-        """
-        return (
-            self._convert_index(log),
-            self._convert_index(user_features),
-            self._convert_index(item_features),
-        )
-
     # pylint: disable=too-many-arguments
     def _predict_wrap(
         self,
@@ -343,9 +297,9 @@ class BaseRecommender(ABC):
         """
         self.logger.debug("Начало предикта %s", type(self).__name__)
 
-        log, user_features, item_features = convert2spark_all(
-            log, user_features, item_features
-        )
+        log, user_features, item_features = [
+            convert2spark(df) for df in [log, user_features, item_features]
+        ]
 
         user_data = users or log or user_features or self.user_indexer.labels
         users = self._get_ids(user_data, "user_id")
@@ -356,12 +310,10 @@ class BaseRecommender(ABC):
         users_type = users.schema["user_id"].dataType
         items_type = items.schema["item_id"].dataType
 
-        log, user_features, item_features = self._convert_index_all(
-            log, user_features, item_features
-        )
-
-        users = self._convert_index(users)
-        items = self._convert_index(items)
+        log, user_features, item_features, users, items = [
+            self._convert_index(df)
+            for df in [log, user_features, item_features, users, items]
+        ]
 
         num_items = items.count()
         if num_items < k:
@@ -395,7 +347,9 @@ class BaseRecommender(ABC):
         recs = get_top_k_recs(recs, k)
         return recs
 
-    def _convert_index(self, data_frame: DataFrame) -> Optional[DataFrame]:
+    def _convert_index(
+        self, data_frame: Optional[DataFrame]
+    ) -> Optional[DataFrame]:
         """
         Строковые индексы в полях ``user_id``, ``item_id`` заменяются на
         числовые индексы ``user_idx`` и ``item_idx`` соответственно
@@ -424,11 +378,19 @@ class BaseRecommender(ABC):
         return data_frame
 
     def _convert_back(self, log, user_type, item_type):
-        res = self.inv_user_indexer.transform(
-            self.inv_item_indexer.transform(log)
-        ).drop("user_idx", "item_idx")
-        res = res.withColumn("user_id", res["user_id"].cast(user_type))
-        res = res.withColumn("item_id", res["item_id"].cast(item_type))
+        res = log
+        if "user_idx" in log.columns:
+            res = (
+                self.inv_user_indexer.transform(res)
+                .drop("user_idx")
+                .withColumn("user_id", sf.col("user_id").cast(user_type))
+            )
+        if "item_idx" in log.columns:
+            res = (
+                self.inv_item_indexer.transform(res)
+                .drop("item_idx")
+                .withColumn("item_id", sf.col("item_id").cast(item_type))
+            )
         return res
 
     def _reindex(self, entity: str, objects: DataFrame):
@@ -619,7 +581,10 @@ class BaseRecommender(ABC):
         :return: рекомендации, спарк-датафрейм с колонками
             ``[user_id, item_id, relevance]`` для переданных пар
         """
-        pairs = convert2spark(pairs)
+        log, user_features, item_features, pairs = [
+            convert2spark(df)
+            for df in [log, user_features, item_features, pairs]
+        ]
         if sorted(pairs.columns) != ["item_id", "user_id"]:
             raise ValueError(
                 "Передайте пары в виде датафрейма со столбцами [user_id, item_id]"
@@ -627,14 +592,12 @@ class BaseRecommender(ABC):
 
         users_type = pairs.schema["user_id"].dataType
         items_type = pairs.schema["item_id"].dataType
-        pairs = self._convert_index(pairs)
 
-        log, user_features, item_features = convert2spark_all(
-            log, user_features, item_features
-        )
-        log, user_features, item_features = self._convert_index_all(
-            log, user_features, item_features
-        )
+        log, user_features, item_features, pairs = [
+            self._convert_index(df)
+            for df in [log, user_features, item_features, pairs]
+        ]
+
         pred = self._predict_pairs(
             pairs=pairs,
             log=log,
@@ -692,6 +655,35 @@ class BaseRecommender(ABC):
             how="inner",
         )
         return pred
+
+    def _get_features_wrap(
+        self, ids: DataFrame, features: Optional[DataFrame]
+    ) -> Optional[Tuple[DataFrame, int]]:
+        if "user_id" not in ids.columns and "item_id" not in ids.columns:
+            raise ValueError(
+                "Передайте id пользователей или объектов в столбце user_id или item_id"
+            )
+
+        idx_col_name = "item_id" if "item_id" in ids.columns else "user_id"
+
+        ids_type = ids.schema[idx_col_name].dataType
+        ids, features = [self._convert_index(df) for df in [ids, features]]
+
+        vectors, rank = self._get_features(ids, features)
+        vectors = self._convert_back(
+            log=vectors,
+            user_type=ids_type if idx_col_name == "user_id" else None,
+            item_type=ids_type if idx_col_name == "item_id" else None,
+        )
+
+        return vectors, rank
+
+    def _get_features(
+        self, ids: DataFrame, features: Optional[DataFrame]
+    ) -> Optional[Tuple[DataFrame, int]]:
+        raise NotImplementedError(
+            "Метод реализован только для моделей ALS и LightFMWrap"
+        )
 
 
 # pylint: disable=abstract-method
@@ -855,6 +847,18 @@ class HybridRecommender(BaseRecommender, ABC):
             pairs, log, user_features, item_features
         )
 
+    def get_features(
+        self, ids: DataFrame, features: Optional[DataFrame]
+    ) -> Optional[Tuple[DataFrame, int]]:
+        """
+        Возвращает вектора пользователей или объектов в виде столбца с типом ArrayType
+        :param ids: spark-датафрейм с уникальными id пользователей или объектов
+        :param features: spark-датафрейм c признаками пользователей или объектов, для которых переданы id
+        :return: вектора пользователей или объектов.
+            Если модель не может вернуть вектор для какого-то id, id исключается из датафрейма с результатами
+        """
+        return self._get_features_wrap(ids, features)
+
 
 # pylint: disable=abstract-method
 class Recommender(BaseRecommender, ABC):
@@ -982,6 +986,16 @@ class Recommender(BaseRecommender, ABC):
             filter_seen_items=filter_seen_items,
             force_reindex=force_reindex,
         )
+
+    def get_features(self, ids: DataFrame) -> Optional[Tuple[DataFrame, int]]:
+        """
+        Возвращает вектора пользователей или объектов в виде столбца с типом ArrayType
+
+        :param ids: spark-датафрейм с уникальными id пользователей или объектов, колонкой user_id или item_id
+        :return: вектора пользователей или объектов.
+            Если модель не может вернуть вектор для какого-то id, id исключается из датафрейма с результатами
+        """
+        return self._get_features_wrap(ids, None)
 
 
 class UserRecommender(BaseRecommender, ABC):
