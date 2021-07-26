@@ -6,7 +6,7 @@ from pyspark.sql import DataFrame
 
 from replay.constants import AnyDataFrame
 from replay.models import PopRec, ALSWrap
-from replay.scenarios.two_stages_scenario import TwoStagesScenario
+from replay.scenarios.two_stages.two_stages_scenario import TwoStagesScenario
 from replay.scenarios.fallback import Fallback
 from replay.session_handler import State
 from replay.splitters import DateSplitter, UserSplitter
