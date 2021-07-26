@@ -99,4 +99,4 @@ class Coverage(RecOnlyMetric):
             )
 
         best_positions.unpersist()
-        return self.unpack_if_int(res, k)
+        return self._unpack_if_int(res, k)
