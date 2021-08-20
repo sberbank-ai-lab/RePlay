@@ -28,6 +28,6 @@ jobs:
       # Runs a single command using the runners shell
       - name: Install and test package
         run: |
-          sh install.sh
-          sh test_package.sh
+          sh ./install.sh
+          sh ./test_package.sh
         
