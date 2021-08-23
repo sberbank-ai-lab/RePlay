@@ -48,8 +48,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
-          with:
-            name: venv
+        with:
+          name: venv
       - run: . ./venv/bin/activate
       - run: pycodestyle --ignore=E203,E231,E501,W503,W605 --max-doc-length=160 replay tests
 
@@ -59,8 +59,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
-          with:
-            name: venv
+        with:
+          name: venv
       - run: . ./venv/bin/activate
       - run: --rcfile=.pylintrc replay
 
@@ -70,8 +70,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
-          with:
-            name: venv
+        with:
+          name: venv
       - run: . ./venv/bin/activate
       - run: pytest --cov=replay --cov-report=term-missing \
           --doctest-modules replay --cov-fail-under=93 tests
