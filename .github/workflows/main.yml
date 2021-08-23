@@ -28,6 +28,7 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - run: . ./venv/bin/activate
       - run: cd docs
       - run: mkdir -p _static
@@ -37,6 +38,7 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - run: . ./venv/bin/activate
       - run: pycodestyle --ignore=E203,E231,E501,W503,W605 --max-doc-length=160 replay tests
 
@@ -44,6 +46,7 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - run: . ./venv/bin/activate
       - run: --rcfile=.pylintrc replay
 
@@ -51,6 +54,7 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - run: . ./venv/bin/activate
       - run: pytest --cov=replay --cov-report=term-missing \
           --doctest-modules replay --cov-fail-under=93 tests
