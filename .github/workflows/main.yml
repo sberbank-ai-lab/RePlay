@@ -15,28 +15,11 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
-  build_docs:
-    runs-on: ubuntu-latest
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - run: pip install -U Sphinx sphinx-rtd-theme sphinx-autodoc-typehints recommonmark sphinx-markdown-tables
-      - run: cd docs
-      - run: mkdir -p _static
-      - run: make clean html
-
   run_tests:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-python@v2
       - name: Install package
         run: |
           python -m venv venv
@@ -44,9 +27,21 @@ jobs:
           pip install --upgrade pip
           pip install --upgrade requests pypandoc cython optuna poetry
           poetry install
+      - name: Build docs
+        run: |
+          . ./venv/bin/activate
+          cd docs
+          mkdir -p _static
+          make clean html
       - name: pycodestyle
-        run: pycodestyle --ignore=E203,E231,E501,W503,W605 --max-doc-length=160 replay tests
+        run: |
+          . ./venv/bin/activate
+          pycodestyle --ignore=E203,E231,E501,W503,W605 --max-doc-length=160 replay tests
       - name: pylint
-        run: pylint --rcfile=.pylintrc replay
+        run: |
+          . ./venv/bin/activate
+          pylint --rcfile=.pylintrc replay
       - name: pytest
-        run: pytest --cov=replay --cov-report=term-missing --doctest-modules replay --cov-fail-under=93 tests
+        run: |
+          . ./venv/bin/activate
+          pytest --cov=replay --cov-report=term-missing --doctest-modules replay --cov-fail-under=93 tests
