@@ -15,19 +15,42 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  install:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      # Runs a single command using the runners shell
-      - name: Install and test package
-        run: |
-          sh ./install.sh
-          sh ./test_package.sh
-        
+      - name: Install package
+        run: sh ./install.sh
+
+  build_docs:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - run: . ./venv/bin/activate
+      - run: cd docs
+      - run: mkdir -p _static
+      - run: make clean html
+
+  pycodestyle:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - run: . ./venv/bin/activate
+      - run: pycodestyle --ignore=E203,E231,E501,W503,W605 --max-doc-length=160 replay tests
+
+  pylint:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - run: . ./venv/bin/activate
+      - run: --rcfile=.pylintrc replay
+
+  pytest:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - run: . ./venv/bin/activate
+      - run: pytest --cov=replay --cov-report=term-missing \
+          --doctest-modules replay --cov-fail-under=93 tests

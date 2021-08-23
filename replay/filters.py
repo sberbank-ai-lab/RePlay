@@ -102,13 +102,13 @@ def filter_user_interactions(
 
     Первое взаимодействие из лога:
 
-    >>> filter_user_interactions(log_sp, 1, True).show()
+    >>> filter_user_interactions(log_sp, 1, True).orderBy('user_id').show()
     +-------+-------+---+-------------------+
     |user_id|item_id|rel|          timestamp|
     +-------+-------+---+-------------------+
-    |     u3|     i1|1.0|2020-01-01 00:04:15|
     |     u1|     i1|1.0|2020-01-01 23:59:59|
     |     u2|     i2|0.5|2020-02-01 00:00:00|
+    |     u3|     i1|1.0|2020-01-01 00:04:15|
     +-------+-------+---+-------------------+
     <BLANKLINE>
 
@@ -182,7 +182,7 @@ def filter_by_user_duration(
     ...             )
     >>> log_pd["timestamp"] = pd.to_datetime(log_pd["timestamp"])
     >>> log_sp = convert2spark(log_pd)
-    >>> log_sp.show()
+    >>> log_sp.orderBy('user_id', 'item_id').show()
     +-------+-------+---+-------------------+
     |user_id|item_id|rel|          timestamp|
     +-------+-------+---+-------------------+
