@@ -15,63 +15,29 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  install:
-    runs-on: ubuntu-latest
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-
-      - name: Install package
-        run: sh ./install.sh
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: venv
-          path: ./venv
 
   build_docs:
     needs: install
     runs-on: ubuntu-latest
     steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
-        with:
-          name: venv
-      - run: . ./venv/bin/activate
+      - run: pip install -U Sphinx sphinx-rtd-theme sphinx-autodoc-typehints recommonmark sphinx-markdown-tables
       - run: cd docs
       - run: mkdir -p _static
       - run: make clean html
 
-  pycodestyle:
-    needs: install
+  run_tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
-        with:
-          name: venv
-      - run: . ./venv/bin/activate
-      - run: pycodestyle --ignore=E203,E231,E501,W503,W605 --max-doc-length=160 replay tests
-
-  pylint:
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
-        with:
-          name: venv
-      - run: . ./venv/bin/activate
-      - run: --rcfile=.pylintrc replay
-
-  pytest:
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
-        with:
-          name: venv
-      - run: . ./venv/bin/activate
-      - run: pytest --cov=replay --cov-report=term-missing \
-          --doctest-modules replay --cov-fail-under=93 tests
+      - name: Install package
+        run: |
+          sh ./install.sh
+          . ./venv/bin/activate
+      -name: pycodestyle
+        run: pycodestyle --ignore=E203,E231,E501,W503,W605 --max-doc-length=160 replay tests
+      -name: pylint
+        run: pylint --rcfile=.pylintrc replay
+      -name: pytest
+        run: pytest --cov=replay --cov-report=term-missing --doctest-modules replay --cov-fail-under=93 tests
