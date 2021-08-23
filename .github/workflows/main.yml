@@ -17,7 +17,6 @@ on:
 jobs:
 
   build_docs:
-    needs: install
     runs-on: ubuntu-latest
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
