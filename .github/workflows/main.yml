@@ -45,9 +45,9 @@ jobs:
           pip install --upgrade pip
           pip install --upgrade requests pypandoc cython optuna poetry
           poetry install
-      -name: pycodestyle
+      - name: pycodestyle
         run: pycodestyle --ignore=E203,E231,E501,W503,W605 --max-doc-length=160 replay tests
-      -name: pylint
+      - name: pylint
         run: pylint --rcfile=.pylintrc replay
-      -name: pytest
+      - name: pytest
         run: pytest --cov=replay --cov-report=term-missing --doctest-modules replay --cov-fail-under=93 tests
