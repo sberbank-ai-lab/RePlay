@@ -1,8 +1,5 @@
 """
-Данный модуль содержит обертки для известных моделей, вроде Lightfm_Wrap,
-и реализует некоторые классические алгоритмы.
-
-Модели используют в реализации либо Spark, либо pytorch.
+This module contains recommendation models implemented in Spark and Pytorch.
 """
 
 from replay.models.admm_slim import ADMMSLIM

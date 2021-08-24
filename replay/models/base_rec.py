@@ -1,12 +1,11 @@
 # pylint: disable=too-many-lines
 """
-Реализация абстрактных классов рекомендательных моделей:
-- BaseRecommender - базовый класс для всех рекомендательных моделей
-- Recommender - базовый класс для моделей, обучающихся на логе взаимодействия
-- HybridRecommender - базовый класс для моделей, обучающихся на логе взаимодействия и признаках
-- UserRecommender - базовый класс для моделей, использующих признаки пользователей,
-    но не использующих признаки объектов.
-- NeighbourRec - базовый класс для моделей, использующих join матрицы сходства объектов с логом на inference
+Base abstract classes:
+- BaseRecommender - the simplest base class
+- Recommender - base class for models that fit on interaction log
+- HybridRecommender - base class for models that accept user or item features
+- UserRecommender - base class that accepts only user features, but not item features
+- NeighbourRec - base class that requires log at prediction time
 """
 import collections
 import logging
@@ -29,7 +28,7 @@ from replay.utils import get_top_k_recs, convert2spark
 
 
 class BaseRecommender(ABC):
-    """ Базовый класс-рекомендатель. """
+    """ Base recommender """
 
     model: Any
     user_indexer: StringIndexerModel
@@ -58,19 +57,18 @@ class BaseRecommender(ABC):
         budget: int = 10,
     ) -> Optional[Dict[str, Any]]:
         """
-        Подбирает лучшие гиперпараметры с помощью optuna.
+        Searches best parameters with optuna.
 
-        :param train: датафрейм для обучения
-        :param test: датафрейм для проверки качества
-        :param user_features: датафрейм с признаками пользователей
-        :param item_features: датафрейм с признаками объектов
-        :param param_grid: сетка параметров, задается словарем, где ключ ---
-            название параметра, значение --- границы возможных значений.
-            ``{param: [low, high]}``.
-        :param criterion: метрика, которая будет оптимизироваться
-        :param k: количество рекомендаций для каждого пользователя
-        :param budget: количество попыток при поиске лучших гиперпараметров
-        :return: словарь оптимальных параметров
+        :param train: train data
+        :param test: test data
+        :param user_features: user features
+        :param item_features: item features
+        :param param_grid: a dictionary with search grid, where
+            key is the parameter name and value is the range of possible values``{param: [low, high]}``.
+        :param criterion: metric to use for optimization
+        :param k: recommendation list length
+        :param budget: number of points to try
+        :return: dictionary with best parameters
         """
         if self._search_space is None:
             self.logger.warning(
@@ -134,10 +132,9 @@ class BaseRecommender(ABC):
 
     def set_params(self, **params: Dict[str, Any]) -> None:
         """
-        Устанавливает параметры модели.
+        Set model parameters
 
-        :param params: словарь, ключ - название параметра,
-            значение - значение параметра
+        :param params: dictionary param name - param value
         :return:
         """
         for param, value in params.items():
@@ -155,30 +152,26 @@ class BaseRecommender(ABC):
         force_reindex: bool = True,
     ) -> None:
         """
-        Обучает модель на логе и признаках пользователей и объектов.
+        Wrapper for fit to allow for fewer arguments in a model.
 
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками
+        :param log: historical log of interactions
             ``[user_id, item_id, timestamp, relevance]``
-        :param user_features: признаки пользователей,
-            спарк-датафрейм с колонками
-            ``[user_id, timestamp]`` и колонки с признаками
-        :param item_features: признаки объектов,
-            спарк-датафрейм с колонками
-            ``[item_id, timestamp]`` и колонки с признаками
-        :param force_reindex: обязательно создавать
-            индексы, даже если они были созданы ранее
+        :param user_features: user features
+            ``[user_id, timestamp]`` + feature columns
+        :param item_features: item features
+            ``[item_id, timestamp]`` + feature columns
+        :param force_reindex: create indexers again, even if they were created previously
         :return:
         """
-        self.logger.debug("Начало обучения %s", type(self).__name__)
+        self.logger.debug("Starting fit %s", type(self).__name__)
         log, user_features, item_features = [
             convert2spark(df) for df in [log, user_features, item_features]
         ]
 
         if "user_indexer" not in self.__dict__ or force_reindex:
-            self.logger.debug("Предварительная стадия обучения (pre-fit)")
+            self.logger.debug("Creating indexers")
             self._create_indexers(log, user_features, item_features)
-        self.logger.debug("Основная стадия обучения (fit)")
+        self.logger.debug("Main fit stage")
 
         log, user_features, item_features = [
             self._convert_index(df)
@@ -193,12 +186,11 @@ class BaseRecommender(ABC):
         item_features: Optional[DataFrame] = None,
     ) -> None:
         """
-        Метод для создания индексеров.
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками
+        Creates indexers to map raw id to numerical idx so that spark can handle them.
+        :param log: historical log of interactions
             ``[user_id, item_id, timestamp, relevance]``
-        :param user_features: свойства пользователей (обязательно содержат колонку ``user_id``)
-        :param item_features: свойства объектов (обязательно содержат колонку ``item_id``)
+        :param user_features: user features (must have ``user_id``)
+        :param item_features: item features (must have ``item_id``)
         :return:
         """
         if user_features is None:
@@ -238,18 +230,14 @@ class BaseRecommender(ABC):
         item_features: Optional[DataFrame] = None,
     ) -> None:
         """
-        Метод для обучения модели.
-        Должен быть имплементирован наследниками.
+        Inner method where model actually fits.
 
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками
+        :param log: historical log of interactions
             ``[user_id, item_id, timestamp, relevance]``
-        :param user_features: признаки пользователей,
-            спарк-датафрейм с колонками
-            ``[user_id, timestamp]`` и колонки с признаками
-        :param item_features: признаки объектов,
-            спарк-датафрейм с колонками
-            ``[item_id, timestamp]`` и колонки с признаками
+        :param user_features: user features
+            ``[user_id, timestamp]`` + feature columns
+        :param item_features: item features
+            ``[item_id, timestamp]`` + feature columns
         :return:
         """
 
@@ -265,35 +253,27 @@ class BaseRecommender(ABC):
         filter_seen_items: bool = True,
     ) -> DataFrame:
         """
-        Выдача рекомендаций для пользователей.
+        Predict wrapper to allow for fewer parameters in models
 
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками
+        :param log: historical log of interactions
             ``[user_id, item_id, timestamp, relevance]``
-        :param k: количество рекомендаций для каждого пользователя;
-            должно быть не больше, чем количество объектов в ``items``
-        :param users: список пользователей, для которых необходимо получить
-            рекомендации, спарк-датафрейм с колонкой ``[user_id]`` или ``array-like``;
-            если ``None``, выбираются все пользователи из лога;
-            если в этом списке есть пользователи, про которых модель ничего
-            не знает, то вызывается ошибка
-        :param items: список объектов, которые необходимо рекомендовать;
-            спарк-датафрейм с колонкой ``[item_id]`` или ``array-like``;
-            если ``None``, выбираются все объекты из лога;
-            если в этом списке есть объекты, про которых модель ничего
-            не знает, то в ``relevance`` в рекомендациях к ним будет стоять ``0``
-        :param user_features: признаки пользователей,
-            спарк-датафрейм с колонками
-            ``[user_id , timestamp]`` и колонки с признаками
-        :param item_features: признаки объектов,
-            спарк-датафрейм с колонками
-            ``[item_id , timestamp]`` и колонки с признаками
-        :param filter_seen_items: если True, из рекомендаций каждому
-            пользователю удаляются виденные им объекты на основе лога
-        :return: рекомендации, спарк-датафрейм с колонками
+        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param users: users to create recommendations for
+            dataframe containing ``[user_id]`` or ``array-like``;
+            if ``None``, recommend to all users from ``log``
+        :param items: candidate items for recommendations
+            dataframe containing ``[item_id]`` or ``array-like``;
+            if ``None``, take all items from ``log``.
+            If it contains new items, ``relevance`` for them will be``0``.
+        :param user_features: user features
+            ``[user_id , timestamp]`` + feature columns
+        :param item_features: item features
+            ``[item_id , timestamp]`` + feature columns
+        :param filter_seen_items: flag to remove seen items from recommendations based on ``log``.
+        :return: recommendation dataframe
             ``[user_id, item_id, relevance]``
         """
-        self.logger.debug("Начало предикта %s", type(self).__name__)
+        self.logger.debug("Starting predict %s", type(self).__name__)
 
         log, user_features, item_features = [
             convert2spark(df) for df in [log, user_features, item_features]
@@ -316,8 +296,7 @@ class BaseRecommender(ABC):
         num_items = items.count()
         if num_items < k:
             raise ValueError(
-                "Значение k больше, чем множество объектов; "
-                f"k = {k}, number of items = {num_items}"
+                f"k = {k} > number of items = {num_items}"
             )
 
         recs = self._predict(
@@ -349,11 +328,10 @@ class BaseRecommender(ABC):
         self, data_frame: Optional[DataFrame]
     ) -> Optional[DataFrame]:
         """
-        Строковые индексы в полях ``user_id``, ``item_id`` заменяются на
-        числовые индексы ``user_idx`` и ``item_idx`` соответственно
+        Convert raw ``user_id`` and ``item_id`` to numerical ``user_idx`` and ``item_idx``
 
-        :param data_frame: спарк-датафрейм со строковыми индексами
-        :return: спарк-датафрейм с числовыми индексами
+        :param data_frame: dataframe with raw indexes
+        :return: dataframe with converted indexes
         """
         if data_frame is None:
             return None
@@ -393,13 +371,11 @@ class BaseRecommender(ABC):
 
     def _reindex(self, entity: str, objects: DataFrame):
         """
-           Переиндексирование пользователей/объектов. В случае если
-           рекомендатель может работать с пользователями/объектами не из
-           обучения, индексатор дополняется соответствующими элементами.
+           Reindex users or items. If recommender can process cold entities,
+           indexer is updated with new entries.
 
-           :param entity: название сущности item или user
-           :param objects: DataFrame со столбцом уникальных
-           пользователей/объектов
+           :param entity: user or item
+           :param objects: unique users/items
         """
         indexer = getattr(self, f"{entity}_indexer")
         inv_indexer = getattr(self, f"inv_{entity}_indexer")
@@ -428,9 +404,7 @@ class BaseRecommender(ABC):
                 inv_indexer.setLabels(new_labels)
             else:
                 message = (
-                    f"Список {entity} содержит элементы, которые "
-                    "отсутствовали при обучении. Результат "
-                    "предсказания будет не полным."
+                    f"{entity} contains cold elements, recommendations won't be complete."
                 )
                 self.logger.warning(message)
                 indexer.setHandleInvalid("skip")
@@ -440,8 +414,7 @@ class BaseRecommender(ABC):
         log: Union[Iterable, AnyDataFrame], column: str,
     ) -> DataFrame:
         """
-        Получить уникальные значения из ``array`` и положить в датафрейм с колонкой ``column``.
-        Если ``array is None``, то вытащить значение из ``log``.
+        Get unique values from ``array`` and put them into dataframe with column ``column``.
         """
         spark = State().session
         if isinstance(log, DataFrame):
@@ -467,38 +440,31 @@ class BaseRecommender(ABC):
         filter_seen_items: bool = True,
     ) -> DataFrame:
         """
-        Метод-helper для получения рекомендаций.
-        Должен быть имплементирован наследниками.
+        Inner method where model actually predicts.
 
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками
+        :param log: historical log of interactions
             ``[user_id, item_id, timestamp, relevance]``
-        :param k: количество рекомендаций для каждого пользователя;
-            должно быть не больше, чем количество объектов в ``items``
-        :param users: список пользователей, для которых необходимо получить
-            рекомендации; если ``None``, выбираются все пользователи из лога;
-            если в этом списке есть пользователи, про которых модель ничего
-            не знает, то вызывается ошибка
-        :param items: список объектов, которые необходимо рекомендовать;
-            если ``None``, выбираются все объекты из лога;
-            если в этом списке есть объекты, про которых модель ничего
-            не знает, то в рекомендациях к ним будет стоять ``0``
-        :param user_features: признаки пользователей,
-            спарк-датафрейм с колонками
-            ``[user_id , timestamp]`` и колонки с признаками
-        :param item_features: признаки объектов,
-            спарк-датафрейм с колонками
-            ``[item_id , timestamp]`` и колонки с признаками
-        :param filter_seen_items: если ``True``, из рекомендаций каждому
-            пользователю удаляются виденные им объекты на основе лога
-        :return: рекомендации, спарк-датафрейм с колонками
+        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param users: users to create recommendations for
+            dataframe containing ``[user_id]`` or ``array-like``;
+            if ``None``, recommend to all users from ``log``
+        :param items: candidate items for recommendations
+            dataframe containing ``[item_id]`` or ``array-like``;
+            if ``None``, take all items from ``log``.
+            If it contains new items, ``relevance`` for them will be``0``.
+        :param user_features: user features
+            ``[user_id , timestamp]`` + feature columns
+        :param item_features: item features
+            ``[item_id , timestamp]`` + feature columns
+        :param filter_seen_items: flag to remove seen items from recommendations based on ``log``.
+        :return: recommendation dataframe
             ``[user_id, item_id, relevance]``
         """
 
     @property
     def logger(self) -> logging.Logger:
         """
-        :returns: стандартный логгер библиотеки
+        :returns: get library logger
         """
         if self._logger is None:
             self._logger = logging.getLogger("replay")
@@ -507,25 +473,25 @@ class BaseRecommender(ABC):
     @property
     def users_count(self) -> int:
         """
-        :returns: количество пользователей в обучающей выборке; выдаёт ошибку, если модель не обучена
+        :returns: number of users the model was trained on
         """
         try:
             return len(self.user_indexer.labels)
         except AttributeError:
             raise AttributeError(
-                "Перед вызовом этого свойства нужно вызвать метод fit"
+                "Must run fit before calling this method"
             )
 
     @property
     def items_count(self) -> int:
         """
-        :returns: количество объектов в обучающей выборке; выдаёт ошибку, если модель не обучена
+        :returns: number of items the model was trained on
         """
         try:
             return len(self.item_indexer.labels)
         except AttributeError:
             raise AttributeError(
-                "Перед вызовом этого свойства нужно вызвать метод fit"
+                "Must run fit before calling this method"
             )
 
     def _fit_predict(
@@ -552,7 +518,7 @@ class BaseRecommender(ABC):
 
     def _clear_cache(self):
         """
-        Очищает закэшированные данные spark.
+        Clear spark cache
         """
 
     def _predict_pairs_wrap(
@@ -563,21 +529,18 @@ class BaseRecommender(ABC):
         item_features: Optional[AnyDataFrame] = None,
     ) -> DataFrame:
         """
-        Обертка для _predict_pairs отдельных алгоритмов.
-        Выполняет:
-        1) конвертацию в spark
-        2) переиндексирование пользователей и объектов
-        3) вызов _predict_pairs модели
-        4) обратное переиндексирование пользователей и объектов
+        This method
+        1) converts data to spark
+        2) converts indexes
+        3) calls inner _predict_pairs method of a model
+        4) converts indexes back
 
-        :param pairs: пары пользователь-объект, для которых необходимо получить relevance,
-            spark- или pandas-датафрейм с колонками
-                ``[user_id, item_id]``.
-        :param log: лог взаимодействий пользователей и объектов,
-            spark- или pandas-датафрейм с колонками
+        :param pairs: user-item pairs to get relevance for,
+            dataframe containing``[user_id, item_id]``.
+        :param log: train data
             ``[user_id, item_id, timestamp, relevance]``.
-        :return: рекомендации, спарк-датафрейм с колонками
-            ``[user_id, item_id, relevance]`` для переданных пар
+        :return: recommendations
+            ``[user_id, item_id, relevance]`` for given pairs
         """
         log, user_features, item_features, pairs = [
             convert2spark(df)
@@ -585,7 +548,7 @@ class BaseRecommender(ABC):
         ]
         if sorted(pairs.columns) != ["item_id", "user_id"]:
             raise ValueError(
-                "Передайте пары в виде датафрейма со столбцами [user_id, item_id]"
+                "pairs must be a dataframe with columns strictly [user_id, item_id]"
             )
 
         users_type = pairs.schema["user_id"].dataType
@@ -616,21 +579,18 @@ class BaseRecommender(ABC):
         item_features: Optional[DataFrame] = None,
     ) -> DataFrame:
         """
-        Predict для пар путем join результатов predict по всем объектам с выбранными парами.
-        Используется, если _predict_pairs не реализован для конкретного алгоритма.
-        :param pairs: пары пользователь-объект, для которых необходимо получить relevance,
-            спарк-датафрейм с колонками
-                ``[user_idx, item_idx]``.
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками
+        Fallback method to use in case ``_predict_pairs`` is not implemented.
+        Simply joins ``predict`` with given ``pairs``.
+        :param pairs: user-item pairs to get relevance for,
+            dataframe containing``[user_idx, item_idx]``.
+        :param log: train data
             ``[user_idx, item_idx, timestamp, relevance]``.
-        :return: рекомендации, спарк-датафрейм с колонками
-            ``[user_idx, item_idx, relevance]`` для переданных пар
+        :return: recommendations
+            ``[user_idx, item_idx, relevance]`` for given pairs
         """
         message = (
-            "Метод predict_pairs не определен для выбранного алгоритма. "
-            "Будет использован метод predict для всех пар пользователь-объект из pairs "
-            "и произведена фильтрация нужных пар."
+            "native predict_pairs is not implemented for this model. "
+            "Falling back to usual predict method and filtering the results."
         )
         self.logger.warning(message)
 
@@ -659,7 +619,7 @@ class BaseRecommender(ABC):
     ) -> Optional[Tuple[DataFrame, int]]:
         if "user_id" not in ids.columns and "item_id" not in ids.columns:
             raise ValueError(
-                "Передайте id пользователей или объектов в столбце user_id или item_id"
+                "user_id or item_id missing"
             )
 
         idx_col_name = "item_id" if "item_id" in ids.columns else "user_id"
@@ -680,7 +640,7 @@ class BaseRecommender(ABC):
         self, ids: DataFrame, features: Optional[DataFrame]
     ) -> Optional[Tuple[DataFrame, int]]:
         raise NotImplementedError(
-            "Метод реализован только для моделей ALS и LightFMWrap"
+            "Method is implemented only for ALS and LightFMWrap"
         )
 
 
