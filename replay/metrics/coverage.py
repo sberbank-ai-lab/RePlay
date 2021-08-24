@@ -12,11 +12,11 @@ from replay.metrics.base_metric import RecOnlyMetric
 # pylint: disable=too-few-public-methods, arguments-differ, unused-argument
 class Coverage(RecOnlyMetric):
     """
-    Метрика вычисляется так:
+    Metric calculation is as follows:
 
-    * берём ``K`` рекомендаций с наибольшей ``relevance`` для каждого ``user_id``
-    * считаем, сколько всего различных ``item_id`` встречается в отобранных рекомендациях
-    * делим полученное количество объектов в рекомендациях на количество объектов в изначальном логе (до разбиения на train и test)
+    * take ``K`` recommendations with the biggest ``relevance`` for each ``user_id``
+    * count the number of distinct ``item_id`` in these recommendations
+    * devide it by the number of items in the whole data set
 
     """
 
@@ -24,8 +24,8 @@ class Coverage(RecOnlyMetric):
         self, log: AnyDataFrame
     ):  # pylint: disable=super-init-not-called
         """
-        :param log: pandas или Spark DataFrame, содержащий лог *до* разбиения на train и test.
-                    Важно, чтобы log содержал все доступные объекты (items). Coverage будет рассчитываться как доля по отношению к ним.
+        :param log: pandas or Spark DataFrame
+                    It is important for ``log`` to contain all available items.
         """
         self.items = (
             convert2spark(log).select("item_id").distinct()  # type: ignore
@@ -35,7 +35,7 @@ class Coverage(RecOnlyMetric):
 
     @staticmethod
     def _get_metric_value_by_user(k, *args):
-        # эта метрика не является средним по всем пользователям
+        # not averaged by users
         pass
 
     @staticmethod
@@ -67,8 +67,8 @@ class Coverage(RecOnlyMetric):
         )
         if unknown_item_count > 0:
             self.logger.warning(
-                "В рекомендациях есть объекты, которых не было в изначальном логе! "
-                "Значение метрики может получиться больше единицы ¯\_(ツ)_/¯"
+                "Recommendations contain items that were not present in the log. "
+                "The resulting metric value can be more than 1.0 ¯\_(ツ)_/¯"
             )
 
         best_positions = (
