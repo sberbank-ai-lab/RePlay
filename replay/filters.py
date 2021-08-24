@@ -114,23 +114,23 @@ def filter_user_interactions(
 
     Последнее взаимодействие из лога:
 
-    >>> filter_user_interactions(log_sp, 1, False, item_col=None).show()
+    >>> filter_user_interactions(log_sp, 1, False, item_col=None).orderBy('user_id').show()
     +-------+-------+---+-------------------+
     |user_id|item_id|rel|          timestamp|
     +-------+-------+---+-------------------+
-    |     u3|     i3|1.0|2020-01-05 23:59:59|
     |     u1|     i1|1.0|2020-01-01 23:59:59|
     |     u2|     i2|0.5|2020-02-01 00:00:00|
+    |     u3|     i3|1.0|2020-01-05 23:59:59|
     +-------+-------+---+-------------------+
     <BLANKLINE>
 
-    >>> filter_user_interactions(log_sp, 1, False).show()
+    >>> filter_user_interactions(log_sp, 1, False).orderBy('user_id').show()
     +-------+-------+---+-------------------+
     |user_id|item_id|rel|          timestamp|
     +-------+-------+---+-------------------+
-    |     u3|     i3|1.0|2020-01-05 23:59:59|
     |     u1|     i1|1.0|2020-01-01 23:59:59|
     |     u2|     i3|3.0|2020-02-01 00:00:00|
+    |     u3|     i3|1.0|2020-01-05 23:59:59|
     +-------+-------+---+-------------------+
     <BLANKLINE>
 

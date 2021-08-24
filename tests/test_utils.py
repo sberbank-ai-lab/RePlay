@@ -58,6 +58,7 @@ different_timestamp_formats_data = [
     "log_data, ground_truth_data, schema", different_timestamp_formats_data
 )
 def test_process_timestamp(log_data, ground_truth_data, schema, spark):
+    spark.conf.set("spark.sql.session.timeZone", "UTC")
     log = spark.createDataFrame(data=log_data, schema=schema)
     ground_truth = spark.createDataFrame(data=ground_truth_data, schema=schema)
     for col in log.columns:
@@ -69,6 +70,7 @@ def test_process_timestamp(log_data, ground_truth_data, schema, spark):
         log = utils.process_timestamp_column(log, col, **kwargs)
         assert isinstance(log.schema[col].dataType, TimestampType)
     sparkDataFrameEqual(log, ground_truth)
+    spark.conf.unset("spark.sql.session.timeZone")
 
 
 def test_func_get():
