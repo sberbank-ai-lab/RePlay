@@ -16,9 +16,9 @@ different_timestamp_formats_data = [
     (
         [[1.0, 1], [300003.0, 300003], [0.0, 0],],
         [
-            [datetime(1970, 1, 1, 3, 0, 1), datetime(1970, 1, 1, 3, 0, 1)],
+            [datetime(1970, 1, 1, 0, 0, 1), datetime(1970, 1, 1, 0, 0, 1)],
             [datetime(1970, 1, 4, 14, 20, 3), datetime(1970, 1, 4, 14, 20, 3)],
-            [datetime(1970, 1, 1, 3, 0, 0), datetime(1970, 1, 1, 3, 0, 0)],
+            [datetime(1970, 1, 1, 0, 0, 0), datetime(1970, 1, 1, 0, 0, 0)],
         ],
         ["float_", "int_"],
     ),
