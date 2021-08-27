@@ -4,11 +4,10 @@ Contains classes ``DataPreparator`` and ``CatFeaturesTransformer``.
 
 `CatFeaturesTransformer`` transforms cateforical features with one-hot encoding.
 """
-import logging
 import string
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 
-from pyspark.sql import Column, DataFrame
+from pyspark.sql import DataFrame
 from pyspark.sql import functions as sf
 from pyspark.sql.types import (
     DoubleType,
@@ -17,7 +16,7 @@ from pyspark.sql.types import (
 )
 
 from replay.constants import AnyDataFrame
-from replay.utils import convert2spark
+from replay.utils import convert2spark, process_timestamp_column
 from replay.session_handler import State
 
 
@@ -162,57 +161,6 @@ class DataPreparator:
                 raise ValueError(f"Column '{column}' has NULL values")
 
     @staticmethod
-    def _process_timestamp_column(
-        dataframe: DataFrame,
-        column_name: str,
-        column: Column,
-        date_format: Optional[str],
-        default_value: str,
-    ):
-        not_ts_types = ["timestamp", "string", None]
-        if dict(dataframe.dtypes).get("timestamp", None) not in not_ts_types:
-
-            tmp_column = column_name + "tmp"
-            dataframe = dataframe.withColumn(
-                tmp_column, sf.to_timestamp(sf.from_unixtime(column))
-            )
-
-            is_null_column = dataframe.select(
-                (sf.min(tmp_column).eqNullSafe(sf.max(tmp_column))).alias(
-                    tmp_column
-                )
-            ).collect()[0]
-            if is_null_column[tmp_column]:
-                logger = logging.getLogger("replay")
-                logger.warning(
-                    "Timestamp column does not contain unix time; "
-                    "numbers from this column will be added to default date"
-                )
-
-                dataframe = (
-                    dataframe.withColumn(
-                        "tmp", sf.to_timestamp(sf.lit(default_value))
-                    )
-                    .withColumn(
-                        column_name,
-                        sf.to_timestamp(
-                            sf.expr(f"date_add(tmp, {column_name})")
-                        ),
-                    )
-                    .drop("tmp", tmp_column)
-                )
-            else:
-                dataframe = dataframe.drop(column_name).withColumnRenamed(
-                    tmp_column, column_name
-                )
-        else:
-            dataframe = dataframe.withColumn(
-                column_name,
-                sf.to_timestamp(column, format=date_format),  # type: ignore
-            )
-        return dataframe
-
-    @staticmethod
     def _rename_columns(
         dataframe: DataFrame,
         columns_names: Dict[str, str],
@@ -233,16 +181,16 @@ class DataPreparator:
             (default_value, default_type),
         ) in default_schema.items():
             if column_name not in dataframe.columns:
-                column = sf.lit(default_value)
-            else:
-                column = sf.col(column_name)
+                dataframe = dataframe.withColumn(
+                    column_name, sf.lit(default_value)
+                )
             if column_name == "timestamp":
-                dataframe = DataPreparator._process_timestamp_column(
-                    dataframe, column_name, column, date_format, default_value
+                dataframe = process_timestamp_column(
+                    dataframe, column_name, date_format
                 )
             else:
                 dataframe = dataframe.withColumn(
-                    column_name, column.cast(default_type)
+                    column_name, sf.col(column_name).cast(default_type)
                 )
         return dataframe
 
@@ -255,7 +203,7 @@ class DataPreparator:
         format_type: Optional[str] = None,
         date_format: Optional[str] = None,
         features_columns: Optional[Union[str, Iterable[str]]] = None,
-        **kwargs,
+        reader_kwargs: Optional[Dict] = None,
     ) -> DataFrame:
         """
         Transforms log, user or item features into a Spark DataFrame
@@ -276,14 +224,16 @@ class DataPreparator:
         :param format_type: file type, one of ``[csv , parquet , json , table]``
         :param date_format: format for the ``timestamp``
         :param features_columns: names of the feature columns
-        :param kwargs: extra arguments passed to
-            ``spark.read.csv(path, **kwargs)``
+        :param reader_kwargs: extra arguments passed to
+            ``spark.read.<format>(path, **reader_kwargs)``
         :return: processed DataFrame
         """
         if data is not None:
             dataframe = convert2spark(data)
         elif path and format_type:
-            dataframe = self._read_data(path, format_type, **kwargs)
+            if reader_kwargs is None:
+                reader_kwargs = dict()
+            dataframe = self._read_data(path, format_type, **reader_kwargs)
         else:
             raise ValueError(
                 "Either data or path parameters must not be None"

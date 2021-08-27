@@ -1,9 +1,10 @@
 from typing import Any, List, Optional, Set, Union
 
 import numpy as np
-from pyspark.ml.linalg import DenseVector, VectorUDT
+import pyspark.sql.types as st
+
+from pyspark.ml.linalg import DenseVector, Vectors, VectorUDT
 from pyspark.sql import Column, DataFrame, Window, functions as sf
-from pyspark.sql.types import ArrayType, DoubleType, NumericType
 from scipy.sparse import csr_matrix
 
 from replay.constants import NumType, AnyDataFrame
@@ -53,6 +54,59 @@ def func_get(vector: np.ndarray, i: int) -> float:
     return float(vector[i])
 
 
+def get_top_k(
+    dataframe: DataFrame,
+    partition_by_col: Column,
+    order_by_col: List[Column],
+    k: int,
+) -> DataFrame:
+    """
+    Return top ``k`` rows for each entity in ``partition_by_col`` ordered by
+    ``order_by_col``.
+
+    >>> from replay.session_handler import State
+    >>> spark = State().session
+    >>> log = spark.createDataFrame([(1, 2, 1.), (1, 3, 1.), (1, 4, 0.5), (2, 1, 1.)]).toDF("user_id", "item_id", "relevance")
+    >>> log.show()
+    +-------+-------+---------+
+    |user_id|item_id|relevance|
+    +-------+-------+---------+
+    |      1|      2|      1.0|
+    |      1|      3|      1.0|
+    |      1|      4|      0.5|
+    |      2|      1|      1.0|
+    +-------+-------+---------+
+    <BLANKLINE>
+    >>> get_top_k(dataframe=log,
+    ...    partition_by_col=sf.col('user_id'),
+    ...    order_by_col=[sf.col('relevance').desc(), sf.col('item_id').desc()],
+    ...    k=1).orderBy('user_id').show()
+    +-------+-------+---------+
+    |user_id|item_id|relevance|
+    +-------+-------+---------+
+    |      1|      3|      1.0|
+    |      2|      1|      1.0|
+    +-------+-------+---------+
+    <BLANKLINE>
+
+    :param dataframe: spark dataframe to filter
+    :param partition_by_col: spark column to partition by
+    :param order_by_col: list of spark columns to orted by
+    :param k: number of first rows for each entity in ``partition_by_col`` to return
+    :return: filtered spark dataframe
+    """
+    return (
+        dataframe.withColumn(
+            "temp_rank",
+            sf.row_number().over(
+                Window.partitionBy(partition_by_col).orderBy(*order_by_col)
+            ),
+        )
+        .filter(sf.col("temp_rank") <= k)
+        .drop("temp_rank")
+    )
+
+
 def get_top_k_recs(recs: DataFrame, k: int, id_type: str = "id") -> DataFrame:
     """
     Get top k recommendations by `relevance`.
@@ -63,17 +117,15 @@ def get_top_k_recs(recs: DataFrame, k: int, id_type: str = "id") -> DataFrame:
     :param id_type: id or idx
     :return: top k recommendations `[user_id, item_id, relevance]`
     """
-    window = Window.partitionBy(recs["user_" + id_type]).orderBy(
-        recs["relevance"].desc()
-    )
-    return (
-        recs.withColumn("rank", sf.row_number().over(window))
-        .filter(sf.col("rank") <= k)
-        .drop("rank")
+    return get_top_k(
+        dataframe=recs,
+        partition_by_col=sf.col("user_{}".format(id_type)),
+        order_by_col=[sf.col("relevance").desc()],
+        k=k,
     )
 
 
-@sf.udf(returnType=DoubleType())  # type: ignore
+@sf.udf(returnType=st.DoubleType())
 def vector_dot(one: DenseVector, two: DenseVector) -> float:
     """
     dot product of two column vectors
@@ -153,8 +205,8 @@ def vector_mult(
     return one * two
 
 
-@sf.udf(returnType=ArrayType(DoubleType()))
-def array_mult(first: Column, second: Column):
+@sf.udf(returnType=st.ArrayType(st.DoubleType()))
+def array_mult(first: st.ArrayType, second: st.ArrayType):
     """
     elementwise array multiplication
 
@@ -244,6 +296,7 @@ def get_stats(
     |      1|     2.0|      3|      1|        3|         2|
     |      2|     2.0|      2|      2|        1|         2|
     +-------+--------+-------+-------+---------+----------+
+    <BLANKLINE>
     >>> get_stats(test_df, group_by='item_id', target_column='rel').show()
     +-------+--------+-------+-------+---------+----------+
     |item_id|mean_rel|max_rel|min_rel|count_rel|median_rel|
@@ -252,6 +305,7 @@ def get_stats(
     |      3|     2.5|      3|      2|        2|         2|
     |      1|     2.0|      2|      2|        1|         2|
     +-------+--------+-------+-------+---------+----------+
+    <BLANKLINE>
 
     :param log: spark DataFrame with ``user_id``, ``item_id`` and ``relevance`` columns
     :param group_by: column to group data by, ``user_id`` или ``item_id``
@@ -283,7 +337,9 @@ def check_numeric(feature_table: DataFrame) -> None:
     :param feature_table: spark DataFrame
     """
     for column in feature_table.columns:
-        if not isinstance(feature_table.schema[column].dataType, NumericType):
+        if not isinstance(
+            feature_table.schema[column].dataType, st.NumericType
+        ):
             raise ValueError(
                 "Column {} has type {}, that is not numeric.".format(
                     column, feature_table.schema[column].dataType
@@ -431,95 +487,178 @@ def fallback(
     return recs
 
 
-# pylint: disable=too-many-locals
-def get_first_level_model_features(
-    model: DataFrame,
-    pairs: DataFrame,
-    user_features: Optional[DataFrame] = None,
-    item_features: Optional[DataFrame] = None,
-    add_factors_mult: bool = True,
+def cache_if_exists(dataframe: Optional[DataFrame]) -> Optional[DataFrame]:
+    """
+    Cache a DataFrame
+    :param dataframe: Spark DataFrame or None
+    :return: DataFrame or None
+    """
+    if dataframe is not None:
+        return dataframe.cache()
+    return dataframe
+
+
+def unpersist_if_exists(dataframe: Optional[DataFrame]) -> None:
+    """
+    :param dataframe: DataFrame or None
+    """
+    if dataframe is not None and dataframe.is_cached:
+        dataframe.unpersist()
+
+
+def ugly_join(
+    left: DataFrame,
+    right: DataFrame,
+    on_col_name: Union[str, List],
+    how: str = "inner",
+    suffix="join",
+) -> DataFrame:
+    """
+    Ugly workaround for joining DataFrames derived form the same DataFrame
+    https://issues.apache.org/jira/browse/SPARK-14948
+    :param left: left-side dataframe
+    :param right: right-side dataframe
+    :param on_col_name: column name to join on
+    :param how: join type
+    :param suffix: suffix added to `on_col_name` value to name temporary column
+    :return: join result
+    """
+    if isinstance(on_col_name, str):
+        on_col_name = [on_col_name]
+
+    on_condition = sf.lit(True)
+    for name in on_col_name:
+        right = right.withColumnRenamed(name, "{}_{}".format(name, suffix))
+        on_condition &= sf.col(name) == sf.col("{}_{}".format(name, suffix))
+
+    return (left.join(right, on=on_condition, how=how)).drop(
+        *["{}_{}".format(name, suffix) for name in on_col_name]
+    )
+
+
+def add_to_date(
+    dataframe: DataFrame,
+    column_name: str,
+    base_date: str,
+    base_date_format: Optional[str] = None,
 ) -> DataFrame:
     """
     Get user or item features from replay model.
     If a model can return both user and item embeddings, elementwise multiplication can be performed too.
     If a model can't return embedding for specific user/item, zero vector is returned.
+    Treats column ``column_name`` as a number of days after the ``base_date``.
+    Converts ``column_name`` to TimestampType with
+    ``base_date`` + values of the ``column_name``.
 
-    :param model: trained replay model
-    :param pairs: user-item pairs to return embeddings for `[user_id/user_idx, item_id/item_idx]`
-    :param user_features: user features `[user_id/user_idx, feature_1, ....]`
-    :param item_features: item features `[item_id/item_idx, feature_1, ....]`
-    :param add_factors_mult: flag to return elementwise multiplication
-    :return: Spark DataFrame
+    >>> from replay.session_handler import State
+    >>> from pyspark.sql.types import IntegerType
+    >>> spark = State().session
+    >>> input_data = (
+    ...     spark.createDataFrame([5, 6], IntegerType())
+    ...     .toDF("days")
+    ... )
+    >>> input_data.show()
+    +----+
+    |days|
+    +----+
+    |   5|
+    |   6|
+    +----+
+    <BLANKLINE>
+    >>> add_to_date(input_data, 'days', '2021/09/01', 'yyyy/MM/dd').show()
+    +-------------------+
+    |               days|
+    +-------------------+
+    |2021-09-06 00:00:00|
+    |2021-09-07 00:00:00|
+    +-------------------+
+    <BLANKLINE>
+
+    :param dataframe: spark dataframe
+    :param column_name: name of a column with numbers
+        to add to the ``base_date``
+    :param base_date: str with the date to add to
+    :param base_date_format: base date pattern to parse
+    :return: dataframe with new ``column_name`` converted to TimestampType
     """
-    if "user_id" in pairs.columns:
-        func_name = "_get_features_wrap"
-        suffix = "id"
-    else:
-        func_name = "_get_features"
-        suffix = "idx"
-
-    users = pairs.select("user_{}".format(suffix)).distinct()
-    items = pairs.select("item_{}".format(suffix)).distinct()
-    user_factors, user_vector_len = getattr(model, func_name)(
-        users, user_features
-    )
-    item_factors, item_vector_len = getattr(model, func_name)(
-        items, item_features
-    )
-
-    pairs_with_features = join_or_return(
-        pairs, user_factors, how="left", on="user_{}".format(suffix)
-    )
-    pairs_with_features = join_or_return(
-        pairs_with_features,
-        item_factors,
-        how="left",
-        on="item_{}".format(suffix),
-    )
-
-    factors_to_explode = []
-    if user_factors is not None:
-        pairs_with_features = pairs_with_features.withColumn(
-            "user_factors",
-            sf.coalesce(
-                sf.col("user_factors"),
-                sf.array([sf.lit(0.0)] * user_vector_len),
-            ),
+    dataframe = (
+        dataframe.withColumn(
+            "tmp", sf.to_timestamp(sf.lit(base_date), format=base_date_format)
         )
-        factors_to_explode.append(("user_factors", "uf"))
-
-    if item_factors is not None:
-        pairs_with_features = pairs_with_features.withColumn(
-            "item_factors",
-            sf.coalesce(
-                sf.col("item_factors"),
-                sf.array([sf.lit(0.0)] * item_vector_len),
-            ),
+        .withColumn(
+            column_name,
+            sf.to_timestamp(sf.expr(f"date_add(tmp, {column_name})")),
         )
-        factors_to_explode.append(("item_factors", "if"))
+        .drop("tmp")
+    )
+    return dataframe
 
-    if model.__str__() == "LightFMWrap":
-        pairs_with_features.fillna({"user_bias": 0, "item_bias": 0})
 
-    if (
-        add_factors_mult
-        and user_factors is not None
-        and item_factors is not None
-    ):
-        pairs_with_features = pairs_with_features.withColumn(
-            "factors_mult",
-            array_mult(sf.col("item_factors"), sf.col("user_factors")),
-        )
-        factors_to_explode.append(("factors_mult", "fm"))
+def process_timestamp_column(
+    dataframe: DataFrame, column_name: str, date_format: Optional[str] = None,
+) -> DataFrame:
+    """
+    Convert ``column_name`` column of numeric/string/timestamp type
+    to TimestampType.
+    Return original ``dataframe`` if the column has TimestampType.
+    Treats numbers as unix timestamp, treats strings as
+    a string representation of dates in ``date_format``.
+    Date format is inferred by pyspark if not defined by ``date_format``.
 
-    for col_name, prefix in factors_to_explode:
-        col_set = set(pairs_with_features.columns)
-        col_set.remove(col_name)
-        pairs_with_features = horizontal_explode(
-            data_frame=pairs_with_features,
-            column_to_explode=col_name,
-            other_columns=[sf.col(column) for column in sorted(list(col_set))],
-            prefix=prefix,
+    :param dataframe: spark dataframe
+    :param column_name: name of ``dataframe`` column to convert
+    :param date_format: datetime pattern passed to
+        ``to_timestamp`` pyspark sql function
+    :return: dataframe with updated column ``column_name``
+    """
+    if column_name not in dataframe.columns:
+        raise ValueError(f"Column {column_name} not found")
+
+    # no conversion needed
+    if isinstance(dataframe.schema[column_name].dataType, st.TimestampType):
+        return dataframe
+
+    # unix timestamp
+    if isinstance(dataframe.schema[column_name].dataType, st.NumericType):
+        return dataframe.withColumn(
+            column_name, sf.to_timestamp(sf.from_unixtime(sf.col(column_name)))
         )
 
-    return pairs_with_features
+    # datetime in string format
+    dataframe = dataframe.withColumn(
+        column_name, sf.to_timestamp(sf.col(column_name), format=date_format),
+    )
+    return dataframe
+
+
+@sf.udf(returnType=VectorUDT())
+def list_to_vector_udf(array: st.ArrayType) -> DenseVector:
+    """
+    convert spark array to vector
+
+    :param array: spark Array to convert
+    :return:  spark DenseVector
+    """
+    return Vectors.dense(array)
+
+
+@sf.udf(returnType=st.FloatType())
+def vector_squared_distance(first: DenseVector, second: DenseVector) -> float:
+    """
+    :param first: first vector
+    :param second: second vector
+    :returns: squared distance value
+    """
+    return float(first.squared_distance(second))
+
+
+@sf.udf(returnType=st.FloatType())
+def cosine_similarity(first: DenseVector, second: DenseVector) -> float:
+    """
+    :param first: first vector
+    :param second: second vector
+    :returns: cosine similarity value
+    """
+    num = first.dot(second)
+    denom = first.dot(first) ** 0.5 * second.dot(second) ** 0.5
+    return float(num / denom)

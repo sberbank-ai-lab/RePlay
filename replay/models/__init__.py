@@ -1,5 +1,9 @@
 """
-This module contains recommendation models implemented in Spark and Pytorch.
+The module contains recommender system algorithms including:
+- distributed models built in pyspark;
+- neural networks build in pytorch with distributed inference in pyspark;
+- wrappers for commonly used recommender systems libraries
+and models with non-distributed training and distributed inference in pyspark.
 """
 
 from replay.models.admm_slim import ADMMSLIM

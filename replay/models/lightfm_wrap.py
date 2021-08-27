@@ -266,7 +266,7 @@ class LightFMWrap(HybridRecommender):
 
     def _get_features(
         self, ids: DataFrame, features: Optional[DataFrame]
-    ) -> Optional[Tuple[DataFrame, int]]:
+    ) -> Tuple[Optional[DataFrame], Optional[int]]:
         """
         Get features from LightFM.
         LightFM has methods get_item_representations/get_user_representations,
@@ -274,7 +274,7 @@ class LightFMWrap(HybridRecommender):
 
         :param ids: id item_idx/user_idx to get features for
         :param features: features for item_idx/user_idx
-        :return: spark-dataframe с bias и векторами пользователей/объектов
+        :return: spark-dataframe с bias и векторами пользователей/объектов, размерность вектора
         """
         entity = "item" if "item_idx" in ids.columns else "user"
         ids_list = ids.toPandas()["{}_idx".format(entity)]
