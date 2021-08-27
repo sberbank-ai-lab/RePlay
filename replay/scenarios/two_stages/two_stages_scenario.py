@@ -25,22 +25,16 @@ DEFAULT_FIRST_STAGE_SPLITTER = UserSplitter(
 # pylint: disable=too-many-instance-attributes
 class TwoStagesScenario:
     """
-    Двухуровневый сценарий:
-
-    * получить входной ``log``
-    * с помощью ``second_stage_splitter`` разбить ``log`` на ``second_stage_train`` и ``second_stage_test``
-    * с помощью ``first_stage_splitter`` разбить ``second_stage_train`` на ``first_stage_train`` и ``first_stage_test``
-    * на ``first_stage_train`` обучить ``first_stage_model`` (которая умеет генерировать эмбеддинги пользователей и объектов)
-    * с помощью ``first_stage_model`` получить по ``first_stage_k``
-        рекомендованных объектов для тестовых пользователей (``first_stage_k > second_stage_k``)
-    * сравнивая ``first_stage_recs`` с ``first_stage_test`` получить таргет
-        для обучения классификатора (угадали --- ``1``, не угадали --- ``0``)
-    * обучить ``second_stage_model`` (на основе классификатора) на таргете из предыдущего пункта и с эмбеддингами пользователей и объектов в качестве фичей
-    * получить ``second_stage_k`` рекомендаций с помощью ``second_stage_model``
-    * посчитать метрику от ``second_stage_recs`` и ``second_stage_test``
-
+    * takes input ``log``
+    * use ``second_stage_splitter`` to split ``log`` into ``second_stage_train`` and ``second_stage_test``
+    * use ``first_stage_splitter`` to split ``second_stage_train`` into ``first_stage_train`` and ``first_stage_test``
+    * train ``first_stage_model`` on ``first_stage_train``
+    * use ``first_stage_model`` to get ``first_stage_k`` recommended items (``first_stage_k > second_stage_k``)
+    * use ``first_stage_recs`` and ``first_stage_test`` to create classification target (hit --- ``1``, no hit --- ``0``)
+    * train ``second_stage_model`` using classification target and user and item features
+    * get ``second_stage_k`` recommendations using ``second_stage_model``
+    * calculate metric using ``second_stage_recs`` and ``second_stage_test``
     """
-
     _experiment: Optional[Experiment] = None
 
     # pylint: disable=too-many-arguments
@@ -55,20 +49,14 @@ class TwoStagesScenario:
         stat_features: bool = True,
     ) -> None:
         """
-        собрать двухуровневую рекомендательную архитектуру из блоков
-
-        :param second_stage_splitter: как разбивать входной лог на ``train`` и ``test``.
-                                      По умолчанию у каждого пользователя откладывается 1 объект в ``train``, а остальное идёт в ``test``.
-                                      ``test`` будет использоваться для финальной оценки качества модели, а ``train`` будет разбиваться повторно.
-        :param first_stage_splitter: как разбивать ``train`` на новые ``first_stage_train`` и ``first_stage_test``.
-                                     По умолчанию у каждого пользователя откладывается 40% объектов в ``first_stage_train``,
-                                     а остальное идёт в ``first_stage_test``.
-        :param first_model: модель какого класса будем обучать на ``first_stage_train``. По умолчанию :ref:`ALS<als-rec>`.
-        :param first_stage_k: сколько объектов будем рекомендовать моделью первого уровня (``first_model``). По умолчанию 100
-        :param second_model: какую модель будем обучать на результате сравнения предсказаний ``first_model`` и ``first_stage_test``
-        :param metrics: какие метрики будем оценивать у ``second_model`` на ``test``. По умолчанию :ref:`HitRate@10<hit-rate>`.
-        :param stat_features: выполнить подсчет статистических признаков по логу взаимодействия для пользователей
-                                               и объектов для обучения модели второго уровня
+        :param second_stage_splitter: By default each user has one object in ``test``, and the rest in ``train``.
+        :param first_stage_splitter: splits ``train`` into ``first_stage_train`` and ``first_stage_test``.
+                                     By default each user has 40% of items in ``first_stage_train``.
+        :param first_model: model to train on ``first_stage_train``.
+        :param first_stage_k: length of recommendation list with ``first_model``.
+        :param second_model: classification model
+        :param metrics: metrics to evaluate scenario
+        :param stat_features: flag to create statistical features for the second level model
         """
 
         self.second_stage_splitter = second_stage_splitter
@@ -87,7 +75,7 @@ class TwoStagesScenario:
         """ история экспериментов """
         if self._experiment is None:
             raise ValueError(
-                "нужно запустить метод get_recs, чтобы провести эксперимент"
+                "run get_recs first"
             )
         return self._experiment
 
@@ -183,7 +171,7 @@ class TwoStagesScenario:
             .drop("uid", "iid")
         )
         State().logger.debug(
-            "баланс классов: положительных %d из %d",
+            "class balance: %d / %d positive",
             second_train.filter("relevance = 1").count(),
             second_train.count(),
         )
@@ -197,8 +185,7 @@ class TwoStagesScenario:
         item_features: Optional[DataFrame] = None,
     ) -> DataFrame:
         """
-        обучить двухуровневую модель и выдать рекомендации на тестовом множестве,
-        полученном в соответствии с выбранной схемой валидации
+        train model and get recommendations
 
         >>> from replay.session_handler import get_spark_session, State
         >>> spark = get_spark_session(1, 1)
@@ -228,7 +215,7 @@ class TwoStagesScenario:
         >>> two_stages.experiment
         Traceback (most recent call last):
             ...
-        ValueError: нужно запустить метод get_recs, чтобы провести эксперимент
+        ValueError: run get_recs first
         >>> log = spark.createDataFrame(
         ...     [(i, i + j, 1) for i in range(10) for j in range(10)]
         ... ).toDF("user_id", "item_id", "relevance")
@@ -252,15 +239,11 @@ class TwoStagesScenario:
                              HitRate@1
         two_stages_scenario        0.6
 
-        :param log: лог пользовательских предпочтений
-        :param k: количество рекомендаций, которые нужно вернуть каждому пользователю
-        :param user_features: признаки пользователей,
-            спарк-датафрейм с колонками
-            ``[user_id , timestamp]`` и колонки с признаками
-        :param item_features: признаки объектов,
-            спарк-датафрейм с колонками
-            ``[item_id , timestamp]`` и колонки с признаками
-        :return: DataFrame со списком рекомендаций
+        :param log: input DataFrame
+        :param k: length of a recommendation list
+        :param user_features: user features ``[user_id , timestamp]`` + feature columns
+        :param item_features: item features ``[item_id , timestamp]`` + feature columns
+        :return: recommendations
         """
 
         first_train, first_test, test = self._split_data(log)
@@ -291,7 +274,7 @@ class TwoStagesScenario:
             users=test.select("user_id").distinct(),
         )
         State().logger.debug(
-            "ROC AUC модели второго уровня (как классификатора): %.4f",
+            "ROC AUC for second level as classificator is: %.4f",
             BinaryClassificationEvaluator().evaluate(
                 self.second_model.model.transform(
                     self.second_model.augmented_data

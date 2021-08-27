@@ -1,6 +1,5 @@
 """
-Сценарий --- пайплайн работы с рекомендациями, включающий в себя несколько шагов.
-Например, разбиение данных, обучение моделей, подсчет метрик.
+Scenarios are a series of actions for recommendations
 """
 from replay.scenarios.two_stages.two_stages_scenario import TwoStagesScenario
 from replay.scenarios.fallback import Fallback

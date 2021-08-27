@@ -646,7 +646,7 @@ class BaseRecommender(ABC):
 
 # pylint: disable=abstract-method
 class HybridRecommender(BaseRecommender, ABC):
-    """Рекомендатель, учитывающий фичи"""
+    """Base class for models that can use extra features"""
 
     def fit(
         self,
@@ -656,19 +656,15 @@ class HybridRecommender(BaseRecommender, ABC):
         force_reindex: bool = True,
     ) -> None:
         """
-        Обучает модель на логе и признаках пользователей и объектов.
+        Fit a recommendation model
 
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками
+        :param log: historical log of interactions
             ``[user_id, item_id, timestamp, relevance]``
-        :param user_features: признаки пользователей,
-            спарк-датафрейм с колонками
-            ``[user_id, timestamp]`` и колонки с признаками
-        :param item_features: признаки объектов,
-            спарк-датафрейм с колонками
-            ``[item_id, timestamp]`` и колонки с признаками
-        :param force_reindex: обязательно создавать
-            индексы, даже если они были созданы ранее
+        :param user_features: user features
+            ``[user_id, timestamp]`` + feature columns
+        :param item_features: item features
+            ``[item_id, timestamp]`` + feature columns
+        :param force_reindex: create indexers again, even if they were created previously
         :return:
         """
         self._fit_wrap(
@@ -690,32 +686,24 @@ class HybridRecommender(BaseRecommender, ABC):
         filter_seen_items: bool = True,
     ) -> DataFrame:
         """
-        Выдача рекомендаций для пользователей.
+        Get recommendations
 
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками
+        :param log: historical log of interactions
             ``[user_id, item_id, timestamp, relevance]``
-        :param k: количество рекомендаций для каждого пользователя;
-            должно быть не больше, чем количество объектов в ``items``
-        :param users: список пользователей, для которых необходимо получить
-            рекомендации, спарк-датафрейм с колонкой ``[user_id]`` или ``array-like``;
-            если ``None``, выбираются все пользователи из лога;
-            если в этом списке есть пользователи, про которых модель ничего
-            не знает, то вызывается ошибка
-        :param items: список объектов, которые необходимо рекомендовать;
-            спарк-датафрейм с колонкой ``[item_id]`` или ``array-like``;
-            если ``None``, выбираются все объекты из лога;
-            если в этом списке есть объекты, про которых модель ничего
-            не знает, то в ``relevance`` в рекомендациях к ним будет стоять ``0``
-        :param user_features: признаки пользователей,
-            спарк-датафрейм с колонками
-            ``[user_id , timestamp]`` и колонки с признаками
-        :param item_features: признаки объектов,
-            спарк-датафрейм с колонками
-            ``[item_id , timestamp]`` и колонки с признаками
-        :param filter_seen_items: если True, из рекомендаций каждому
-            пользователю удаляются виденные им объекты на основе лога
-        :return: рекомендации, спарк-датафрейм с колонками
+        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param users: users to create recommendations for
+            dataframe containing ``[user_id]`` or ``array-like``;
+            if ``None``, recommend to all users from ``log``
+        :param items: candidate items for recommendations
+            dataframe containing ``[item_id]`` or ``array-like``;
+            if ``None``, take all items from ``log``.
+            If it contains new items, ``relevance`` for them will be``0``.
+        :param user_features: user features
+            ``[user_id , timestamp]`` + feature columns
+        :param item_features: item features
+            ``[item_id , timestamp]`` + feature columns
+        :param filter_seen_items: flag to remove seen items from recommendations based on ``log``.
+        :return: recommendation dataframe
             ``[user_id, item_id, relevance]``
         """
         return self._predict_wrap(
@@ -740,32 +728,24 @@ class HybridRecommender(BaseRecommender, ABC):
         force_reindex: bool = True,
     ) -> DataFrame:
         """
-        Обучает модель и выдает рекомендации.
+        Fit model and get recommendations
 
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками
+        :param log: historical log of interactions
             ``[user_id, item_id, timestamp, relevance]``
-        :param k: количество рекомендаций для каждого пользователя;
-            должно быть не больше, чем количество объектов в ``items``
-        :param users: список пользователей, для которых необходимо получить
-            рекомендации; если ``None``, выбираются все пользователи из лога;
-            если в этом списке есть пользователи, про которых модель ничего
-            не знает, то поднимается исключение
-        :param items: список объектов, которые необходимо рекомендовать;
-            если ``None``, выбираются все объекты из лога;
-            если в этом списке есть объекты, про которых модель ничего
-            не знает, то в рекомендациях к ним будет стоять ``0``
-        :param user_features: признаки пользователей,
-            спарк-датафрейм с колонками
-            ``[user_id , timestamp]`` и колонки с признаками
-        :param item_features: признаки объектов,
-            спарк-датафрейм с колонками
-            ``[item_id , timestamp]`` и колонки с признаками
-        :param filter_seen_items: если ``True``, из рекомендаций каждому
-            пользователю удаляются виденные им объекты на основе лога
-        :param force_reindex: обязательно создавать
-            индексы, даже если они были созданы ранее
-        :return: рекомендации, спарк-датафрейм с колонками
+        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param users: users to create recommendations for
+            dataframe containing ``[user_id]`` or ``array-like``;
+            if ``None``, recommend to all users from ``log``
+        :param items: candidate items for recommendations
+            dataframe containing ``[item_id]`` or ``array-like``;
+            if ``None``, take all items from ``log``.
+            If it contains new items, ``relevance`` for them will be``0``.
+        :param user_features: user features
+            ``[user_id , timestamp]`` + feature columns
+        :param item_features: item features
+            ``[item_id , timestamp]`` + feature columns
+        :param filter_seen_items: flag to remove seen items from recommendations based on ``log``.
+        :return: recommendation dataframe
             ``[user_id, item_id, relevance]``
         """
         return self._fit_predict(
@@ -787,18 +767,17 @@ class HybridRecommender(BaseRecommender, ABC):
         item_features: Optional[AnyDataFrame] = None,
     ) -> DataFrame:
         """
-        Возвращает релевантности для конкретных пар user-item, переданных в pairs.
-        В случае, если модель не вернула relevance для каких-то из пар,
-        они исключаются из возвращаемого датафрейма.
+        Get recommendations for specific user-item ``pairs``.
+        If a model can't produce recommendation for specific pair it is removed from the resulting dataframe.
 
-        :param pairs: пары пользователь-объект, для которых необходимо получить relevance,
-            spark- или pandas-датафрейм с колонками ``[user_id, item_id]``
-        :param log: лог взаимодействий пользователей и объектов,
-            spark- или pandas-датафрейм с колонками ``[user_id, item_id, timestamp, relevance]``.
-            Необходим для корректной работы inference некоторых алгоритмов
-        :param user_features: spark- или pandas-датафрейм, содержащий признаки пользователей и user_id
-        :param item_features: spark- или pandas-датафрейм, содержащий признаки объектов и item_id
-        :return: рекомендации для переданных пар, спарк-датафрейм с колонками
+        :param pairs: dataframe with pairs to calculate relevance for, ``[user_id, item_id]``.
+        :param log: historical log of interactions
+            ``[user_id, item_id, timestamp, relevance]``
+        :param user_features: user features
+            ``[user_id , timestamp]`` + feature columns
+        :param item_features: item features
+            ``[item_id , timestamp]`` + feature columns
+        :return: recommendation dataframe
             ``[user_id, item_id, relevance]``
         """
         return self._predict_pairs_wrap(
@@ -809,28 +788,26 @@ class HybridRecommender(BaseRecommender, ABC):
         self, ids: DataFrame, features: Optional[DataFrame]
     ) -> Optional[Tuple[DataFrame, int]]:
         """
-        Возвращает вектора пользователей или объектов в виде столбца с типом ArrayType
-        :param ids: spark-датафрейм с уникальными id пользователей или объектов
-        :param features: spark-датафрейм c признаками пользователей или объектов, для которых переданы id
-        :return: вектора пользователей или объектов.
-            Если модель не может вернуть вектор для какого-то id, id исключается из датафрейма с результатами
+        Returns user or item feature vectors as a Column with type ArrayType
+        :param ids: Spark DataFrame with unique ids
+        :param features: Spark DataFrame with features for provided ids
+        :return: feature vestors
+            If a model does not have a vector for some ids they are not present in the final result.
         """
         return self._get_features_wrap(ids, features)
 
 
 # pylint: disable=abstract-method
 class Recommender(BaseRecommender, ABC):
-    """Обычный рекомендатель"""
+    """Usual recommened class for models without features."""
 
     def fit(self, log: AnyDataFrame, force_reindex: bool = True) -> None:
         """
-        Обучает модель на логе и признаках пользователей и объектов.
+        Fit a recommendation model
 
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками
+        :param log: historical log of interactions
             ``[user_id, item_id, timestamp, relevance]``
-        :param force_reindex: обязательно создавать
-            индексы, даже если они были созданы ранее
+        :param force_reindex: create indexers again, even if they were created previously
         :return:
         """
         self._fit_wrap(
@@ -850,27 +827,20 @@ class Recommender(BaseRecommender, ABC):
         filter_seen_items: bool = True,
     ) -> DataFrame:
         """
-        Выдача рекомендаций для пользователей.
+        Get recommendations
 
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками
-            ``[user_id, item_id, timestamp, relevance]``.
-            Необходим некоторым моделям для предикта и используется для фильтрации просмотренных объектов.
-        :param k: количество рекомендаций для каждого пользователя;
-            должно быть не больше, чем количество объектов в ``items``
-        :param users: список пользователей, для которых необходимо получить
-            рекомендации, спарк-датафрейм с колонкой ``[user_id]`` или ``array-like``;
-            если ``None``, выбираются все пользователи из лога;
-            если в этом списке есть пользователи, про которых модель ничего
-            не знает, то вызывается ошибка
-        :param items: список объектов, которые необходимо рекомендовать;
-            спарк-датафрейм с колонкой ``[item_id]`` или ``array-like``;
-            если ``None``, выбираются все объекты из лога;
-            если в этом списке есть объекты, про которых модель ничего
-            не знает, то в ``relevance`` в рекомендациях к ним будет стоять ``0``
-        :param filter_seen_items: если True, из рекомендаций каждому
-            пользователю удаляются виденные им объекты на основе лога
-        :return: рекомендации, спарк-датафрейм с колонками
+        :param log: historical log of interactions
+            ``[user_id, item_id, timestamp, relevance]``
+        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param users: users to create recommendations for
+            dataframe containing ``[user_id]`` or ``array-like``;
+            if ``None``, recommend to all users from ``log``
+        :param items: candidate items for recommendations
+            dataframe containing ``[item_id]`` or ``array-like``;
+            if ``None``, take all items from ``log``.
+            If it contains new items, ``relevance`` for them will be``0``.
+        :param filter_seen_items: flag to remove seen items from recommendations based on ``log``.
+        :return: recommendation dataframe
             ``[user_id, item_id, relevance]``
         """
         return self._predict_wrap(
@@ -887,16 +857,13 @@ class Recommender(BaseRecommender, ABC):
         self, pairs: AnyDataFrame, log: Optional[AnyDataFrame] = None
     ) -> DataFrame:
         """
-        Возвращает релевантности для конкретных пар user-item, переданных в pairs.
-        В случае, если модель не вернула relevance для каких-то из пар,
-        они исключаются из возвращаемого датафрейма.
+        Get recommendations for specific user-item ``pairs``.
+        If a model can't produce recommendation for specific pair it is removed from the resulting dataframe.
 
-        :param pairs: пары пользователь-объект, для которых необходимо получить relevance,
-            spark- или pandas-датафрейм с колонками ``[user_id, item_id]``
-        :param log: лог взаимодействий пользователей и объектов,
-            spark- или pandas-датафрейм с колонками ``[user_id, item_id, timestamp, relevance]``.
-            Необходим для корректной работы inference некоторых алгоритмов
-        :return: рекомендации для переданных пар, спарк-датафрейм с колонками
+        :param pairs: dataframe with pairs to calculate relevance for, ``[user_id, item_id]``.
+        :param log: historical log of interactions
+            ``[user_id, item_id, timestamp, relevance]``
+        :return: recommendation dataframe
             ``[user_id, item_id, relevance]``
         """
         return self._predict_pairs_wrap(pairs, log, None, None)
@@ -912,26 +879,20 @@ class Recommender(BaseRecommender, ABC):
         force_reindex: bool = True,
     ) -> DataFrame:
         """
-        Обучает модель и выдает рекомендации.
+        Fit model and get recommendations
 
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками
+        :param log: historical log of interactions
             ``[user_id, item_id, timestamp, relevance]``
-        :param k: количество рекомендаций для каждого пользователя;
-            должно быть не больше, чем количество объектов в ``items``
-        :param users: список пользователей, для которых необходимо получить
-            рекомендации; если ``None``, выбираются все пользователи из лога;
-            если в этом списке есть пользователи, про которых модель ничего
-            не знает, то поднимается исключение
-        :param items: список объектов, которые необходимо рекомендовать;
-            если ``None``, выбираются все объекты из лога;
-            если в этом списке есть объекты, про которых модель ничего
-            не знает, то в рекомендациях к ним будет стоять ``0``
-        :param filter_seen_items: если ``True``, из рекомендаций каждому
-            пользователю удаляются виденные им объекты на основе лога
-        :param force_reindex: обязательно создавать
-            индексы, даже если они были созданы ранее
-        :return: рекомендации, спарк-датафрейм с колонками
+        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param users: users to create recommendations for
+            dataframe containing ``[user_id]`` or ``array-like``;
+            if ``None``, recommend to all users from ``log``
+        :param items: candidate items for recommendations
+            dataframe containing ``[item_id]`` or ``array-like``;
+            if ``None``, take all items from ``log``.
+            If it contains new items, ``relevance`` for them will be``0``.
+        :param filter_seen_items: flag to remove seen items from recommendations based on ``log``.
+        :return: recommendation dataframe
             ``[user_id, item_id, relevance]``
         """
         return self._fit_predict(
@@ -947,17 +908,16 @@ class Recommender(BaseRecommender, ABC):
 
     def get_features(self, ids: DataFrame) -> Optional[Tuple[DataFrame, int]]:
         """
-        Возвращает вектора пользователей или объектов в виде столбца с типом ArrayType
-
-        :param ids: spark-датафрейм с уникальными id пользователей или объектов, колонкой user_id или item_id
-        :return: вектора пользователей или объектов.
-            Если модель не может вернуть вектор для какого-то id, id исключается из датафрейма с результатами
+        Returns user or item feature vectors as a Column with type ArrayType
+        :param ids: Spark DataFrame with unique ids
+        :return: feature vestors
+            If a model does not have a vector for some ids they are not present in the final result.
         """
         return self._get_features_wrap(ids, None)
 
 
 class UserRecommender(BaseRecommender, ABC):
-    """Использует фичи пользователей, но не использует фичи айтемов. Лог — необязательный параметр."""
+    """Base class for models that use user features but not item features. ``log`` is not required for this class."""
 
     def fit(
         self,
@@ -966,12 +926,16 @@ class UserRecommender(BaseRecommender, ABC):
         force_reindex: bool = True,
     ) -> None:
         """
-        Выделить кластеры и посчитать популярность объектов в них.
+        Finds user clusters and calculates item similarity in that clusters.
 
-        :param log: логи пользователей с историей для подсчета популярности объектов
-        :param user_features: датафрейм связывающий `user_id` пользователей и их числовые признаки
-        :param force_reindex: обязательно создавать
-            индексы, даже если они были созданы ранее
+        :param log: historical log of interactions
+            ``[user_id, item_id, timestamp, relevance]``
+        :param user_features: user features
+            ``[user_id, timestamp]`` + feature columns
+        :param item_features: item features
+            ``[item_id, timestamp]`` + feature columns
+        :param force_reindex: create indexers again, even if they were created previously
+        :return:
         """
         self._fit_wrap(
             log=log, user_features=user_features, force_reindex=force_reindex
@@ -988,21 +952,23 @@ class UserRecommender(BaseRecommender, ABC):
         filter_seen_items: bool = True,
     ) -> DataFrame:
         """
-        Получить предсказания для переданных пользователей
+        Get recommendations
 
-        :param user_features: айди пользователей с числовыми фичами
-        :param k: длина рекомендаций
-        :param log: опциональный датафрейм с логами пользователей.
-            Если передан, объекты отсюда удаляются из рекомендаций для соответствующих пользователей.
-        :param users: список пользователей, для которых необходимо получить
-            рекомендации; если ``None``, выбираются все пользователи из лога;
-        :param items: список объектов, которые необходимо рекомендовать;
-            если ``None``, выбираются все объекты из лога;
-        :param filter_seen_items: если ``True``, из рекомендаций каждому
-            пользователю удаляются виденные им объекты на основе лога
-        :return: рекомендации, спарк-датафрейм с колонками
+        :param log: historical log of interactions
+            ``[user_id, item_id, timestamp, relevance]``
+        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param users: users to create recommendations for
+            dataframe containing ``[user_id]`` or ``array-like``;
+            if ``None``, recommend to all users from ``log``
+        :param items: candidate items for recommendations
+            dataframe containing ``[item_id]`` or ``array-like``;
+            if ``None``, take all items from ``log``.
+            If it contains new items, ``relevance`` for them will be``0``.
+        :param user_features: user features
+            ``[user_id , timestamp]`` + feature columns
+        :param filter_seen_items: flag to remove seen items from recommendations based on ``log``.
+        :return: recommendation dataframe
             ``[user_id, item_id, relevance]``
-        :return: датафрейм с рекомендациями
         """
         return self._predict_wrap(
             log=log,
@@ -1020,24 +986,22 @@ class UserRecommender(BaseRecommender, ABC):
         user_features: Optional[AnyDataFrame] = None,
     ) -> DataFrame:
         """
-        Возвращает релевантности для конкретных пар user-item, переданных в pairs.
-        В случае, если модель не вернула relevance для каких-то из пар,
-        они исключаются из возвращаемого датафрейма.
+        Get recommendations for specific user-item ``pairs``.
+        If a model can't produce recommendation for specific pair it is removed from the resulting dataframe.
 
-        :param pairs: пары пользователь-объект, для которых необходимо получить relevance,
-            spark- или pandas-датафрейм с колонками ``[user_id, item_id]``
-        :param log: лог взаимодействий пользователей и объектов,
-            spark- или pandas-датафрейм с колонками ``[user_id, item_id, timestamp, relevance]``.
-            Необходим для корректной работы inference некоторых алгоритмов
-        :param user_features: spark- или pandas-датафрейм, содержащий признаки пользователей и user_id
-        :return: рекомендации для переданных пар, спарк-датафрейм с колонками
+        :param pairs: dataframe with pairs to calculate relevance for, ``[user_id, item_id]``.
+        :param log: historical log of interactions
+            ``[user_id, item_id, timestamp, relevance]``
+        :param user_features: user features
+            ``[user_id , timestamp]`` + feature columns
+        :return: recommendation dataframe
             ``[user_id, item_id, relevance]``
         """
         return self._predict_pairs_wrap(pairs, log, user_features, None)
 
 
 class NeighbourRec(Recommender, ABC):
-    """ Базовый класс для алгоритмов, использующих join матрицы сходства объектов с логом на inference"""
+    """ Base class that requires log at prediction time"""
 
     similarity: Optional[DataFrame]
 
@@ -1053,21 +1017,18 @@ class NeighbourRec(Recommender, ABC):
         users: DataFrame,
     ) -> DataFrame:
         """
-        Получение рекомендаций для всех выбранных пользователей
-        с фильтрацией объектов путем inner join промежуточных результатов с filter_df по condition.
-        Позволяет реализовать как predict для пар, так и обычный predict top-k.
+        Get recommendations for all provided users and filter results with ``filter_df`` by ``condition``.
+        It allows to implement both ``predict_pairs`` and usual ``predict``@k.
 
-        :param log: лог взаимодействий пользователей и объектов,
-            спарк-датафрейм с колонками ``[user_idx, item_idx, timestamp, relevance]``.
-        :param filter_df: спарк-датафрейм, по которому будет выполняться фильтрация объектов,
-            спарк-датафрейм с колонками ``[item_idx_filter]`` или ``[user_idx_filter, item_idx_filter]``.
-        :param condition: условие для inner join датафрейма, полученного перед подсчетом relevance и filter_df
-        :param users: пользователи, для которых нужно получить рекомендации
-        :return: спарк-датафрейм с колонками ``[user_idx, item_idx, relevance]``
+        :param log: historical interactions, DataFrame ``[user_idx, item_idx, timestamp, relevance]``.
+        :param filter_df: DataFrame use to filter items: ``[item_idx_filter]`` or ``[user_idx_filter, item_idx_filter]``.
+        :param condition: condition used for inner join with ``filter_df``
+        :param users: users to calculate recommendations for
+        :return: DataFrame ``[user_idx, item_idx, relevance]``
         """
         if log is None:
             raise ValueError(
-                "Для predict {} необходим log.".format(self.__str__())
+                "log is not provided, but it is required for prediction"
             )
 
         recs = (
