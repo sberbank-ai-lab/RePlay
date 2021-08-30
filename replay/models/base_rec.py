@@ -65,7 +65,7 @@ class BaseRecommender(ABC):
         :param user_features: user features
         :param item_features: item features
         :param param_grid: a dictionary with search grid, where
-            key is the parameter name and value is the range of possible values``{param: [low, high]}``.
+            key is the parameter name and value is the range of possible values ``{param: [low, high]}``.
         :param criterion: metric to use for optimization
         :param k: recommendation list length
         :param budget: number of points to try
@@ -280,7 +280,7 @@ class BaseRecommender(ABC):
         :param items: candidate items for recommendations
             dataframe containing ``[item_id]`` or ``array-like``;
             if ``None``, take all items from ``log``.
-            If it contains new items, ``relevance`` for them will be``0``.
+            If it contains new items, ``relevance`` for them will be ``0``.
         :param user_features: user features
             ``[user_id , timestamp]`` + feature columns
         :param item_features: item features
@@ -467,7 +467,7 @@ class BaseRecommender(ABC):
         :param items: candidate items for recommendations
             dataframe containing ``[item_id]`` or ``array-like``;
             if ``None``, take all items from ``log``.
-            If it contains new items, ``relevance`` for them will be``0``.
+            If it contains new items, ``relevance`` for them will be ``0``.
         :param user_features: user features
             ``[user_id , timestamp]`` + feature columns
         :param item_features: item features
@@ -833,7 +833,7 @@ class HybridRecommender(BaseRecommender, ABC):
         :param items: candidate items for recommendations
             dataframe containing ``[item_id]`` or ``array-like``;
             if ``None``, take all items from ``log``.
-            If it contains new items, ``relevance`` for them will be``0``.
+            If it contains new items, ``relevance`` for them will be ``0``.
         :param user_features: user features
             ``[user_id , timestamp]`` + feature columns
         :param item_features: item features
@@ -875,7 +875,7 @@ class HybridRecommender(BaseRecommender, ABC):
         :param items: candidate items for recommendations
             dataframe containing ``[item_id]`` or ``array-like``;
             if ``None``, take all items from ``log``.
-            If it contains new items, ``relevance`` for them will be``0``.
+            If it contains new items, ``relevance`` for them will be ``0``.
         :param user_features: user features
             ``[user_id , timestamp]`` + feature columns
         :param item_features: item features
@@ -974,7 +974,7 @@ class Recommender(BaseRecommender, ABC):
         :param items: candidate items for recommendations
             dataframe containing ``[item_id]`` or ``array-like``;
             if ``None``, take all items from ``log``.
-            If it contains new items, ``relevance`` for them will be``0``.
+            If it contains new items, ``relevance`` for them will be ``0``.
         :param filter_seen_items: flag to remove seen items from recommendations based on ``log``.
         :return: recommendation dataframe
             ``[user_id, item_id, relevance]``
@@ -1026,7 +1026,7 @@ class Recommender(BaseRecommender, ABC):
         :param items: candidate items for recommendations
             dataframe containing ``[item_id]`` or ``array-like``;
             if ``None``, take all items from ``log``.
-            If it contains new items, ``relevance`` for them will be``0``.
+            If it contains new items, ``relevance`` for them will be ``0``.
         :param filter_seen_items: flag to remove seen items from recommendations based on ``log``.
         :return: recommendation dataframe
             ``[user_id, item_id, relevance]``
@@ -1045,8 +1045,9 @@ class Recommender(BaseRecommender, ABC):
     def get_features(self, ids: DataFrame) -> Optional[Tuple[DataFrame, int]]:
         """
         Returns user or item feature vectors as a Column with type ArrayType
+
         :param ids: Spark DataFrame with unique ids
-        :return: feature vestors
+        :return: feature vectors.
             If a model does not have a vector for some ids they are not present in the final result.
         """
         return self._get_features_wrap(ids, None)
@@ -1099,7 +1100,7 @@ class UserRecommender(BaseRecommender, ABC):
         :param items: candidate items for recommendations
             dataframe containing ``[item_id]`` or ``array-like``;
             if ``None``, take all items from ``log``.
-            If it contains new items, ``relevance`` for them will be``0``.
+            If it contains new items, ``relevance`` for them will be ``0``.
         :param user_features: user features
             ``[user_id , timestamp]`` + feature columns
         :param filter_seen_items: flag to remove seen items from recommendations based on ``log``.

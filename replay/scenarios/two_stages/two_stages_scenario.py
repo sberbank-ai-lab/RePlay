@@ -201,9 +201,10 @@ class TwoStagesScenario(HybridRecommender):
         :param negatives_type: negative examples creation strategy,``random`` or most relevant examples from ``first-level``
         :param use_generated_features: flag to use generated features to train second level
         :param user_cat_features_list: list of user categorical features
-        :param item_cat_features_list:list of item categorical features
+        :param item_cat_features_list: list of item categorical features
         :param custom_features_processor: you can pass custom feature processor
         :param seed: random seed
+
         """
         self.train_splitter = train_splitter
         self.cached_list = []

@@ -17,6 +17,7 @@ class UserSplitter(Splitter):
     Split data inside each user's history separately.
 
     Example:
+
     >>> from replay.session_handler import get_spark_session, State
     >>> spark = get_spark_session(1, 1)
     >>> state = State(spark)

@@ -71,7 +71,7 @@ def test_transform_log_redundant_columns_exception(
     columns_names_local = deepcopy(columns_names)
     columns_names_local.update({"user_id": "", "item_id": ""})
     with pytest.raises(
-        ValueError, match=r"В 'columns_names' есть лишние колонки:.*"
+        ValueError, match=r"'columns_names' has excess columns.*"
     ):
         data_preparator.transform(
             path="/test_path",
@@ -84,7 +84,7 @@ def test_transform_log_redundant_columns_exception(
 def test_transform_log_empty_dataframe_exception(data_preparator, spark):
     log = spark.createDataFrame(data=[], schema=StructType([]))
     data_preparator._read_data = Mock(return_value=log)
-    with pytest.raises(ValueError, match=r"Датафрейм пустой.*"):
+    with pytest.raises(ValueError, match=r"DataFrame is empty.*"):
         data_preparator.transform(
             path="/test_path",
             format_type="json",
@@ -106,8 +106,7 @@ def test_absent_columns(data_preparator, long_log_with_features, col_kwargs):
     data_preparator._read_data = Mock(return_value=long_log_with_features)
     with pytest.raises(
         ValueError,
-        match=r"В feature_columns или columns_names указаны колонки, "
-        r"которых нет в датафрейме: .*",
+        match=r"'columns_names' has excess columns:.*",
     ):
         data_preparator.transform(
             path="/test_path", format_type="table", **col_kwargs
@@ -124,7 +123,7 @@ def test_transform_log_null_column_exception(
     log = spark.createDataFrame(data=log_data, schema=log_schema)
     data_preparator._read_data = Mock(return_value=log)
 
-    with pytest.raises(ValueError, match=r".* есть значения NULL"):
+    with pytest.raises(ValueError, match=r".* has NULL values"):
         data_preparator.transform(
             path="/test_path",
             format_type="parquet",
@@ -136,7 +135,7 @@ def test_transform_log_null_column_exception(
 def test_read_data_empty_pass(data_preparator):
     with pytest.raises(
         ValueError,
-        match=r"Один из параметров data, path должен быть отличным от None.*",
+        match=r"Either data or path parameters must not be None.*",
     ):
         data_preparator.transform(
             columns_names={"user_id": ""}, path=None, data=None
@@ -156,9 +155,7 @@ def test_transform_log_no_cols(spark, data_preparator, columns_names):
     columns_names_local = deepcopy(columns_names)
     columns_names_local.update({"user_id": "user_id"})
     with pytest.raises(
-        ValueError,
-        match=r"Для датафрейма с признаками пользователей . объектов "
-        "укажите в columns_names только соответствие для текущего ключа.*",
+        ValueError
     ):
         data_preparator.transform(
             path="/test_path",
@@ -173,7 +170,7 @@ def test_transform_log_required_columns_exception(
 ):
     data_preparator._read_data = Mock(return_value=long_log_with_features)
     with pytest.raises(
-        ValueError, match="В columns_names нет ни 'user_id', ни 'item_id'"
+        ValueError, match="columns_names have neither 'user_id', nor 'item_id'"
     ):
         data_preparator.transform(
             path="/test_path",
@@ -186,7 +183,7 @@ def test_transform_no_feature_columns(data_preparator, long_log_with_features):
     data_preparator._read_data = Mock(
         return_value=long_log_with_features.select("item_id")
     )
-    with pytest.raises(ValueError, match="В датафрейме нет колонок с фичами"):
+    with pytest.raises(ValueError):
         data_preparator.transform(
             path="/test_path",
             format_type="json",
@@ -198,7 +195,7 @@ def test_transform_no_feature_columns(data_preparator, long_log_with_features):
 def test_features_columns(data_preparator, long_log_with_features):
     data_preparator._read_data = Mock(return_value=long_log_with_features)
     with pytest.raises(
-        ValueError, match="В данной таблице features не используются"
+        ValueError
     ):
         data_preparator.transform(
             path="/test_path",
@@ -421,7 +418,6 @@ def get_transformed_features(transformer, train, test):
 
 def test_cat_features_transformer(item_features):
     transformed = get_transformed_features(
-        # при передаче списка можно сделать кодирование и по числовой фиче
         transformer=CatFeaturesTransformer(cat_cols_list=["class"]),
         train=item_features.filter(sf.col("class") != "dog"),
         test=item_features,

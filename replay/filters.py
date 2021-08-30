@@ -73,7 +73,7 @@ def filter_user_interactions(
     item_col: Optional[str] = "item_id",
 ) -> DataFrame:
     """
-     Get first/last `n` interactions for user.
+     Get first/last ``num_interactions`` interactions for each user.
 
     >>> import pandas as pd
     >>> from replay.utils import convert2spark
@@ -224,7 +224,6 @@ def filter_by_user_duration(
     :param first: take either first ``days`` or last
     :param date_col: date column
     :param user_col: user column
-    :return: diltered DataFrame
     """
 
     window = Window.partitionBy(user_col)
@@ -255,7 +254,7 @@ def filter_between_dates(
     date_column: str = "timestamp",
 ) -> DataFrame:
     """
-    Select a part of data between [start_date, end_date).
+    Select a part of data between ``[start_date, end_date)``.
 
     >>> import pandas as pd
     >>> from replay.utils import convert2spark
@@ -293,8 +292,7 @@ def filter_between_dates(
     :param log: historical DataFrame
     :param start_date: datetime or str with format "yyyy-MM-dd HH:mm:ss".
     :param end_date: datetime or str with format "yyyy-MM-dd HH:mm:ss".
-    :param date_column: имя столбца с датой взаимодействия
-    :return: filtered DataFrame
+    :param date_column: date column
     """
     if start_date is None:
         start_date = log.agg(sf.min(date_column)).first()[0]
@@ -365,7 +363,6 @@ def filter_by_duration(
     :param duration_days: length of selected data in days
     :param first: take either first ``duration_days`` or last
     :param date_column: date column
-    :return: filtered DataFrame
     """
     if first:
         start_date = log.agg(sf.min(date_column)).first()[0]

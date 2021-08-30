@@ -17,14 +17,13 @@ You can
 
 ### Installation
 
-Use python 3.6+ and java 8+. 
+Use Linux machine with Python 3.6+ and Java 8+. 
 
 ```bash
 pip install replay
 ```
 
 It is preferable to use a virtual environment for your installation.
-
 
 
 To test  your installation you can run tests from `replay folder`:

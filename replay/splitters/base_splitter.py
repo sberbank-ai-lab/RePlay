@@ -81,7 +81,7 @@ class Splitter(ABC):
         Splits input DataFrame into train and test
 
         :param log: input DataFrame ``[timestamp, user_id, item_id, relevance]``
-        :returns: `train` and `test DataFrame
+        :returns: `train` and `test` DataFrame
         """
         train, test = self._core_split(convert2spark(log))  # type: ignore
         test = self._drop_cold_items_and_users(
