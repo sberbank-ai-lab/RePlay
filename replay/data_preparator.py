@@ -332,6 +332,7 @@ class CatFeaturesTransformer:
     def __init__(
         self,
         cat_cols_list: List,
+        threshold: Optional[int] = None,
         alias: str = "ohe",
     ):
         """
@@ -340,7 +341,12 @@ class CatFeaturesTransformer:
         """
         self.cat_cols_list = cat_cols_list
         self.expressions_list = []
+        self.threshold = threshold
         self.alias = alias
+        if threshold is not None:
+            State().logger.info(
+                "threshold не будет применен, функциональность в разработке"
+            )
 
     def fit(self, spark_df: Optional[DataFrame]) -> None:
         """
