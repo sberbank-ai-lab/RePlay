@@ -75,7 +75,7 @@ def get_enriched_recommendations(
 
 
 class Metric(ABC):
-    """ Base metric class """
+    """Base metric class"""
 
     def __str__(self):
         return type(self).__name__
@@ -156,7 +156,9 @@ class Metric(ABC):
         return self._unpack_if_int(res, k)
 
     def _get_metric_distribution(
-        self, recs: DataFrame, k: IntOrList,
+        self,
+        recs: DataFrame,
+        k: IntOrList,
     ) -> DataFrame:
         """
         :param recs: recommendations

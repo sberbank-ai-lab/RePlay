@@ -381,7 +381,10 @@ class NeuroMF(TorchRecommender):
             user_batch = LongTensor([user_idx] * len(items_np))
             item_batch = LongTensor(items_np)
             user_recs = torch.reshape(
-                model(user_batch, item_batch).detach(), [-1,]
+                model(user_batch, item_batch).detach(),
+                [
+                    -1,
+                ],
             )
             if cnt is not None:
                 best_item_idx = (

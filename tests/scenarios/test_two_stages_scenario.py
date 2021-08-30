@@ -112,7 +112,10 @@ def test_fit(
 
 
 def test_predict(
-    long_log_with_features, user_features, item_features, two_stages_kwargs,
+    long_log_with_features,
+    user_features,
+    item_features,
+    two_stages_kwargs,
 ):
     two_stages = TwoStagesScenario(**two_stages_kwargs)
 

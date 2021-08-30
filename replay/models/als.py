@@ -15,7 +15,7 @@ from replay.utils import (
 
 
 class ALSWrap(Recommender):
-    """ Wrapper for `Spark ALS
+    """Wrapper for `Spark ALS
     <https://spark.apache.org/docs/latest/api/python/pyspark.mllib.html#pyspark.mllib.recommendation.ALS>`_.
     """
 

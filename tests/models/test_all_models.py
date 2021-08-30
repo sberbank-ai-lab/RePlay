@@ -104,10 +104,18 @@ def test_predict_pairs_warm_only(log, log_to_pred, model):
 @pytest.mark.parametrize(
     "model",
     [ADMMSLIM(seed=SEED), KNN(), SLIM(seed=SEED), Word2VecRec(seed=SEED)],
-    ids=["admm_slim", "knn", "slim", "word2vec",],
+    ids=[
+        "admm_slim",
+        "knn",
+        "slim",
+        "word2vec",
+    ],
 )
 def test_predict_pairs_raises(log, model):
-    with pytest.raises(ValueError, match=r"log is not provided, but it is required for prediction"):
+    with pytest.raises(
+        ValueError,
+        match=r"log is not provided, but it is required for prediction",
+    ):
         model.fit(log)
         model.predict_pairs(log.select("user_id", "item_id"))
 
@@ -115,7 +123,8 @@ def test_predict_pairs_raises(log, model):
 def test_predict_pairs_raises_pairs_format(log):
     model = ALSWrap(seed=SEED)
     with pytest.raises(
-        ValueError, match=r"log is not provided, but it is required for prediction"
+        ValueError,
+        match=r"log is not provided, but it is required for prediction",
     ):
         model.fit(log)
         model.predict_pairs(log, log)

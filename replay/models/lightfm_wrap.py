@@ -18,7 +18,7 @@ from replay.session_handler import State
 
 # pylint: disable=too-many-locals, too-many-instance-attributes
 class LightFMWrap(HybridRecommender):
-    """ Wrapper for LightFM. """
+    """Wrapper for LightFM."""
 
     epochs: int = 10
     _search_space = {
@@ -219,13 +219,9 @@ class LightFMWrap(HybridRecommender):
         model = self.model
 
         if self.can_predict_cold_users and user_features is None:
-            raise ValueError(
-                "User features are missing for predict"
-            )
+            raise ValueError("User features are missing for predict")
         if self.can_predict_cold_items and item_features is None:
-            raise ValueError(
-                "Item features are missing for predict"
-            )
+            raise ValueError("Item features are missing for predict")
 
         csr_item_features = self._feature_table_to_csr(
             pairs.select("item_idx").distinct(), item_features
@@ -284,7 +280,10 @@ class LightFMWrap(HybridRecommender):
             matrix_width = getattr(self, "num_of_warm_{}s".format(entity))
             warm_ids = ids_list[ids_list < matrix_width]
             sparse_features = csr_matrix(
-                ([1] * warm_ids.shape[0], (warm_ids, warm_ids),),
+                (
+                    [1] * warm_ids.shape[0],
+                    (warm_ids, warm_ids),
+                ),
                 shape=(ids_list.max() + 1, matrix_width),
             )
         else:

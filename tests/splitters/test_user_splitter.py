@@ -142,7 +142,9 @@ def log2(spark):
 
 def test_split_quantity(log2):
     splitter = UserSplitter(
-        drop_cold_items=False, drop_cold_users=False, item_test_size=2,
+        drop_cold_items=False,
+        drop_cold_users=False,
+        item_test_size=2,
     )
     train, test = splitter.split(log2)
     num_items = test.toPandas().user_id.value_counts()
@@ -152,7 +154,9 @@ def test_split_quantity(log2):
 
 def test_split_proportion(log2):
     splitter = UserSplitter(
-        drop_cold_items=False, drop_cold_users=False, item_test_size=0.4,
+        drop_cold_items=False,
+        drop_cold_users=False,
+        item_test_size=0.4,
     )
     train, test = splitter.split(log2)
     num_items = test.toPandas().user_id.value_counts()

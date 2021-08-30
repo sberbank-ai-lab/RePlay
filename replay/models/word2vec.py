@@ -12,7 +12,7 @@ from replay.utils import vector_dot, vector_mult
 
 class Word2VecRec(Recommender):
     """
-        Trains word2vec model where items ar treated as words and users as sentences.
+    Trains word2vec model where items ar treated as words and users as sentences.
     """
 
     idf: DataFrame
@@ -93,7 +93,9 @@ class Word2VecRec(Recommender):
             self.vectors.unpersist()
 
     def _get_user_vectors(
-        self, users: DataFrame, log: DataFrame,
+        self,
+        users: DataFrame,
+        log: DataFrame,
     ) -> DataFrame:
         """
         :param users: user ids, dataframe ``[user_idx]``
@@ -120,7 +122,9 @@ class Word2VecRec(Recommender):
         )
 
     def _predict_pairs_inner(
-        self, pairs: DataFrame, log: DataFrame,
+        self,
+        pairs: DataFrame,
+        log: DataFrame,
     ) -> DataFrame:
         if log is None:
             raise ValueError(

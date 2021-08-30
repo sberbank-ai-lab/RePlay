@@ -28,7 +28,7 @@ from replay.utils import convert2spark, get_top_k, get_top_k_recs
 
 
 class BaseRecommender(ABC):
-    """ Base recommender """
+    """Base recommender"""
 
     model: Any
     user_indexer: StringIndexerModel
@@ -311,9 +311,7 @@ class BaseRecommender(ABC):
 
         num_items = items.count()
         if num_items < k:
-            raise ValueError(
-                f"k = {k} > number of items = {num_items}"
-            )
+            raise ValueError(f"k = {k} > number of items = {num_items}")
 
         recs = self._predict(
             log,
@@ -387,11 +385,11 @@ class BaseRecommender(ABC):
 
     def _reindex(self, entity: str, objects: DataFrame):
         """
-           Reindex users or items. If recommender can process cold entities,
-           indexer is updated with new entries.
+        Reindex users or items. If recommender can process cold entities,
+        indexer is updated with new entries.
 
-           :param entity: user or item
-           :param objects: unique users/items
+        :param entity: user or item
+        :param objects: unique users/items
         """
         indexer = getattr(self, f"{entity}_indexer")
         inv_indexer = getattr(self, f"inv_{entity}_indexer")
@@ -419,15 +417,14 @@ class BaseRecommender(ABC):
                 )
                 inv_indexer.setLabels(new_labels)
             else:
-                message = (
-                    f"{entity} contains cold elements, recommendations won't be complete."
-                )
+                message = f"{entity} contains cold elements, recommendations won't be complete."
                 self.logger.warning(message)
                 indexer.setHandleInvalid("skip")
 
     @staticmethod
     def _get_ids(
-        log: Union[Iterable, AnyDataFrame], column: str,
+        log: Union[Iterable, AnyDataFrame],
+        column: str,
     ) -> DataFrame:
         """
         Get unique values from ``array`` and put them into dataframe with column ``column``.
@@ -494,9 +491,7 @@ class BaseRecommender(ABC):
         try:
             return len(self.user_indexer.labels)
         except AttributeError:
-            raise AttributeError(
-                "Must run fit before calling this method"
-            )
+            raise AttributeError("Must run fit before calling this method")
 
     @property
     def items_count(self) -> int:
@@ -506,9 +501,7 @@ class BaseRecommender(ABC):
         try:
             return len(self.item_indexer.labels)
         except AttributeError:
-            raise AttributeError(
-                "Must run fit before calling this method"
-            )
+            raise AttributeError("Must run fit before calling this method")
 
     def _fit_predict(
         self,
@@ -634,9 +627,7 @@ class BaseRecommender(ABC):
         self, ids: DataFrame, features: Optional[DataFrame]
     ) -> Optional[Tuple[DataFrame, int]]:
         if "user_id" not in ids.columns and "item_id" not in ids.columns:
-            raise ValueError(
-                "user_id or item_id missing"
-            )
+            raise ValueError("user_id or item_id missing")
 
         idx_col_name = "item_id" if "item_id" in ids.columns else "user_id"
 
@@ -729,7 +720,9 @@ class BaseRecommender(ABC):
         ]
 
         nearest_items_to_filter = self._get_nearest_items(
-            items=items, metric=metric, items_to_consider=items_to_consider,
+            items=items,
+            metric=metric,
+            items_to_consider=items_to_consider,
         )
 
         nearest_items = get_top_k(
@@ -1138,7 +1131,7 @@ class UserRecommender(BaseRecommender, ABC):
 
 
 class NeighbourRec(Recommender, ABC):
-    """ Base class that requires log at prediction time"""
+    """Base class that requires log at prediction time"""
 
     similarity: Optional[DataFrame]
     can_predict_item_to_item: bool = True
@@ -1176,7 +1169,11 @@ class NeighbourRec(Recommender, ABC):
                 how="inner",
                 on=sf.col("item_idx") == sf.col("item_id_one"),
             )
-            .join(filter_df, how="inner", on=condition,)
+            .join(
+                filter_df,
+                how="inner",
+                on=condition,
+            )
             .groupby("user_idx", "item_id_two")
             .agg(sf.sum("similarity").alias("relevance"))
             .withColumnRenamed("item_id_two", "item_idx")
@@ -1248,7 +1245,10 @@ class NeighbourRec(Recommender, ABC):
             )
 
         return self._get_nearest_items_wrap(
-            items=items, k=k, metric=None, items_to_consider=items_to_consider,
+            items=items,
+            k=k,
+            metric=None,
+            items_to_consider=items_to_consider,
         )
 
     def _get_nearest_items(

@@ -26,7 +26,7 @@ from replay.constants import IDX_REC_SCHEMA
 
 
 class TorchRecommender(Recommender):
-    """ Base class for neural recommenders"""
+    """Base class for neural recommenders"""
 
     model: Any
     device: torch.device
@@ -55,7 +55,10 @@ class TorchRecommender(Recommender):
         self.logger.debug("Предсказание модели")
         recs = (
             users.join(log, how="left", on="user_idx")
-            .selectExpr("user_idx AS user_idx", "item_idx AS item_idx",)
+            .selectExpr(
+                "user_idx AS user_idx",
+                "item_idx AS item_idx",
+            )
             .groupby("user_idx")
             .applyInPandas(grouped_map, IDX_REC_SCHEMA)
         )
@@ -118,7 +121,9 @@ class TorchRecommender(Recommender):
     @staticmethod
     @abstractmethod
     def _predict_by_user_pairs(
-        pandas_df: pd.DataFrame, model: nn.Module, item_count: int,
+        pandas_df: pd.DataFrame,
+        model: nn.Module,
+        item_count: int,
     ) -> pd.DataFrame:
         """
         Get relevance for provided pairs

@@ -44,7 +44,10 @@ app.layout = html.Div(
                 {
                     "id": c,
                     "name": c,
-                    "format": Format(precision=4, scheme=Scheme.fixed,),
+                    "format": Format(
+                        precision=4,
+                        scheme=Scheme.fixed,
+                    ),
                     "type": "numeric",
                 }
                 for c in df.columns

@@ -45,19 +45,26 @@ class Coverage(RecOnlyMetric):
         return convert2spark(recommendations)
 
     def _conf_interval(
-        self, recommendations: AnyDataFrame, k: IntOrList, alpha: float = 0.95,
+        self,
+        recommendations: AnyDataFrame,
+        k: IntOrList,
+        alpha: float = 0.95,
     ) -> Union[Dict[int, float], float]:
         if isinstance(k, int):
             return 0.0
         return {i: 0.0 for i in k}
 
     def _median(
-        self, recommendations: AnyDataFrame, k: IntOrList,
+        self,
+        recommendations: AnyDataFrame,
+        k: IntOrList,
     ) -> Union[Dict[int, NumType], NumType]:
         return self._mean(recommendations, k)
 
     def _mean(
-        self, recommendations: DataFrame, k: IntOrList,
+        self,
+        recommendations: DataFrame,
+        k: IntOrList,
     ) -> Union[Dict[int, NumType], NumType]:
         unknown_item_count = (
             recommendations.select("item_id")  # type: ignore

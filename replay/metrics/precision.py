@@ -12,8 +12,7 @@ class Precision(Metric):
     .. math::
         Precision@K = \\frac {\sum_{i=1}^{N}Precision@K(i)}{N}
 
-    :math:`\\mathbb{1}_{r_{ij}}` -- indicator function showing that user :math:`i` interacted with item :math:`j`
-"""
+    :math:`\\mathbb{1}_{r_{ij}}` -- indicator function showing that user :math:`i` interacted with item :math:`j`"""
 
     @staticmethod
     def _get_metric_value_by_user(k, pred, ground_truth) -> float:

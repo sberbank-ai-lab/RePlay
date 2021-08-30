@@ -67,7 +67,8 @@ class Surprisal(RecOnlyMetric):
     ) -> DataFrame:
         recommendations = convert2spark(recommendations)
         sort_udf = sf.udf(
-            partial(sorter, index=2), returnType=st.ArrayType(st.DoubleType()),
+            partial(sorter, index=2),
+            returnType=st.ArrayType(st.DoubleType()),
         )
         return (
             recommendations.join(self.item_weights, on="item_id", how="left")

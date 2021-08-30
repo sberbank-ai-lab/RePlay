@@ -165,6 +165,7 @@ class TwoStagesScenario(HybridRecommender):
     4) get recommendations
 
     """
+
     can_predict_cold_users: bool = True
     can_predict_cold_items: bool = True
 
@@ -304,9 +305,7 @@ class TwoStagesScenario(HybridRecommender):
         :param item_features: item features``[item_idx]`` + feature columns
         :return: DataFrame
         """
-        self.logger.info(
-            "Generating features"
-        )
+        self.logger.info("Generating features")
         full_second_level_train = log_to_add_features
         first_level_item_features_cached = cache_if_exists(
             self.first_level_item_features_transformer.transform(item_features)
@@ -354,9 +353,7 @@ class TwoStagesScenario(HybridRecommender):
             0
         ).cache()
 
-        self.logger.info(
-            "Adding features from the dataset"
-        )
+        self.logger.info("Adding features from the dataset")
         full_second_level_train = join_or_return(
             full_second_level_train_cached,
             user_features,
@@ -364,7 +361,10 @@ class TwoStagesScenario(HybridRecommender):
             how="left",
         )
         full_second_level_train = join_or_return(
-            full_second_level_train, item_features, on="item_idx", how="left",
+            full_second_level_train,
+            item_features,
+            on="item_idx",
+            how="left",
         )
 
         if self.use_generated_features:
@@ -376,9 +376,7 @@ class TwoStagesScenario(HybridRecommender):
                     user_cat_features_list=self.user_cat_features_list,
                     item_cat_features_list=self.item_cat_features_list,
                 )
-            self.logger.info(
-                "Adding generated features"
-            )
+            self.logger.info("Adding generated features")
             full_second_level_train = self.features_processor.transform(
                 log=full_second_level_train
             )
@@ -619,9 +617,7 @@ class TwoStagesScenario(HybridRecommender):
                 ),
             )
 
-        self.logger.info(
-            "Generate negative examples"
-        )
+        self.logger.info("Generate negative examples")
         negatives_source = (
             self.first_level_models[0]
             if self.negatives_type == "first_level"
@@ -642,9 +638,7 @@ class TwoStagesScenario(HybridRecommender):
         unpersist_if_exists(first_level_user_features)
         unpersist_if_exists(first_level_item_features)
 
-        self.logger.info(
-            "Crate train dataset for second level"
-        )
+        self.logger.info("Crate train dataset for second level")
         full_second_level_train = (
             second_level_train.select("user_idx", "item_idx", "relevance")
             .withColumn("relevance", sf.lit(1))

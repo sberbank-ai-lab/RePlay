@@ -8,7 +8,7 @@ from replay.models.base_rec import NeighbourRec
 
 
 class KNN(NeighbourRec):
-    """ Item-based KNN with modified cosine similarity measure. """
+    """Item-based KNN with modified cosine similarity measure."""
 
     all_items: Optional[DataFrame]
     dot_products: Optional[DataFrame]

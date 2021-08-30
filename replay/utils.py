@@ -595,7 +595,9 @@ def add_to_date(
 
 
 def process_timestamp_column(
-    dataframe: DataFrame, column_name: str, date_format: Optional[str] = None,
+    dataframe: DataFrame,
+    column_name: str,
+    date_format: Optional[str] = None,
 ) -> DataFrame:
     """
     Convert ``column_name`` column of numeric/string/timestamp type
@@ -626,7 +628,8 @@ def process_timestamp_column(
 
     # datetime in string format
     dataframe = dataframe.withColumn(
-        column_name, sf.to_timestamp(sf.col(column_name), format=date_format),
+        column_name,
+        sf.to_timestamp(sf.col(column_name), format=date_format),
     )
     return dataframe
 

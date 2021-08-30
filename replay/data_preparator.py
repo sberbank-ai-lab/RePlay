@@ -22,7 +22,7 @@ from replay.session_handler import State
 
 # pylint: disable=too-few-public-methods
 class DataPreparator:
-    """ Transforms data to a library format. If both user id and item id are provided, DataFrame
+    """Transforms data to a library format. If both user id and item id are provided, DataFrame
     is trated as a log, otherwise as a feature DataFrame.
 
     Examples:
@@ -235,9 +235,7 @@ class DataPreparator:
                 reader_kwargs = dict()
             dataframe = self._read_data(path, format_type, **reader_kwargs)
         else:
-            raise ValueError(
-                "Either data or path parameters must not be None"
-            )
+            raise ValueError("Either data or path parameters must not be None")
 
         optional_columns = dict()
 
@@ -285,7 +283,9 @@ class DataPreparator:
         elif "item_id" in columns_names:
             required_columns = {"item_id": (None, StringType())}
         else:
-            raise ValueError("columns_names have neither 'user_id', nor 'item_id'")
+            raise ValueError(
+                "columns_names have neither 'user_id', nor 'item_id'"
+            )
 
         if features_columns is None:
             given_columns = set(columns_names.values())
@@ -324,8 +324,7 @@ class DataPreparator:
 
 
 class CatFeaturesTransformer:
-    """Transform categorical features in ``cat_cols_list`` with one-hot encoding and delete other columns.
-    """
+    """Transform categorical features in ``cat_cols_list`` with one-hot encoding and delete other columns."""
 
     def __init__(
         self,
@@ -339,7 +338,6 @@ class CatFeaturesTransformer:
         self.cat_cols_list = cat_cols_list
         self.expressions_list = []
         self.alias = alias
-
 
     def fit(self, spark_df: Optional[DataFrame]) -> None:
         """

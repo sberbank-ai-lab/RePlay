@@ -66,7 +66,7 @@ class DateSplitter(Splitter):
 
 # pylint: disable=too-few-public-methods
 class RandomSplitter(Splitter):
-    """ Assign records into train and test at random. """
+    """Assign records into train and test at random."""
 
     def __init__(
         self,
@@ -217,7 +217,8 @@ class ColdUserRandomSplitter(Splitter):
     def _core_split(self, log: DataFrame) -> SplitterReturnType:
         users = log.select("user_id").distinct()
         train_users, test_users = users.randomSplit(
-            [1 - self.test_size, self.test_size], seed=self.seed,
+            [1 - self.test_size, self.test_size],
+            seed=self.seed,
         )
         train = log.join(train_users, on="user_id", how="inner")
         test = log.join(test_users, on="user_id", how="inner")

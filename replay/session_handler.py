@@ -53,7 +53,7 @@ def get_spark_session(
 
 
 def logger_with_settings() -> logging.Logger:
-    """ Set up default logging """
+    """Set up default logging"""
     spark_logger = logging.getLogger("py4j")
     spark_logger.setLevel(logging.WARN)
     ignite_engine_logger = logging.getLogger("ignite.engine.engine.Engine")

@@ -12,10 +12,12 @@ SplitterReturnType = Tuple[DataFrame, DataFrame]
 
 # pylint: disable=too-few-public-methods
 class Splitter(ABC):
-    """ Base class """
+    """Base class"""
 
     def __init__(
-        self, drop_cold_items: bool, drop_cold_users: bool,
+        self,
+        drop_cold_items: bool,
+        drop_cold_users: bool,
     ):
         """
         :param drop_cold_items: flag to remove items that are not in train data

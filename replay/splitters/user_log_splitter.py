@@ -108,7 +108,10 @@ class UserSplitter(Splitter):
         self.shuffle = shuffle
         self.seed = seed
 
-    def _get_test_users(self, log: DataFrame,) -> DataFrame:
+    def _get_test_users(
+        self,
+        log: DataFrame,
+    ) -> DataFrame:
         """
         :param log: input DataFrame
         :return: Spark DataFrame with single column `user_id`

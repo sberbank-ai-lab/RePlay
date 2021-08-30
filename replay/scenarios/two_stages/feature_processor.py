@@ -384,7 +384,8 @@ class SecondLevelFeaturesProcessor:
         log.unpersist()
 
     def transform(
-        self, log: DataFrame,
+        self,
+        log: DataFrame,
     ):
         """
         Add features
@@ -428,7 +429,10 @@ class SecondLevelFeaturesProcessor:
 
         if self.use_conditional_popularity:
             if self.user_cond_dist_cat_feat_c is not None:
-                for (key, value,) in self.user_cond_dist_cat_feat_c.items():
+                for (
+                    key,
+                    value,
+                ) in self.user_cond_dist_cat_feat_c.items():
                     joined = join_or_return(
                         joined,
                         sf.broadcast(value),
@@ -438,7 +442,10 @@ class SecondLevelFeaturesProcessor:
                     joined = joined.fillna({"user_pop_by_" + key: 0})
 
             if self.item_cond_dist_cat_feat_c is not None:
-                for (key, value,) in self.item_cond_dist_cat_feat_c.items():
+                for (
+                    key,
+                    value,
+                ) in self.item_cond_dist_cat_feat_c.items():
                     joined = join_or_return(
                         joined,
                         sf.broadcast(value),

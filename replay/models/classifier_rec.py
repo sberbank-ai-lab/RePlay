@@ -112,7 +112,8 @@ class ClassifierRec(HybridRecommender):
             feature_cols += ["item_features"]
         if feature_cols:
             return VectorAssembler(
-                inputCols=feature_cols, outputCol="features",
+                inputCols=feature_cols,
+                outputCol="features",
             ).transform(raw_join)
         raise ValueError(
             "model must use at least one of: "
@@ -132,7 +133,9 @@ class ClassifierRec(HybridRecommender):
         filter_seen_items: bool = True,
     ) -> DataFrame:
         data = self._augment_data(
-            users.crossJoin(items), user_features, item_features,
+            users.crossJoin(items),
+            user_features,
+            item_features,
         ).select("features", "item_idx", "user_idx")
         recs = self.model.transform(data).select(
             "user_idx",
