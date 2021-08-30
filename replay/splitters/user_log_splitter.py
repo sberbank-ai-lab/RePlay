@@ -93,7 +93,8 @@ class UserSplitter(Splitter):
     ):
         """
         :param item_test_size: fraction or a number of items per user
-        :param user_test_size: similar to ``item_test_size``, but corresponds to the number of users.
+        :param user_test_size: similar to ``item_test_size``,
+            but corresponds to the number of users.
             ``None`` is all available users.
         :param shuffle: take random items and not last based on ``timestamp``.
         :param drop_cold_items: flag to drop cold items from test

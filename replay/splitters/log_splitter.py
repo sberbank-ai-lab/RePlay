@@ -33,7 +33,8 @@ class DateSplitter(Splitter):
         drop_cold_users: bool = False,
     ):
         """
-        :param test_start: date ``yyyy-mm-dd`` or a fraction for test size to determine data automatically
+        :param test_start: date ``yyyy-mm-dd`` or a
+            fraction for test size to determine data automatically
         :param drop_cold_items: flag to drop cold items from test
         :param drop_cold_users: flag to drop cold users from test
         """
@@ -136,7 +137,8 @@ class NewUsersSplitter(Splitter):
     +-------+-------+---------+---------+
     <BLANKLINE>
 
-    Train DataFrame can be drastically reduced even with moderate `test_size` if the amount of new users is small.
+    Train DataFrame can be drastically reduced even with moderate
+    `test_size` if the amount of new users is small.
 
     >>> train, test = NewUsersSplitter(test_size=0.3).split(data_frame)
     >>> train.show()

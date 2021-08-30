@@ -11,7 +11,8 @@ from replay.models.pop_rec import PopRec
 
 class Wilson(PopRec):
     """
-    Calculates lower confidence bound for the confidence interval of true fraction of positive ratings.
+    Calculates lower confidence bound for the confidence interval
+    of true fraction of positive ratings.
 
     ``relevance`` must be converted to binary 0-1 form.
 

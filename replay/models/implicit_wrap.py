@@ -18,7 +18,8 @@ class ImplicitWrap(Recommender):
     >>> model = implicit.als.AlternatingLeastSquares(factors=5)
     >>> als = ImplicitWrap(model)
 
-    This way you can use implicit models as any other in replay with conversions made under the hood.
+    This way you can use implicit models as any other in replay
+    with conversions made under the hood.
 
     >>> import pandas as pd
     >>> df = pd.DataFrame({"user_id": [1, 1, 2, 2], "item_id": [1, 2, 2, 3], "relevance": [1, 1, 1, 1]})

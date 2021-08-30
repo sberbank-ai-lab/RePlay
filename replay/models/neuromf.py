@@ -250,7 +250,8 @@ class NeuroMF(TorchRecommender):
         count_negative_sample: int = 1,
     ):
         """
-        MLP or GMF model can be ignored if its embedding size (embedding_mlp_dim or embedding_gmf_dim) is set to None.
+        MLP or GMF model can be ignored if
+        its embedding size (embedding_mlp_dim or embedding_gmf_dim) is set to ``None``.
         Default variant is MLP + GMF with embedding size 128.
 
         :param learning_rate: learning rate

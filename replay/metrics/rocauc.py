@@ -7,7 +7,8 @@ class RocAuc(Metric):
     Receiver Operating Characteristic/Area Under the Curve is the aggregated performance measure,
     that depends only on the order of recommended items.
     It can be interpreted as the fraction of object pairs (object of class 1, object of class 0)
-    that were correctly ordered by the model. The bigger the value of AUC, the better the classification model.
+    that were correctly ordered by the model.
+    The bigger the value of AUC, the better the classification model.
 
     .. math::
         ROCAUC@K(i) = \\frac {\sum_{s=1}^{K}\sum_{t=1}^{K}

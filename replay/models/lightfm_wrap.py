@@ -63,7 +63,8 @@ class LightFMWrap(HybridRecommender):
 
         :param feature_table: dataframe with ``user_idx`` or ``item_idx``,
             other columns are features.
-        :param log_ids_list: dataframe with ``user_idx`` or ``item_idx``, containing unique ids from log..
+        :param log_ids_list: dataframe with ``user_idx`` or ``item_idx``,
+            containing unique ids from log.
         :returns: feature matrix
         """
 

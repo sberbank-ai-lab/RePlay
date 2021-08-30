@@ -6,9 +6,11 @@ from replay.metrics.base_metric import Metric
 # pylint: disable=too-few-public-methods
 class NDCG(Metric):
     """
-    Normalized Discounted Cumulative Gain is a metric that takes into account positions of relevant items.
+    Normalized Discounted Cumulative Gain is a metric
+    that takes into account positions of relevant items.
 
-    This is the binary version, it takes into account whether the item was consumed or not, relevance value is ignored.
+    This is the binary version, it takes into account
+    whether the item was consumed or not, relevance value is ignored.
 
     .. math::
         DCG@K(i) = \sum_{j=1}^{K}\\frac{\mathbb{1}_{r_{ij}}}{\log_2 (j+1)}

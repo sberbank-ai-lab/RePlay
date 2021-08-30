@@ -211,8 +211,10 @@ class DataPreparator:
         ``[user_id, *features]``, or  ``[item_id, *features]``.
         Input is either file of ``format_type``
         at ``path``, or ``pandas.DataFrame`` or ``spark.DataFrame``.
-        :param columns_names: dictionary mapping "default column name: column name in input DataFrame"
-        ``user_id`` and ``item_id`` mappings are required, ``timestamp`` and``relevance`` are optional.
+        :param columns_names: dictionary mapping "default column name:
+        column name in input DataFrame"
+        ``user_id`` and ``item_id`` mappings are required,
+        ``timestamp`` and``relevance`` are optional.
 
             Mapping specifies the meaning of the DataFrame:
             - Both ``[user_id, item_id]`` are present, then it's log
@@ -324,7 +326,8 @@ class DataPreparator:
 
 
 class CatFeaturesTransformer:
-    """Transform categorical features in ``cat_cols_list`` with one-hot encoding and delete other columns."""
+    """Transform categorical features in ``cat_cols_list``
+    with one-hot encoding and delete other columns."""
 
     def __init__(
         self,

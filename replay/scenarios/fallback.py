@@ -59,8 +59,10 @@ class Fallback(BaseScenario):
         :param test: test data
         :param user_features: user features
         :param item_features: item features
-        :param param_grid: a dictionary with keys main and fallback containing dictionaries with search grid, where
-            key is the parameter name and value is the range of possible values ``{param: [low, high]}``.
+        :param param_grid: a dictionary with keys main and
+            fallback containing dictionaries with search grid, where
+            key is the parameter name and value is the range of possible values
+            ``{param: [low, high]}``.
         :param criterion: metric to use for optimization
         :param k: recommendation list length
         :param budget: number of points to try

@@ -544,7 +544,8 @@ def add_to_date(
 ) -> DataFrame:
     """
     Get user or item features from replay model.
-    If a model can return both user and item embeddings, elementwise multiplication can be performed too.
+    If a model can return both user and item embeddings,
+    elementwise multiplication can be performed too.
     If a model can't return embedding for specific user/item, zero vector is returned.
     Treats column ``column_name`` as a number of days after the ``base_date``.
     Converts ``column_name`` to TimestampType with

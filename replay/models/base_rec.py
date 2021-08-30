@@ -65,7 +65,8 @@ class BaseRecommender(ABC):
         :param user_features: user features
         :param item_features: item features
         :param param_grid: a dictionary with search grid, where
-            key is the parameter name and value is the range of possible values ``{param: [low, high]}``.
+            key is the parameter name and value is the range of possible values
+            ``{param: [low, high]}``.
         :param criterion: metric to use for optimization
         :param k: recommendation list length
         :param budget: number of points to try
@@ -897,7 +898,8 @@ class HybridRecommender(BaseRecommender, ABC):
     ) -> DataFrame:
         """
         Get recommendations for specific user-item ``pairs``.
-        If a model can't produce recommendation for specific pair it is removed from the resulting dataframe.
+        If a model can't produce recommendation
+        for specific pair it is removed from the resulting dataframe.
 
         :param pairs: dataframe with pairs to calculate relevance for, ``[user_id, item_id]``.
         :param log: historical log of interactions
@@ -987,7 +989,8 @@ class Recommender(BaseRecommender, ABC):
     ) -> DataFrame:
         """
         Get recommendations for specific user-item ``pairs``.
-        If a model can't produce recommendation for specific pair it is removed from the resulting dataframe.
+        If a model can't produce recommendation
+        for specific pair it is removed from the resulting dataframe.
 
         :param pairs: dataframe with pairs to calculate relevance for, ``[user_id, item_id]``.
         :param log: historical log of interactions
@@ -1047,7 +1050,8 @@ class Recommender(BaseRecommender, ABC):
 
 
 class UserRecommender(BaseRecommender, ABC):
-    """Base class for models that use user features but not item features. ``log`` is not required for this class."""
+    """Base class for models that use user features
+    but not item features. ``log`` is not required for this class."""
 
     def fit(
         self,
@@ -1117,7 +1121,8 @@ class UserRecommender(BaseRecommender, ABC):
     ) -> DataFrame:
         """
         Get recommendations for specific user-item ``pairs``.
-        If a model can't produce recommendation for specific pair it is removed from the resulting dataframe.
+        If a model can't produce recommendation
+        for specific pair it is removed from the resulting dataframe.
 
         :param pairs: dataframe with pairs to calculate relevance for, ``[user_id, item_id]``.
         :param log: historical log of interactions
@@ -1148,11 +1153,14 @@ class NeighbourRec(Recommender, ABC):
         users: DataFrame,
     ) -> DataFrame:
         """
-        Get recommendations for all provided users and filter results with ``filter_df`` by ``condition``.
+        Get recommendations for all provided users
+        and filter results with ``filter_df`` by ``condition``.
         It allows to implement both ``predict_pairs`` and usual ``predict``@k.
 
-        :param log: historical interactions, DataFrame ``[user_idx, item_idx, timestamp, relevance]``.
-        :param filter_df: DataFrame use to filter items: ``[item_idx_filter]`` or ``[user_idx_filter, item_idx_filter]``.
+        :param log: historical interactions, DataFrame
+            ``[user_idx, item_idx, timestamp, relevance]``.
+        :param filter_df: DataFrame use to filter items:
+            ``[item_idx_filter]`` or ``[user_idx_filter, item_idx_filter]``.
         :param condition: condition used for inner join with ``filter_df``
         :param users: users to calculate recommendations for
         :return: DataFrame ``[user_idx, item_idx, relevance]``
