@@ -4,4 +4,3 @@
 =================
 .. automodule:: replay.data_preparator
    :members: DataPreparator
-   :special-members: __init__

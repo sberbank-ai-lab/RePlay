@@ -658,6 +658,7 @@ class BaseRecommender(ABC):
     ) -> Tuple[Optional[DataFrame], Optional[int]]:
         """
         Get embeddings from model
+
         :param ids: id ids to get embeddings for Spark DataFrame containing user_idx or item_idx
         :param features: user or item features
         :return: DataFrame with biases and embeddings, and vector size
@@ -926,7 +927,7 @@ class HybridRecommender(BaseRecommender, ABC):
         Returns user or item feature vectors as a Column with type ArrayType
         :param ids: Spark DataFrame with unique ids
         :param features: Spark DataFrame with features for provided ids
-        :return: feature vestors
+        :return: feature vectors
             If a model does not have a vector for some ids they are not present in the final result.
         """
         return self._get_features_wrap(ids, features)
