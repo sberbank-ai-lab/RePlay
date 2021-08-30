@@ -113,8 +113,7 @@ def test_predict_pairs_warm_only(log, log_to_pred, model):
 )
 def test_predict_pairs_raises(log, model):
     with pytest.raises(
-        ValueError,
-        match=r"log is not provided, but it is required for prediction",
+        ValueError
     ):
         model.fit(log)
         model.predict_pairs(log.select("user_id", "item_id"))
@@ -123,8 +122,7 @@ def test_predict_pairs_raises(log, model):
 def test_predict_pairs_raises_pairs_format(log):
     model = ALSWrap(seed=SEED)
     with pytest.raises(
-        ValueError,
-        match=r"log is not provided, but it is required for prediction",
+        ValueError
     ):
         model.fit(log)
         model.predict_pairs(log, log)

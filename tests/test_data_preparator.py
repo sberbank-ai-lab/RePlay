@@ -105,8 +105,7 @@ def test_transform_log_empty_dataframe_exception(data_preparator, spark):
 def test_absent_columns(data_preparator, long_log_with_features, col_kwargs):
     data_preparator._read_data = Mock(return_value=long_log_with_features)
     with pytest.raises(
-        ValueError,
-        match=r"'columns_names' has excess columns:.*",
+        ValueError
     ):
         data_preparator.transform(
             path="/test_path", format_type="table", **col_kwargs

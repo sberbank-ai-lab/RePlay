@@ -128,7 +128,7 @@ class Word2VecRec(Recommender):
     ) -> DataFrame:
         if log is None:
             raise ValueError(
-                "Для predict {} необходим log.".format(self.__str__())
+                "{} predict requires log.".format(self.__str__())
             )
 
         user_vectors = self._get_user_vectors(

@@ -64,13 +64,13 @@ def test_init(two_stages_kwargs):
 
     two_stages_kwargs["use_first_level_models_feat"] = [True]
     with pytest.raises(
-        ValueError, match="Для каждой модели из first_level_models укажите.*"
+        ValueError
     ):
         two_stages = TwoStagesScenario(**two_stages_kwargs)
 
     two_stages_kwargs["use_first_level_models_feat"] = True
     two_stages_kwargs["negatives_type"] = "abs"
-    with pytest.raises(ValueError, match="Некорректное значение.*"):
+    with pytest.raises(ValueError):
         two_stages = TwoStagesScenario(**two_stages_kwargs)
 
 
