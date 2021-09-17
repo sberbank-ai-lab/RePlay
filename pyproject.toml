@@ -40,6 +40,7 @@ numba = "*"
 llvmlite = "*"
 seaborn = "*"
 nevergrad = "*"
+ghp-import = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
 # fixing versions of package dependencies (non-dev)
