@@ -19,10 +19,10 @@ different_timestamp_formats_data = [
             [300003.0, 300003],
             [0.0, 0],
         ],
-        [
-            [datetime(1970, 1, 1, 0, 0, 1), datetime(1970, 1, 1, 0, 0, 1)],
-            [datetime(1970, 1, 4, 11, 20, 3), datetime(1970, 1, 4, 11, 20, 3)],
-            [datetime(1970, 1, 1, 0, 0, 0), datetime(1970, 1, 1, 0, 0, 0)],
+        [   
+            [datetime(1970, 1, 1, 3, 0, 0), datetime(1970, 1, 1, 3, 0, 0)],
+            [datetime(1970, 1, 4, 14, 20, 3), datetime(1970, 1, 4, 14, 20, 3)],
+            [datetime(1970, 1, 1, 3, 0, 1), datetime(1970, 1, 1, 3, 0, 1)]
         ],
         ["float_", "int_"],
     ),
@@ -39,18 +39,18 @@ different_timestamp_formats_data = [
         [
             [
                 datetime(2021, 8, 22),
-                datetime(2021, 8, 22),
-                datetime(2021, 8, 22),
+                datetime(2021, 8, 22, 3),
+                datetime(2021, 8, 22, 3),
             ],
             [
                 datetime(2021, 8, 23, 11, 29, 29),
-                datetime(2021, 8, 23, 11, 29, 29),
-                datetime(2021, 8, 23, 11, 29, 29),
+                datetime(2021, 8, 23, 14, 29, 29),
+                datetime(2021, 8, 23, 14, 29, 29),
             ],
             [
                 datetime(2021, 8, 27),
-                datetime(2021, 8, 27),
-                datetime(2021, 8, 27),
+                datetime(2021, 8, 27, 3),
+                datetime(2021, 8, 27, 3),
             ],
         ],
         ["ts_", "str_", "str_format_"],
