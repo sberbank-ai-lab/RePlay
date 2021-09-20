@@ -28,9 +28,11 @@ def get_spark_session(
     os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
 
     if spark_memory is None:
-        spark_memory = floor(psutil.virtual_memory().total / 1024 ** 3 * 0.7)
+        spark_memory = max(
+            floor(psutil.virtual_memory().total / 1024 ** 3 * 0.1), 2
+        )
     if shuffle_partitions is None:
-        shuffle_partitions = os.cpu_count()
+        shuffle_partitions = os.cpu_count() * 3
     driver_memory = f"{spark_memory}g"
     user_home = os.environ["HOME"]
     spark = (
