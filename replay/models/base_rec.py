@@ -810,7 +810,7 @@ class ItemVectorModel(BaseRecommender, ABC):
             raise NotImplementedError(
                 f"{metric} metric is not implemented, valid metrics are "
                 "'euclidean_distance_sim', 'cosine_similarity', 'dot_product'"
-                )
+            )
 
         items_vectors = self._get_item_vectors()
         left_part = (
