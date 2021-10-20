@@ -10,6 +10,7 @@ from replay.models.base_rec import Recommender, ItemVectorModel
 from replay.utils import vector_dot, vector_mult
 
 
+# pylint: disable=too-many-instance-attributes
 class Word2VecRec(Recommender, ItemVectorModel):
     """
     Trains word2vec model where items ar treated as words and users as sentences.
