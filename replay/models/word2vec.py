@@ -29,17 +29,21 @@ class Word2VecRec(Recommender, ItemVectorModel):
     def __init__(
         self,
         rank: int = 100,
+        min_count: int = 5,
+        step_size: int = 0.025,
+        max_iter: int = 1,
         window_size: int = 1,
         use_idf: bool = False,
-        min_count: int = 0,
         seed: Optional[int] = None,
     ):
         """
         :param rank: embedding size
+        :param min_count: the minimum number of times a token must
+            appear to be included in the word2vec model's vocabulary
+        :param step_size: step size to be used for each iteration of optimization
+        :param max_iter: max number of iterations
         :param window_size: window size
         :param use_idf: flag to use inverse document frequency
-        :param min_count: he minimum number of times a token must
-            appear to be included in the word2vec model's vocabulary
         :param seed: random seed
         """
 
@@ -47,6 +51,8 @@ class Word2VecRec(Recommender, ItemVectorModel):
         self.window_size = window_size
         self.use_idf = use_idf
         self.min_count = min_count
+        self.step_size = step_size
+        self.max_iter = max_iter
         self._seed = seed
 
     def _fit(
@@ -91,6 +97,8 @@ class Word2VecRec(Recommender, ItemVectorModel):
         word_2_vec = Word2Vec(
             vectorSize=self.rank,
             minCount=self.min_count,
+            stepSize=self.step_size,
+            maxIter=self.max_iter,
             inputCol="items",
             outputCol="w2v_vector",
             windowSize=self.window_size,
