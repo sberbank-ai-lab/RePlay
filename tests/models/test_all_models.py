@@ -50,7 +50,7 @@ def log_to_pred(spark):
         MultVAE(),
         NeuroMF(),
         SLIM(seed=SEED),
-        Word2VecRec(seed=SEED),
+        Word2VecRec(seed=SEED, min_count=0),
         PopRec(),
     ],
     ids=[
@@ -103,7 +103,12 @@ def test_predict_pairs_warm_only(log, log_to_pred, model):
 
 @pytest.mark.parametrize(
     "model",
-    [ADMMSLIM(seed=SEED), KNN(), SLIM(seed=SEED), Word2VecRec(seed=SEED)],
+    [
+        ADMMSLIM(seed=SEED),
+        KNN(),
+        SLIM(seed=SEED),
+        Word2VecRec(seed=SEED, min_count=0),
+    ],
     ids=[
         "admm_slim",
         "knn",
@@ -131,7 +136,7 @@ def test_predict_pairs_raises_pairs_format(log):
         (ALSWrap(seed=SEED), "euclidean_distance_sim"),
         (ALSWrap(seed=SEED), "dot_product"),
         (ALSWrap(seed=SEED), "cosine_similarity"),
-        (Word2VecRec(seed=SEED), "cosine_similarity"),
+        (Word2VecRec(seed=SEED, min_count=0), "cosine_similarity"),
         (ADMMSLIM(seed=SEED), None),
         (KNN(), None),
         (SLIM(seed=SEED), None),
