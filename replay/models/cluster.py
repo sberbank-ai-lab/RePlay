@@ -34,7 +34,6 @@ class ClusterRec(UserRecommender):
 
         kmeans = KMeans().setK(self.num_clusters).setFeaturesCol("features")
         user_features_vector = self._transform_features(user_features)
-        user_features_vector.show()
         self.model = kmeans.fit(user_features_vector)
         users_clusters = (
             self.model.transform(user_features_vector)
