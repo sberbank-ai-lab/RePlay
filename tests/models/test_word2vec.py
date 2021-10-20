@@ -30,7 +30,7 @@ def log(spark):
 
 @pytest.fixture
 def model():
-    return Word2VecRec(rank=1, window_size=1, use_idf=True, seed=42)
+    return Word2VecRec(rank=1, window_size=1, use_idf=True, seed=42, min_count=0)
 
 
 def test_fit(log, model):
