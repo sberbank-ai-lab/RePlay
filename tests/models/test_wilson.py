@@ -64,7 +64,6 @@ def test_predict(log, model):
     recs = model.predict(
         log, k=1, users=["user2", "user1"], items=["item4", "item3"]
     )
-    recs.show()
     assert recs.count() == 2
     assert (
         recs.select(
