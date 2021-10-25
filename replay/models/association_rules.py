@@ -18,9 +18,6 @@ class AssociationRulesItemRec(Recommender):
     """
 
     can_predict_item_to_item = True
-
-    frequent_items: DataFrame
-    num_sessions: int
     pair_metrics: DataFrame
 
     def __init__(
@@ -56,17 +53,16 @@ class AssociationRulesItemRec(Recommender):
             confidence(a, b)/confidence(!a, b).
         """
         log = log.select(self.session_col, "item_idx").distinct()
+        num_sessions = log.select(self.session_col).distinct().count()
 
-        self.num_sessions = log.select(self.session_col).distinct().count()
-
-        self.frequent_items = (
+        frequent_items = (
             log.groupBy("item_idx")
             .agg(sf.count("item_idx").alias("item_count"))
             .filter(sf.col("item_count") >= self.min_item_count)
         ).cache()
 
         frequent_items_log = log.join(
-            sf.broadcast(self.frequent_items.select("item_idx")), on="item_idx"
+            frequent_items.select("item_idx"), on="item_idx"
         )
 
         frequent_item_pairs = (
@@ -83,12 +79,10 @@ class AssociationRulesItemRec(Recommender):
             )
             .drop(self.session_col + "_cons")
         )
-        pairs_count = frequent_item_pairs.groupBy(
-            "antecedent", "consequent"
-        ).agg(sf.count("consequent").alias("pair_count"))
-
-        pairs_count = pairs_count.filter(
-            sf.col("pair_count") >= self.min_pair_count
+        pairs_count = (
+            frequent_item_pairs.groupBy("antecedent", "consequent")
+            .agg(sf.count("consequent").alias("pair_count"))
+            .filter(sf.col("pair_count") >= self.min_pair_count)
         )
 
         pairs_metrics = pairs_count.unionByName(
@@ -99,28 +93,20 @@ class AssociationRulesItemRec(Recommender):
             )
         )
         pairs_metrics = pairs_metrics.join(
-            self.frequent_items.withColumnRenamed(
-                "item_count", "antecedent_count"
-            ),
+            frequent_items.withColumnRenamed("item_count", "antecedent_count"),
             on=[sf.col("antecedent") == sf.col("item_idx")],
         ).drop("item_idx")
 
         pairs_metrics = pairs_metrics.join(
-            self.frequent_items.withColumnRenamed(
-                "item_count", "consequent_count"
-            ),
+            frequent_items.withColumnRenamed("item_count", "consequent_count"),
             on=[sf.col("consequent") == sf.col("item_idx")],
         ).drop("item_idx")
 
         pairs_metrics = pairs_metrics.withColumn(
             "confidence", sf.col("pair_count") / sf.col("antecedent_count")
-        )
-
-        pairs_metrics = pairs_metrics.withColumn(
+        ).withColumn(
             "lift",
-            self.num_sessions
-            * sf.col("confidence")
-            / sf.col("consequent_count"),
+            num_sessions * sf.col("confidence") / sf.col("consequent_count"),
         )
 
         if self.num_neighbours is not None:
@@ -138,21 +124,27 @@ class AssociationRulesItemRec(Recommender):
                 .drop("similarity_order")
             )
 
-        self.pair_metrics = pairs_metrics.withColumn(
-            "confidence_gain",
-            sf.when(
-                sf.col("consequent_count") - sf.col("pair_count") == 0,
-                sf.lit(np.inf),
-            ).otherwise(
-                sf.col("confidence")
-                * (self.num_sessions - sf.col("antecedent_count"))
-                / (sf.col("consequent_count") - sf.col("pair_count"))
-            ),
+        self.pair_metrics = (
+            pairs_metrics.withColumn(
+                "confidence_gain",
+                sf.when(
+                    sf.col("consequent_count") - sf.col("pair_count") == 0,
+                    sf.lit(np.inf),
+                ).otherwise(
+                    sf.col("confidence")
+                    * (num_sessions - sf.col("antecedent_count"))
+                    / (sf.col("consequent_count") - sf.col("pair_count"))
+                ),
+            )
+            .select(
+                "antecedent",
+                "consequent",
+                "confidence",
+                "lift",
+                "confidence_gain",
+            )
+            .cache()
         )
-
-        self.pair_metrics = self.pair_metrics.select(
-            "antecedent", "consequent", "confidence", "lift", "confidence_gain"
-        ).cache()
 
     # pylint: disable=too-many-arguments
     def _predict(
@@ -230,5 +222,3 @@ class AssociationRulesItemRec(Recommender):
     def _clear_cache(self):
         if hasattr(self, "pair_metrics"):
             unpersist_if_exists(self.pair_metrics)
-        if hasattr(self, "frequent_items"):
-            unpersist_if_exists(self.frequent_items)
