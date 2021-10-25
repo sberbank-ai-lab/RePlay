@@ -48,6 +48,7 @@ def load(path: str):
     :param path: path to model folder
     :return: Restored trained model
     """
+    spark = State().session
     with open(join(path, "init_args.json"), "r") as json_file:
         init_args = json.load(json_file)
     name = init_args["_model_name"]
@@ -61,7 +62,6 @@ def load(path: str):
 
     df_path = join(path, "dataframes")
     dataframes = os.listdir(df_path)
-    spark = State().session
     for name in dataframes:
         pickle_rdd = spark.sparkContext.pickleFile(
             join(df_path, name)
