@@ -44,6 +44,15 @@ class AssociationRulesItemRec(Recommender):
         self.min_pair_count = min_pair_count
         self.num_neighbours = num_neighbours
 
+    @property
+    def _init_args(self):
+        return {
+            "session_col": self.session_col,
+            "min_item_count": self.min_item_count,
+            "min_pair_count": self.min_pair_count,
+            "num_neighbours": self.num_neighbours,
+        }
+
     def _fit(
         self,
         log: DataFrame,
@@ -232,3 +241,10 @@ class AssociationRulesItemRec(Recommender):
             unpersist_if_exists(self.pair_metrics)
         if hasattr(self, "frequent_items"):
             unpersist_if_exists(self.frequent_items)
+
+    @property
+    def _dataframes(self):
+        return {
+            "pair_metrics": self.pair_metrics,
+            "frequent_items": self.frequent_items,
+        }

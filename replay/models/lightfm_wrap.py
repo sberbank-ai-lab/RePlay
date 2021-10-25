@@ -1,6 +1,7 @@
 import os
 from typing import Optional, Tuple
 
+import joblib
 import numpy as np
 import pandas as pd
 import pyspark.sql.functions as sf
@@ -34,7 +35,9 @@ class LightFMWrap(HybridRecommender):
         no_components: int = 128,
         loss: str = "warp",
         random_state: Optional[int] = None,
-    ):
+        num_of_warm_items: int = 0,
+        num_of_warm_users: int = 0,
+    ):  # pylint: disable=too-many-arguments
         np.random.seed(42)
         self.no_components = no_components
         self.loss = loss
@@ -44,8 +47,24 @@ class LightFMWrap(HybridRecommender):
         self.user_feat_scaler = None
         self.item_feat_scaler = None
         # number of columns in identity matrix used for building feature matrix
-        self.num_of_warm_items = 0
-        self.num_of_warm_users = 0
+        self.num_of_warm_items = num_of_warm_items
+        self.num_of_warm_users = num_of_warm_users
+
+    @property
+    def _init_args(self):
+        return {
+            "no_components": self.no_components,
+            "loss": self.loss,
+            "random_state": self.random_state,
+            "num_of_warm_items": self.num_of_warm_items,
+            "num_of_warm_users": self.num_of_warm_users,
+        }
+
+    def _save_model(self, path: str):
+        joblib.dump(self.model, path)
+
+    def _load_model(self, path: str):
+        self.model = joblib.load(path)
 
     def _feature_table_to_csr(
         self,
@@ -104,7 +123,7 @@ class LightFMWrap(HybridRecommender):
                             )
                         )
                     )
-                )
+                ),
             )
             .toPandas()
             .to_numpy()
@@ -127,9 +146,7 @@ class LightFMWrap(HybridRecommender):
         scaler_name = f"{entity}_feat_scaler"
         if getattr(self, scaler_name) is None:
             if not features_np.size:
-                raise ValueError(
-                    f"features for {entity}s from log are absent"
-                )
+                raise ValueError(f"features for {entity}s from log are absent")
             setattr(self, scaler_name, MinMaxScaler().fit(features_np))
 
         if features_np.size:
@@ -285,9 +302,9 @@ class LightFMWrap(HybridRecommender):
         else:
             sparse_features = self._feature_table_to_csr(ids, features)
 
-        biases, vectors = getattr(
-            self.model, f"get_{entity}_representations"
-        )(sparse_features)
+        biases, vectors = getattr(self.model, f"get_{entity}_representations")(
+            sparse_features
+        )
 
         embed_list = list(
             zip(
@@ -298,10 +315,6 @@ class LightFMWrap(HybridRecommender):
         )
         lightfm_factors = State().session.createDataFrame(
             embed_list,
-            schema=[
-                f"{entity}_idx",
-                f"{entity}_bias",
-                f"{entity}_factors",
-            ],
+            schema=[f"{entity}_idx", f"{entity}_bias", f"{entity}_factors",],
         )
         return lightfm_factors, self.model.no_components

@@ -151,6 +151,26 @@ class RandomRec(Recommender):
         self.seed = seed
         self.add_cold = add_cold
 
+    @property
+    def _init_args(self):
+        return {
+            "distribution": self.distribution,
+            "alpha": self.alpha,
+            "seed": self.seed,
+            "add_cold": self.add_cold,
+        }
+
+    @property
+    def _dataframes(self):
+        return {"item_popularity": self.item_popularity}
+
+    def _load_model(self, path: str):
+        if self.add_cold:
+            fill = self.item_popularity.agg({"probability": "min"}).first()[0]
+        else:
+            fill = 0
+        self.fill = fill
+
     def _fit(
         self,
         log: DataFrame,
@@ -231,10 +251,7 @@ class RandomRec(Recommender):
             .select("user_idx", "item_idx")
             .groupby("user_idx")
             .agg(sf.countDistinct("item_idx").alias("cnt"))
-            .selectExpr(
-                "user_idx",
-                f"LEAST(cnt + {k}, {model_len}) AS cnt",
-            )
+            .selectExpr("user_idx", f"LEAST(cnt + {k}, {model_len}) AS cnt",)
             .groupby("user_idx")
             .applyInPandas(grouped_map, IDX_REC_SCHEMA)
         )

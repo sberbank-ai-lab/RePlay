@@ -25,6 +25,10 @@ class ClusterRec(UserRecommender):
         """
         self.num_clusters = num_clusters
 
+    @property
+    def _init_args(self):
+        return {"num_clusters": self.num_clusters}
+
     def _fit(
         self,
         log: DataFrame,
@@ -60,6 +64,10 @@ class ClusterRec(UserRecommender):
     def _clear_cache(self):
         if hasattr(self, "item_rel_in_cluster"):
             self.item_rel_in_cluster.unpersist()
+
+    @property
+    def _dataframes(self):
+        return {"item_rel_in_cluster": self.item_rel_in_cluster}
 
     @staticmethod
     def _transform_features(user_features):

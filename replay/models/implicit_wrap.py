@@ -1,5 +1,6 @@
 from typing import Optional
 
+import joblib
 import pandas as pd
 from pyspark.sql import DataFrame
 
@@ -31,6 +32,16 @@ class ImplicitWrap(Recommender):
     def __init__(self, model):
         """Provide initialized ``implicit`` model."""
         self.model = model
+
+    @property
+    def _init_args(self):
+        return {"model": None}
+
+    def _save_model(self, path: str):
+        joblib.dump(self.model, path)
+
+    def _load_model(self, path: str):
+        self.model = joblib.load(path)
 
     def _fit(
         self,
