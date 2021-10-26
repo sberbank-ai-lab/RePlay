@@ -1,4 +1,4 @@
-# pylint: disable=wildcard-import,invalid-name,eval-used,unused-wildcard-import
+# pylint: disable=wildcard-import,invalid-name,eval-used,unused-wildcard-import,unspecified-encoding
 import os
 import json
 import shutil
