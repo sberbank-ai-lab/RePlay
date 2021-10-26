@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Iterable, List, Optional, Union
 
 import numpy as np
 import pyspark.sql.functions as sf
@@ -18,6 +18,7 @@ class AssociationRulesItemRec(Recommender):
     """
 
     can_predict_item_to_item = True
+    item_to_item_metrics: List[str] = ["lift", "confidence_gain"]
     pair_metrics: DataFrame
 
     def __init__(
@@ -183,6 +184,39 @@ class AssociationRulesItemRec(Recommender):
             .withColumnRenamed("item_id", "consequent")
         )
         return res
+
+    def get_nearest_items(
+        self,
+        items: Union[DataFrame, Iterable],
+        k: int,
+        metric: Optional[str] = "lift",
+        candidates: Optional[Union[DataFrame, Iterable]] = None,
+    ) -> Optional[DataFrame]:
+        """
+        Get k most similar items be the `metric` for each of the `items`.
+
+        :param items: spark dataframe or list of item ids to find neighbors
+        :param k: number of neighbors
+        :param metric: `lift` of 'confidence_gain'
+        :param candidates: spark dataframe or list of items
+            to consider as similar, e.g. popular/new items. If None,
+            all items presented during model training are used.
+        :return: dataframe with the most similar items an distance,
+            where bigger value means greater similarity.
+            spark-dataframe with columns ``[item_id, neighbour_item_id, similarity]``
+        """
+        if metric not in self.item_to_item_metrics:
+            raise ValueError(
+                f"Select one of the valid distance metrics: "
+                f"{self.item_to_item_metrics}"
+            )
+
+        return self._get_nearest_items_wrap(
+            items=items,
+            k=k,
+            metric=metric,
+            candidates=candidates,
+        )
 
     def _get_nearest_items(
         self,
