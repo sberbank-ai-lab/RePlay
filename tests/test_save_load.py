@@ -1,10 +1,13 @@
 # pylint: disable-all
+from os.path import dirname, join
+
 import pytest
 import pandas as pd
 
 from implicit.als import AlternatingLeastSquares
 from pyspark.sql import functions as sf
 
+import replay
 from replay.model_handler import save, load
 from replay.models import *
 from tests.utils import sparkDataFrameEqual, long_log_with_features, spark
@@ -19,8 +22,9 @@ def user_features(spark):
 
 @pytest.fixture
 def df():
+    folder = dirname(replay.__file__)
     return pd.read_csv(
-        "../experiments/data/ml1m_ratings.dat",
+        join(folder, "../experiments/data/ml1m_ratings.dat"),
         sep="\t",
         names=["user_id", "item_id", "relevance", "timestamp"],
     ).head(1000)
