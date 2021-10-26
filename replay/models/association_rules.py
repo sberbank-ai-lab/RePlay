@@ -33,9 +33,9 @@ class AssociationRulesItemRec(Recommender):
         """
         :param session_col: name of column to group sessions.
             Items are combined by the ``user_id`` column if ``session_col`` is not defined.
-        :param min_item_count items with fewer sessions will be filtered out
-        :param min_pair_count pairs with fewer sessions will be filtered out
-        :param num_neighbours maximal number of neighbours to save for each item
+        :param min_item_count: items with fewer sessions will be filtered out
+        :param min_pair_count: pairs with fewer sessions will be filtered out
+        :param num_neighbours: maximal number of neighbours to save for each item
         """
         self.session_col = (
             session_col if session_col is not None else "user_idx"
@@ -59,7 +59,6 @@ class AssociationRulesItemRec(Recommender):
         user_features: Optional[DataFrame] = None,
         item_features: Optional[DataFrame] = None,
     ) -> None:
-
         """
         1) Filter log items by ``min_item_count`` threshold
         2) Calculate items support, pairs confidence, lift and confidence_gain defined as
