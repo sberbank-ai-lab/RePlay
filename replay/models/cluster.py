@@ -1,7 +1,7 @@
 from typing import Optional
 
 from pandas import DataFrame
-from pyspark.ml.clustering import KMeans
+from pyspark.ml.clustering import KMeans, KMeansModel
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql import functions as sf
 
@@ -28,6 +28,12 @@ class ClusterRec(UserRecommender):
     @property
     def _init_args(self):
         return {"num_clusters": self.num_clusters}
+
+    def _save_model(self, path: str):
+        self.model.write().overwrite().save(path)
+
+    def _load_model(self, path: str):
+        self.model = KMeansModel.load(path)
 
     def _fit(
         self,
