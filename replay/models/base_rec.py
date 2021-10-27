@@ -1310,7 +1310,7 @@ class NeighbourRec(Recommender, ABC):
         k: int,
         metric: Optional[str] = None,
         candidates: Optional[Union[DataFrame, Iterable]] = None,
-    ) -> Optional[DataFrame]:
+    ) -> DataFrame:
         """
         Get k most similar items be the `metric` for each of the `items`.
 

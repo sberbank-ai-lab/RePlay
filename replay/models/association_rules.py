@@ -14,7 +14,7 @@ class AssociationRulesItemRec(Recommender):
     """
     Item-to-item recommender based on association rules.
     Calculate pairs confidence, lift and confidence_gain defined as
-        confidence(a, b)/confidence(!a, b) to get top-k associated items.
+    confidence(a, b)/confidence(!a, b) to get top-k associated items.
     """
 
     can_predict_item_to_item = True
@@ -191,7 +191,7 @@ class AssociationRulesItemRec(Recommender):
         k: int,
         metric: Optional[str] = "lift",
         candidates: Optional[Union[DataFrame, Iterable]] = None,
-    ) -> Optional[DataFrame]:
+    ) -> DataFrame:
         """
         Get k most similar items be the `metric` for each of the `items`.
 
@@ -223,7 +223,7 @@ class AssociationRulesItemRec(Recommender):
         items: DataFrame,
         metric: Optional[str] = None,
         candidates: Optional[DataFrame] = None,
-    ) -> Optional[DataFrame]:
+    ) -> DataFrame:
         """
         Return metric for all available associated items filtered by `candidates`.
 
