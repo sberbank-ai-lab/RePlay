@@ -60,6 +60,7 @@ class LightFMWrap(HybridRecommender):
         }
 
     def _save_model(self, path: str):
+        os.makedirs(path)
         joblib.dump(self.model, join(path, "model"))
         joblib.dump(self.user_feat_scaler, join(path, "user_feat_scaler"))
         joblib.dump(self.item_feat_scaler, join(path, "item_feat_scaler"))
