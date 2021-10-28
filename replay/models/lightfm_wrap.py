@@ -1,4 +1,5 @@
 import os
+from os.path import join
 from typing import Optional, Tuple
 
 import joblib
@@ -35,8 +36,6 @@ class LightFMWrap(HybridRecommender):
         no_components: int = 128,
         loss: str = "warp",
         random_state: Optional[int] = None,
-        num_of_warm_items: int = 0,
-        num_of_warm_users: int = 0,
     ):  # pylint: disable=too-many-arguments
         np.random.seed(42)
         self.no_components = no_components
@@ -47,8 +46,8 @@ class LightFMWrap(HybridRecommender):
         self.user_feat_scaler = None
         self.item_feat_scaler = None
         # number of columns in identity matrix used for building feature matrix
-        self.num_of_warm_items = num_of_warm_items
-        self.num_of_warm_users = num_of_warm_users
+        self.num_of_warm_items = 0
+        self.num_of_warm_users = 0
 
     @property
     def _init_args(self):
@@ -61,10 +60,14 @@ class LightFMWrap(HybridRecommender):
         }
 
     def _save_model(self, path: str):
-        joblib.dump(self.model, path)
+        joblib.dump(self.model, join(path, "model"))
+        joblib.dump(self.user_feat_scaler, join(path, "user_feat_scaler"))
+        joblib.dump(self.item_feat_scaler, join(path, "item_feat_scaler"))
 
     def _load_model(self, path: str):
-        self.model = joblib.load(path)
+        self.model = joblib.load(join(path, "model"))
+        self.user_feat_scaler = joblib.load(join(path, "user_feat_scaler"))
+        self.item_feat_scaler = joblib.load(join(path, "item_feat_scaler"))
 
     def _feature_table_to_csr(
         self,

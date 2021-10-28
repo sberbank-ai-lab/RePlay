@@ -2,6 +2,7 @@
 import os
 import json
 import shutil
+from inspect import getfullargspec
 
 from pyspark.ml.feature import StringIndexerModel, IndexToString
 from os.path import exists, join
@@ -38,7 +39,7 @@ def save(model: BaseRecommender, path: str):
     df_path = join(path, "dataframes")
     os.makedirs(df_path)
     for name, df in dataframes.items():
-        df.rdd.saveAsPickleFile(join(df_path, name))
+        df.write.parquet(join(df_path, name))
 
 
 def load(path: str):
@@ -50,10 +51,21 @@ def load(path: str):
     """
     spark = State().session
     with open(join(path, "init_args.json"), "r") as json_file:
-        init_args = json.load(json_file)
-    name = init_args["_model_name"]
-    del init_args["_model_name"]
+        args = json.load(json_file)
+    name = args["_model_name"]
+    del args["_model_name"]
+    init_args = getfullargspec(eval(f"{name}.__init__")).args
+    init_args.remove("self")
+    extra_args = set(args) - set(init_args)
+    if len(extra_args) > 0:
+        extra_args = {key: args[key] for key in args}
+        init_args = {key: args[key] for key in init_args}
+    else:
+        extra_args = {}
+
     model = eval(f"{name}(**{str(init_args)})")
+    for arg in extra_args:
+        model.arg = extra_args[arg]
 
     model.user_indexer = StringIndexerModel.load(join(path, "user_indexer"))
     model.item_indexer = StringIndexerModel.load(join(path, "item_indexer"))
@@ -63,10 +75,7 @@ def load(path: str):
     df_path = join(path, "dataframes")
     dataframes = os.listdir(df_path)
     for name in dataframes:
-        pickle_rdd = spark.sparkContext.pickleFile(
-            join(df_path, name)
-        ).collect()
-        df = spark.createDataFrame(pickle_rdd).cache()
+        df = spark.read.parquet(join(df_path, name))
         setattr(model, name, df)
 
     model._load_model(join(path, "model"))
