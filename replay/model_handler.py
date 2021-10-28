@@ -61,6 +61,7 @@ def load(path: str):
         extra_args = {key: args[key] for key in args}
         init_args = {key: args[key] for key in init_args}
     else:
+        init_args = args
         extra_args = {}
 
     model = eval(f"{name}(**{str(init_args)})")
