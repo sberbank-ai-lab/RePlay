@@ -1,13 +1,9 @@
 # pylint: disable=redefined-outer-name, missing-function-docstring, unused-import
 import pytest
-import numpy as np
-import pandas as pd
 
 from pyspark.sql import functions as sf
-from statsmodels.stats.proportion import proportion_confint
 
 from replay.models import RandomRec
-from replay.utils import convert2spark
 from tests.utils import log, spark, sparkDataFrameEqual, sparkDataFrameNonEqual
 
 
@@ -68,23 +64,21 @@ def test_popularity_matrix(
 
 
 def test_predict(log, uniform_seed, uniform_no_seed, popular_based_seed):
-    # fixed seed provides reproducibility and diversity
+    # fixed seed provides reproducibility
     for model in [uniform_seed, popular_based_seed]:
         model.fit(log)
         pred = model.predict(log, k=1)
         model.fit(log)
+        pred_same_after_refit = model.predict(log, k=1)
+        sparkDataFrameEqual(pred, pred_same_after_refit)
         pred_same = model.predict(log, k=1)
-        # reproducibility of predictions after model refit for fixed seed
-        sparkDataFrameEqual(pred, pred_same)
-        # diversity in fitted model's predictions
-        pred_new = model.predict(log, k=1)
-        sparkDataFrameNonEqual(pred_same, pred_new)
+        sparkDataFrameEqual(pred_same_after_refit, pred_same)
 
     # no seed provides diversity
     uniform_no_seed.fit(log)
-    pred = model.predict(log, k=1)
+    pred = uniform_no_seed.predict(log, k=1)
     uniform_no_seed.fit(log)
-    pred_same = model.predict(log, k=1)
-    sparkDataFrameNonEqual(pred, pred_same)
-    pred_new = model.predict(log, k=1)
-    sparkDataFrameNonEqual(pred_same, pred_new)
+    pred_new_after_refit = uniform_no_seed.predict(log, k=1)
+    sparkDataFrameNonEqual(pred, pred_new_after_refit)
+    pred_new = uniform_no_seed.predict(log, k=1)
+    sparkDataFrameNonEqual(pred_new_after_refit, pred_new)

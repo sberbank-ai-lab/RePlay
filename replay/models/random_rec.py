@@ -114,7 +114,6 @@ class RandomRec(Recommender):
 
     item_popularity: DataFrame
     fill: float
-    rng: Optional[default_rng] = None
 
     def __init__(
         self,
@@ -173,8 +172,6 @@ class RandomRec(Recommender):
             if self.add_cold
             else 0.0
         )
-        if self.seed:
-            self.rng = default_rng(self.seed)
 
     def _clear_cache(self):
         if hasattr(self, "item_popularity"):
@@ -216,13 +213,13 @@ class RandomRec(Recommender):
         ).fillna(self.fill)
 
         items_np, probs_np = self._get_ids_and_probs_pd(filtered_popularity)
-        current_seed = self.rng.integers(10 ** 7) if self.rng else None
+        seed = self.seed
 
         def grouped_map(pandas_df: pd.DataFrame) -> pd.DataFrame:
             user_idx = pandas_df["user_idx"][0]
             cnt = pandas_df["cnt"][0]
-            if current_seed is not None:
-                local_rng = default_rng(current_seed + user_idx)
+            if seed is not None:
+                local_rng = default_rng(seed + user_idx)
             else:
                 local_rng = default_rng()
             items_idx = local_rng.choice(
