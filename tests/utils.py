@@ -150,7 +150,7 @@ def sparkDataFrameEqual(df1: DataFrame, df2: DataFrame):
     )
 
 
-def sparkDataFrameNonEqual(df1: DataFrame, df2: DataFrame):
+def sparkDataFrameNotEqual(df1: DataFrame, df2: DataFrame):
     try:
         sparkDataFrameEqual(df1, df2)
     except AssertionError:
