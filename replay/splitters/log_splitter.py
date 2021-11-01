@@ -12,7 +12,6 @@ from typing import Optional, Union
 
 import pyspark.sql.functions as sf
 from pyspark.sql import DataFrame, Window
-from pyspark.sql.types import TimestampType
 
 from replay.splitters.base_splitter import (
     Splitter,
@@ -56,12 +55,8 @@ class DateSplitter(Splitter):
             )
         else:
             test_start = self.test_start
-        train = log.filter(
-            sf.col("timestamp") < sf.lit(test_start).cast(TimestampType())
-        )
-        test = log.filter(
-            sf.col("timestamp") >= sf.lit(test_start).cast(TimestampType())
-        )
+        train = log.filter(sf.col("timestamp") < sf.lit(test_start))
+        test = log.filter(sf.col("timestamp") >= sf.lit(test_start))
         return train, test
 
 
@@ -219,8 +214,7 @@ class ColdUserRandomSplitter(Splitter):
     def _core_split(self, log: DataFrame) -> SplitterReturnType:
         users = log.select("user_id").distinct()
         train_users, test_users = users.randomSplit(
-            [1 - self.test_size, self.test_size],
-            seed=self.seed,
+            [1 - self.test_size, self.test_size], seed=self.seed,
         )
         train = log.join(train_users, on="user_id", how="inner")
         test = log.join(test_users, on="user_id", how="inner")
