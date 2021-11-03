@@ -32,6 +32,9 @@ class ImplicitWrap(Recommender):
     def __init__(self, model):
         """Provide initialized ``implicit`` model."""
         self.model = model
+        self.logger.info(
+            "The model is a wrapper of a non-distributed model which may affect performance"
+        )
 
     @property
     def _init_args(self):

@@ -30,6 +30,10 @@ class LightFMWrap(HybridRecommender):
         },
         "no_components": {"type": "loguniform_int", "args": [8, 512]},
     }
+    user_feat_scaler: Optional[MinMaxScaler] = None
+    item_feat_scaler: Optional[MinMaxScaler] = None
+    num_of_warm_users: int
+    num_of_warm_items: int
 
     def __init__(
         self,
@@ -43,11 +47,7 @@ class LightFMWrap(HybridRecommender):
         self.random_state = random_state
         cpu_count = os.cpu_count()
         self.num_threads = cpu_count if cpu_count is not None else 1
-        self.user_feat_scaler = None
-        self.item_feat_scaler = None
         # number of columns in identity matrix used for building feature matrix
-        self.num_of_warm_items = 0
-        self.num_of_warm_users = 0
 
     @property
     def _init_args(self):
@@ -227,7 +227,6 @@ class LightFMWrap(HybridRecommender):
         item_features: Optional[DataFrame] = None,
     ):
         def predict_by_user(pandas_df: pd.DataFrame) -> pd.DataFrame:
-
             pandas_df["relevance"] = model.predict(
                 user_ids=pandas_df["user_idx"].to_numpy(),
                 item_ids=pandas_df["item_idx"].to_numpy(),

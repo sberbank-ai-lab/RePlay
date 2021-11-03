@@ -6,6 +6,8 @@ Base abstract classes:
 - HybridRecommender - base class for models that accept user or item features
 - UserRecommender - base class that accepts only user features, but not item features
 - NeighbourRec - base class that requires log at prediction time
+- ItemVectorModel - class for models which provides items' vectors.
+    Implements similar items search.
 """
 import collections
 import logging
@@ -776,7 +778,7 @@ class BaseRecommender(ABC):
         )
 
 
-class ItemVectorModel(BaseRecommender, ABC):
+class ItemVectorModel(BaseRecommender):
     """Parent for models generating items' vector representations"""
 
     can_predict_item_to_item: bool = True
@@ -1312,7 +1314,7 @@ class NeighbourRec(Recommender, ABC):
         k: int,
         metric: Optional[str] = None,
         candidates: Optional[Union[DataFrame, Iterable]] = None,
-    ) -> Optional[DataFrame]:
+    ) -> DataFrame:
         """
         Get k most similar items be the `metric` for each of the `items`.
 
