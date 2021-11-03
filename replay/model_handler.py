@@ -1,4 +1,4 @@
-# pylint: disable=wildcard-import,invalid-name,eval-used,unused-wildcard-import,unspecified-encoding
+# pylint: disable=wildcard-import,invalid-name,unused-wildcard-import,unspecified-encoding
 import os
 import json
 import shutil
@@ -54,7 +54,9 @@ def load(path: str):
         args = json.load(json_file)
     name = args["_model_name"]
     del args["_model_name"]
-    init_args = getfullargspec(eval(f"{name}.__init__")).args
+
+    model_class = globals()[name]
+    init_args = getfullargspec(model_class.__init__).args
     init_args.remove("self")
     extra_args = set(args) - set(init_args)
     if len(extra_args) > 0:
@@ -64,7 +66,7 @@ def load(path: str):
         init_args = args
         extra_args = {}
 
-    model = eval(f"{name}(**{str(init_args)})")
+    model = model_class(**init_args)
     for arg in extra_args:
         model.arg = extra_args[arg]
 
