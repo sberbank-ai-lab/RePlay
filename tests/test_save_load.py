@@ -39,7 +39,6 @@ def df():
         MultVAE,
         NeuroMF,
         PopRec,
-        RandomRec,
         SLIM,
         UserPopRec,
         LightFMWrap,
@@ -48,6 +47,17 @@ def df():
 def test_equal_preds(long_log_with_features, recommender, tmp_path):
     path = (tmp_path / "test").resolve()
     model = recommender()
+    model.fit(long_log_with_features)
+    base_pred = model.predict(long_log_with_features, 5)
+    save(model, path)
+    m = load(path)
+    new_pred = m.predict(long_log_with_features, 5)
+    sparkDataFrameEqual(base_pred, new_pred)
+
+
+def test_random(long_log_with_features, tmp_path):
+    path = (tmp_path / "random").resolve()
+    model = RandomRec(seed=1)
     model.fit(long_log_with_features)
     base_pred = model.predict(long_log_with_features, 5)
     save(model, path)
