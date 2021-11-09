@@ -123,6 +123,41 @@ class BaseRecommender(ABC):
             criterion=criterion,
             k=k,
         )
+
+        # check if initial models' parameters are inside the search space
+        initial_params = {key: getattr(self, key) for key in param_grid.keys()}
+        outside_search_space = {}
+        for param, value in initial_params.items():
+            param_type = self._search_space[param]["type"]
+            borders = (
+                self._search_space[param]["args"]
+                if param_grid[param] is None
+                else param_grid[param]
+            )
+
+            if param_type == "categorical":
+                if value not in borders:
+                    outside_search_space[param] = {
+                        "borders": borders,
+                        "value": value,
+                    }
+            else:
+                if value < borders[0] or value > borders[1]:
+                    outside_search_space[param] = {
+                        "borders": borders,
+                        "value": value,
+                    }
+
+        if outside_search_space:
+            self.logger.debug(
+                "Model is initialized with parameters outside the search space: %s."
+                "Initial parameters will not be evaluated during optimization."
+                "Change search spare with 'param_grid' argument if necessary",
+                outside_search_space,
+            )
+        else:
+            self.study.enqueue_trial(initial_params)
+
         self.study.optimize(objective, budget)
         return self.study.best_params
 
@@ -470,7 +505,8 @@ class BaseRecommender(ABC):
 
     @staticmethod
     def _get_ids(
-        log: Union[Iterable, AnyDataFrame], column: str,
+        log: Union[Iterable, AnyDataFrame],
+        column: str,
     ) -> DataFrame:
         """
         Get unique values from ``array`` and put them into dataframe with column ``column``.
@@ -738,7 +774,10 @@ class BaseRecommender(ABC):
 
         if self.can_predict_item_to_item:
             return self._get_nearest_items_wrap(
-                items=items, k=k, metric=metric, candidates=candidates,
+                items=items,
+                k=k,
+                metric=metric,
+                candidates=candidates,
             )
 
         raise ValueError(
@@ -766,7 +805,9 @@ class BaseRecommender(ABC):
         ]
 
         nearest_items_to_filter = self._get_nearest_items(
-            items=items, metric=metric, candidates=candidates,
+            items=items,
+            metric=metric,
+            candidates=candidates,
         )
 
         rel_col_name = metric if metric is not None else "similarity"
@@ -1290,7 +1331,11 @@ class NeighbourRec(Recommender, ABC):
                 how="inner",
                 on=sf.col("item_idx") == sf.col("item_id_one"),
             )
-            .join(filter_df, how="inner", on=condition,)
+            .join(
+                filter_df,
+                how="inner",
+                on=condition,
+            )
             .groupby("user_idx", "item_id_two")
             .agg(sf.sum("similarity").alias("relevance"))
             .withColumnRenamed("item_id_two", "item_idx")
@@ -1362,7 +1407,10 @@ class NeighbourRec(Recommender, ABC):
             )
 
         return self._get_nearest_items_wrap(
-            items=items, k=k, metric=None, candidates=candidates,
+            items=items,
+            k=k,
+            metric=None,
+            candidates=candidates,
         )
 
     def _get_nearest_items(
