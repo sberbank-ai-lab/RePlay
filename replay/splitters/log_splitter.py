@@ -27,12 +27,12 @@ class DateSplitter(Splitter):
 
     def __init__(
         self,
-        test_start: Union[datetime, float],
+        test_start: Union[datetime, float, str, int],
         drop_cold_items: bool = False,
         drop_cold_users: bool = False,
     ):
         """
-        :param test_start: date ``yyyy-mm-dd`` or a
+        :param test_start: string``yyyy-mm-dd``, int unix timestamp, datetime or a
             fraction for test size to determine data automatically
         :param drop_cold_items: flag to drop cold items from test
         :param drop_cold_users: flag to drop cold users from test
@@ -54,9 +54,10 @@ class DateSplitter(Splitter):
                 .collect()[0][0]
             )
         else:
-            test_start = self.test_start
-        train = log.filter(sf.col("timestamp") < sf.lit(test_start))
-        test = log.filter(sf.col("timestamp") >= sf.lit(test_start))
+            dtype = dict(log.dtypes)["timestamp"]
+            test_start = sf.lit(self.test_start).cast("timestamp").cast(dtype)
+        train = log.filter(sf.col("timestamp") < test_start)
+        test = log.filter(sf.col("timestamp") >= test_start)
         return train, test
 
 
