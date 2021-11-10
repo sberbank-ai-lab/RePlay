@@ -135,18 +135,17 @@ class BaseRecommender(ABC):
                 else param_grid[param]
             )
 
-            if param_type == "categorical":
-                if value not in borders:
-                    outside_search_space[param] = {
-                        "borders": borders,
-                        "value": value,
-                    }
-            else:
-                if value < borders[0] or value > borders[1]:
-                    outside_search_space[param] = {
-                        "borders": borders,
-                        "value": value,
-                    }
+            extra_category = (
+                param_type == "categorical" and value not in borders
+            )
+            param_out_of_bounds = param_type != "categorical" and (
+                value < borders[0] or value > borders[1]
+            )
+            if extra_category or param_out_of_bounds:
+                outside_search_space[param] = {
+                    "borders": borders,
+                    "value": value,
+                }
 
         if outside_search_space:
             self.logger.debug(
