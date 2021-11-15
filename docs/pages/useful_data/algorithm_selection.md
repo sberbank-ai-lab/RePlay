@@ -76,3 +76,10 @@ The same goes for new items.
 `*` - depends on base models. 
 
 More info on [models](../modules/models).
+
+### Model Comparison
+
+
+.. csv-table:: MovieLens 1m
+   :file: ../experiments/res_1m.csv
+   :header-rows: 1

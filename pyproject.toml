@@ -69,7 +69,7 @@ Sphinx = "*"
 sphinx-rtd-theme = "*"
 sphinx-autodoc-typehints = "*"
 docutils = "=0.16"
-recommonmark = "*"
+myst-parser = "*"
 sphinx-markdown-tables = "*"
 ghp-import = "*"
 # emacs dependencies
