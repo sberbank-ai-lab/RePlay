@@ -27,14 +27,11 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.6.2, <3.10"
+python = ">=3.7, <3.10"
 pytorch-ignite = "*"
 lightfm = "*"
-lightautoml = "*"
-numpy = [
-  {version = ">=1.20.0", python = ">=3.7"},
-  {version = "*", python = "<3.7"}
-]
+lightautoml = ">=0.3.1"
+numpy = ">=1.20.0"
 optuna = "*"
 pandas = "*"
 psutil = "*"
@@ -70,7 +67,6 @@ sphinx-rtd-theme = "*"
 sphinx-autodoc-typehints = "*"
 docutils = "=0.16"
 myst-parser = "*"
-sphinx-markdown-tables = "*"
 ghp-import = "*"
 # emacs dependencies
 rope = "*"
