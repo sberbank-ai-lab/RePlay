@@ -159,7 +159,7 @@ class BaseScenario(BaseRecommender):
         test: AnyDataFrame,
         user_features: Optional[AnyDataFrame] = None,
         item_features: Optional[AnyDataFrame] = None,
-        param_grid: Optional[Dict[str, Dict[str, List[Any]]]] = None,
+        param_borders: Optional[Dict[str, Dict[str, List[Any]]]] = None,
         criterion: Metric = NDCG(),
         k: int = 10,
         budget: int = 10,
@@ -171,7 +171,7 @@ class BaseScenario(BaseRecommender):
         :param test: test data
         :param user_features: user features
         :param item_features: item features
-        :param param_grid: a dictionary with search grid, where
+        :param param_borders: a dictionary with search grid, where
             key is the parameter name and value is
             the range of possible values``{param: [low, high]}``.
         :param criterion: metric to use for optimization
@@ -179,15 +179,15 @@ class BaseScenario(BaseRecommender):
         :param budget: number of points to try
         :return: dictionary with best parameters
         """
-        if param_grid is None:
-            param_grid = {"main": None, "cold": None}
+        if param_borders is None:
+            param_borders = {"main": None, "cold": None}
         self.logger.info("Optimizing main model...")
         params = self._optimize(
             train,
             test,
             user_features,
             item_features,
-            param_grid["main"],
+            param_borders["main"],
             criterion,
             k,
             budget,
@@ -201,7 +201,7 @@ class BaseScenario(BaseRecommender):
                 test,
                 user_features,
                 item_features,
-                param_grid["cold"],
+                param_borders["cold"],
                 criterion,
                 k,
                 budget,
@@ -219,7 +219,7 @@ class BaseScenario(BaseRecommender):
         test: AnyDataFrame,
         user_features: Optional[AnyDataFrame] = None,
         item_features: Optional[AnyDataFrame] = None,
-        param_grid: Optional[Dict[str, Dict[str, List[Any]]]] = None,
+        param_borders: Optional[Dict[str, Dict[str, List[Any]]]] = None,
         criterion: Metric = NDCG(),
         k: int = 10,
         budget: int = 10,

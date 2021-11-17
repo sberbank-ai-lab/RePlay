@@ -834,7 +834,7 @@ class TwoStagesScenario(HybridRecommender):
         test: AnyDataFrame,
         user_features: Optional[AnyDataFrame] = None,
         item_features: Optional[AnyDataFrame] = None,
-        param_grid: Optional[List[Dict[str, List[Any]]]] = None,
+        param_borders: Optional[List[Dict[str, List[Any]]]] = None,
         criterion: Metric = Precision(),
         k: int = 10,
         budget: int = 10,
@@ -846,7 +846,7 @@ class TwoStagesScenario(HybridRecommender):
         :param test: test DataFrame ``[user_id, item_id, timestamp, relevance]``
         :param user_features: user features ``[user_id , timestamp]`` + feature columns
         :param item_features: item features``[item_id]`` + feature columns
-        :param param_grid: list with param grids for first level models and a fallback model.
+        :param param_borders: list with param grids for first level models and a fallback model.
             Empty dict skips optimization for that model.
             Param grid is a dict ``{param: [low, high]}``.
         :param criterion: metric to optimize
@@ -857,7 +857,7 @@ class TwoStagesScenario(HybridRecommender):
         number_of_models = len(self.first_level_models)
         if self.fallback_model is not None:
             number_of_models += 1
-        if number_of_models != len(param_grid):
+        if number_of_models != len(param_borders):
             raise ValueError(
                 "Provide search grid or None for every first level model"
             )
@@ -876,8 +876,8 @@ class TwoStagesScenario(HybridRecommender):
 
         params_found = []
         for i, model in enumerate(self.first_level_models):
-            if param_grid[i] is None or (
-                isinstance(param_grid[i], dict) and param_grid[i]
+            if param_borders[i] is None or (
+                isinstance(param_borders[i], dict) and param_borders[i]
             ):
                 self.logger.info(
                     "Optimizing first level model number %s, %s",
@@ -891,7 +891,7 @@ class TwoStagesScenario(HybridRecommender):
                         test=test,
                         user_features=first_level_user_features,
                         item_features=first_level_item_features,
-                        param_grid=param_grid[i],
+                        param_grid=param_borders[i],
                         criterion=criterion,
                         k=k,
                         budget=budget,
@@ -901,7 +901,7 @@ class TwoStagesScenario(HybridRecommender):
                 params_found.append(None)
 
         if self.fallback_model is None or (
-            isinstance(param_grid[-1], dict) and not param_grid[-1]
+            isinstance(param_borders[-1], dict) and not param_borders[-1]
         ):
             return params_found, None
 
@@ -912,7 +912,7 @@ class TwoStagesScenario(HybridRecommender):
             test=test,
             user_features=first_level_user_features,
             item_features=first_level_item_features,
-            param_grid=param_grid[-1],
+            param_grid=param_borders[-1],
             criterion=criterion,
         )
         unpersist_if_exists(first_level_item_features)
