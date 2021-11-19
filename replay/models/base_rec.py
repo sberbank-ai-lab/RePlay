@@ -74,9 +74,10 @@ class BaseRecommender(ABC):
         :param test: test data
         :param user_features: user features
         :param item_features: item features
-        :param param_borders: a dictionary with search grid, where
+        :param param_borders: a dictionary with search borders, where
             key is the parameter name and value is the range of possible values
-            ``{param: [low, high]}``.
+            ``{param: [low, high]}``. In case of categorical parameters it is
+            all possible values: ``{cat_param: [cat_1, cat_2, cat_3]}``.
         :param criterion: metric to use for optimization
         :param k: recommendation list length
         :param budget: number of points to try
@@ -94,7 +95,10 @@ class BaseRecommender(ABC):
             )
 
         search_space = self._prepare_param_borders(param_borders)
-        if self._init_params_in_search_space(search_space):
+        if (
+            self._init_params_in_search_space(search_space)
+            and not self._params_tried()
+        ):
             self.study.enqueue_trial(self._init_args)
 
         split_data = self._prepare_split_data(
@@ -109,7 +113,9 @@ class BaseRecommender(ABC):
         )
 
         self.study.optimize(objective, budget)
-        return self.study.best_params
+        best_params = self.study.best_params
+        self.set_params(**best_params)
+        return best_params
 
     def _init_params_in_search_space(self, search_space):
         """Check if model params are inside search space"""
@@ -137,7 +143,7 @@ class BaseRecommender(ABC):
             self.logger.debug(
                 "Model is initialized with parameters outside the search space: %s."
                 "Initial parameters will not be evaluated during optimization."
-                "Change search spare with 'param_grid' argument if necessary",
+                "Change search spare with 'param_borders' argument if necessary",
                 outside_search_space,
             )
             return False
@@ -148,20 +154,36 @@ class BaseRecommender(ABC):
         self, param_borders: Optional[Dict[str, List[Any]]] = None
     ) -> Dict[str, Dict[str, List[Any]]]:
         """
-        Checks if param grid is valid and convert it so a search_space format
+        Checks if param borders are valid and convert them so a search_space format
 
         :param param_borders: a dictionary with search grid, where
             key is the parameter name and value is the range of possible values
             ``{param: [low, high]}``.
         :return:
         """
-        if param_borders is None:
-            return deepcopy(self._search_space)
-
         search_space = deepcopy(self._search_space)
+        if param_borders is None:
+            return search_space
+
         for param, borders in param_borders.items():
             self._check_borders(param, borders)
             search_space[param]["args"] = borders
+
+        # Optuna trials should contain all searchable parameters
+        # to be able to correctly return best params
+        # If used didn't specify some params to be tested optuna still needs to suggest them
+        # This part makes sure this suggestion will be constant
+        args = self._init_args
+        missing_borders = {
+            param: args[param]
+            for param in search_space
+            if param not in param_borders
+        }
+        for param, value in missing_borders.items():
+            if search_space[param]["type"] == "categorical":
+                search_space[param]["args"] = [value]
+            else:
+                search_space[param]["args"] = [value, value]
 
         return search_space
 
@@ -898,6 +920,23 @@ class BaseRecommender(ABC):
         raise NotImplementedError(
             f"item-to-item prediction is not implemented for {self.__str__()}"
         )
+
+    def _params_tried(self):
+        """check if current parameters were already evaluated"""
+        if self.study is None:
+            return False
+
+        params = self._init_args
+        params = {
+            param: params[param]
+            for param in self._search_space
+            if param in self._search_space
+        }
+        for trial in self.study.trials:
+            if params == trial.params:
+                return True
+
+        return False
 
 
 class ItemVectorModel(BaseRecommender):
