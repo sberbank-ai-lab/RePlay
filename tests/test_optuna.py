@@ -64,4 +64,3 @@ def test_it_works(model, log):
     model.optimize(log, log, k=2, budget=1)
     trials = model.study.trials
     assert len(trials) == 2
-    assert trials[0].params != trials[1].params
