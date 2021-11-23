@@ -18,17 +18,28 @@ class KNN(NeighbourRec):
         "shrink": {"type": "int", "args": [0, 100]},
     }
 
-    def __init__(self, num_neighbours: int = 10, shrink: float = 0.0):
+    def __init__(
+        self,
+        num_neighbours: int = 10,
+        use_relevance: bool = False,
+        shrink: float = 0.0,
+    ):
         """
-        :param num_neighbours:  number of neighbours
+        :param num_neighbours: number of neighbours
+        :param use_relevance: flag to convert relevance to binary form
         :param shrink: term added to the denominator when calculating similarity
         """
-        self.shrink: float = shrink
-        self.num_neighbours: int = num_neighbours
+        self.shrink = shrink
+        self.use_relevance = use_relevance
+        self.num_neighbours = num_neighbours
 
     @property
     def _init_args(self):
-        return {"shrink": self.shrink, "num_neighbours": self.num_neighbours}
+        return {
+            "shrink": self.shrink,
+            "use_relevance": self.use_relevance,
+            "num_neighbours": self.num_neighbours,
+        }
 
     def _get_similarity_matrix(
         self, dot_products: DataFrame, item_norms: DataFrame
@@ -90,24 +101,29 @@ class KNN(NeighbourRec):
         user_features: Optional[DataFrame] = None,
         item_features: Optional[DataFrame] = None,
     ) -> None:
+        df = log.select("user_idx", "item_idx", "relevance")
+        if not self.use_relevance:
+            df = df.withColumn("relevance", sf.lit(1))
+
+        left = df.withColumnRenamed(
+            "item_idx", "item_id_one"
+        ).withColumnRenamed("relevance", "rel_one")
+        right = df.withColumnRenamed(
+            "item_idx", "item_id_two"
+        ).withColumnRenamed("relevance", "rel_two")
         dot_products = (
-            log.select("user_idx", "item_idx")
-            .withColumnRenamed("item_idx", "item_id_one")
-            .join(
-                log.select("user_idx", "item_idx").withColumnRenamed(
-                    "item_idx", "item_id_two"
-                ),
-                how="inner",
-                on="user_idx",
-            )
+            left.join(right, how="inner", on="user_idx")
             .filter(sf.col("item_id_one") != sf.col("item_id_two"))
-            .groupby("item_id_one", "item_id_two")
-            .agg(sf.count("user_idx").alias("dot_product"))
+            .withColumn("relevance", sf.col("rel_one") * sf.col("rel_two"))
+            .drop("rel_one", "rel_two")
+            .groupBy("item_id_one", "item_id_two")
+            .agg(sf.sum("relevance").alias("dot_product"))
         )
+
         item_norms = (
-            log.select("user_idx", "item_idx")
-            .groupby("item_idx")
-            .agg(sf.count("user_idx").alias("square_norm"))
+            df.withColumn("relevance", sf.col("relevance") ** 2)
+            .groupBy("item_idx")
+            .agg(sf.sum("relevance").alias("square_norm"))
             .select(sf.col("item_idx"), sf.sqrt("square_norm").alias("norm"))
         )
 

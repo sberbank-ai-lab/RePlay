@@ -62,7 +62,6 @@ def test_it_works(model, log):
     assert isinstance(res["rank"], int)
     assert model._params_tried() is True
     model.optimize(log, log, k=2, budget=1)
-    trials = model.study.trials
-    assert len(trials) == 1
+    assert len(model.study.trials) == 1
     model.optimize(log, log, k=2, budget=1, new_study=False)
-    assert len(trials) == 2
+    assert len(model.study.trials) == 2
