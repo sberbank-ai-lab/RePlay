@@ -16,7 +16,7 @@ model.optimize(train, val)
 ```
 This will return a dict with the best parameters and set them. 
 
-If you are not pleased with the results you can continue optimizing by calling `optimize` again, 
+If you are not pleased with the results you can continue optimizing by calling `optimize` with `new_study=False`, 
 it will continue optimizing right where it stopped. Optuna study is stored as a model attribute. 
 For example, you can see all trials with `model.study.trials`.
 

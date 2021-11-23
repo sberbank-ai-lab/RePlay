@@ -66,6 +66,7 @@ class BaseRecommender(ABC):
         criterion: Metric = NDCG(),
         k: int = 10,
         budget: int = 10,
+        new_study: bool = True,
     ) -> Optional[Dict[str, Any]]:
         """
         Searches best parameters with optuna.
@@ -81,6 +82,7 @@ class BaseRecommender(ABC):
         :param criterion: metric to use for optimization
         :param k: recommendation list length
         :param budget: number of points to try
+        :param new_study: keep searching with previous study or start a new study
         :return: dictionary with best parameters
         """
         if self._search_space is None:
@@ -89,7 +91,7 @@ class BaseRecommender(ABC):
             )
             return None
 
-        if self.study is None:
+        if self.study is None or new_study:
             self.study = create_study(
                 direction="maximize", sampler=TPESampler()
             )
@@ -929,7 +931,7 @@ class BaseRecommender(ABC):
         params = self._init_args
         params = {
             param: params[param]
-            for param in self._search_space
+            for param in params
             if param in self._search_space
         }
         for trial in self.study.trials:
