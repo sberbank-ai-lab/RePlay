@@ -814,6 +814,7 @@ class TwoStagesScenario(HybridRecommender):
         criterion: Metric = Precision(),
         k: int = 10,
         budget: int = 10,
+        new_study: bool = True,
     ):
         params = model.optimize(
             train,
@@ -824,6 +825,7 @@ class TwoStagesScenario(HybridRecommender):
             criterion,
             k,
             budget,
+            new_study,
         )
         return params
 
@@ -838,6 +840,7 @@ class TwoStagesScenario(HybridRecommender):
         criterion: Metric = Precision(),
         k: int = 10,
         budget: int = 10,
+        new_study: bool = True,
     ) -> Tuple[List[Dict[str, Any]], Optional[Dict[str, Any]]]:
         """
         Optimize first level models with optuna.
@@ -852,6 +855,7 @@ class TwoStagesScenario(HybridRecommender):
         :param criterion: metric to optimize
         :param k: length of a recommendation list
         :param budget: number of points to train each model
+        :param new_study: keep searching with previous study or start a new study
         :return: list of dicts of parameters
         """
         number_of_models = len(self.first_level_models)
@@ -895,6 +899,7 @@ class TwoStagesScenario(HybridRecommender):
                         criterion=criterion,
                         k=k,
                         budget=budget,
+                        new_study=new_study,
                     )
                 )
             else:
@@ -914,6 +919,7 @@ class TwoStagesScenario(HybridRecommender):
             item_features=first_level_item_features,
             param_borders=param_borders[-1],
             criterion=criterion,
+            new_study=new_study,
         )
         unpersist_if_exists(first_level_item_features)
         unpersist_if_exists(first_level_user_features)

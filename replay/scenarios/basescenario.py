@@ -163,6 +163,7 @@ class BaseScenario(BaseRecommender):
         criterion: Metric = NDCG(),
         k: int = 10,
         budget: int = 10,
+        new_study: bool = True,
     ) -> Tuple[Dict[str, Any]]:
         """
         Searches best parameters with optuna.
@@ -177,6 +178,7 @@ class BaseScenario(BaseRecommender):
         :param criterion: metric to use for optimization
         :param k: recommendation list length
         :param budget: number of points to try
+        :param new_study: keep searching with previous study or start a new study
         :return: dictionary with best parameters
         """
         if param_borders is None:
@@ -191,6 +193,7 @@ class BaseScenario(BaseRecommender):
             criterion,
             k,
             budget,
+            new_study,
         )
         if not isinstance(params, tuple):
             self.set_params(**params)
@@ -205,6 +208,7 @@ class BaseScenario(BaseRecommender):
                 criterion,
                 k,
                 budget,
+                new_study,
             )
             if not isinstance(cold_params, tuple):
                 self.cold_model.set_params(**cold_params)
@@ -223,5 +227,6 @@ class BaseScenario(BaseRecommender):
         criterion: Metric = NDCG(),
         k: int = 10,
         budget: int = 10,
+        new_study: bool = True,
     ):
         pass

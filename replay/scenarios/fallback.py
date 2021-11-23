@@ -51,6 +51,7 @@ class Fallback(BaseScenario):
         criterion: Metric = NDCG(),
         k: int = 10,
         budget: int = 10,
+        new_study: bool = True,
     ) -> Tuple[Dict[str, Any]]:
         """
         Searches best parameters with optuna.
@@ -66,6 +67,7 @@ class Fallback(BaseScenario):
         :param criterion: metric to use for optimization
         :param k: recommendation list length
         :param budget: number of points to try
+        :param new_study: keep searching with previous study or start a new study
         :return: tuple of dictionaries with best parameters
         """
         if param_borders is None:
@@ -80,6 +82,7 @@ class Fallback(BaseScenario):
             criterion,
             k,
             budget,
+            new_study,
         )
         self.main_model.set_params(**params)
         if self.fb_model._search_space is not None:
@@ -93,6 +96,7 @@ class Fallback(BaseScenario):
                 criterion,
                 k,
                 budget,
+                new_study,
             )
             self.fb_model.set_params(**fb_params)
         else:
