@@ -156,7 +156,7 @@ class BaseRecommender(ABC):
         self, param_borders: Optional[Dict[str, List[Any]]] = None
     ) -> Dict[str, Dict[str, List[Any]]]:
         """
-        Checks if param borders are valid and convert them so a search_space format
+        Checks if param borders are valid and convert them to a search_space format
 
         :param param_borders: a dictionary with search grid, where
             key is the parameter name and value is the range of possible values
@@ -928,11 +928,10 @@ class BaseRecommender(ABC):
         if self.study is None:
             return False
 
-        params = self._init_args
         params = {
-            param: params[param]
-            for param in params
-            if param in self._search_space
+            name: value
+            for name, value in self._init_args.items()
+            if name in self._search_space
         }
         for trial in self.study.trials:
             if params == trial.params:
