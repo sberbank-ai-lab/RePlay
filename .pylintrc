@@ -11,7 +11,7 @@ disable=anomalous-backslash-in-string,bad-continuation,missing-module-docstring,
 [FORMAT]
 ignore-long-lines=^.*([А-Яа-я]|>{3}|\.{3}|\\{2}|https://).*$
 max-line-length=100
-good-names=df,i,j,k
+good-names=df,i,j,k,n,_,x,y
 
 [SIMILARITIES]
 min-similarity-lines=33
