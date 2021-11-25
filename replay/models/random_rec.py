@@ -54,7 +54,7 @@ class RandomRec(Recommender):
     >>> random_pop = RandomRec(distribution="abracadabra")
     Traceback (most recent call last):
      ...
-    ValueError: distribution can be either popular_based or uniform
+    ValueError: distribution can be one of [popular_based, relevance, uniform]
 
     >>> random_pop = RandomRec(distribution="popular_based", alpha=1.0, seed=777)
     >>> random_pop.fit(log)
