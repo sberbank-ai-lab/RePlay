@@ -107,7 +107,7 @@ class RandomRec(Recommender):
     _search_space = {
         "distribution": {
             "type": "categorical",
-            "args": ["popular_based", "uniform"],
+            "args": ["popular_based", "relevance", "uniform"],
         },
         "alpha": {"type": "uniform", "args": [-0.5, 100]},
     }
@@ -130,9 +130,9 @@ class RandomRec(Recommender):
         :param seed: random seed
         :param add_cold: flag to add cold items with minimal probability
         """
-        if distribution not in ("popular_based", "uniform"):
+        if distribution not in ("popular_based", "relevance", "uniform"):
             raise ValueError(
-                "distribution can be either popular_based or uniform"
+                "distribution can be one of [popular_based, relevance, uniform]"
             )
         if alpha <= -1.0 and distribution == "popular_based":
             raise ValueError("alpha must be bigger than -1")
@@ -178,7 +178,12 @@ class RandomRec(Recommender):
                     ),
                 )
             )
-
+        elif self.distribution == "relevance":
+            self.item_popularity = (
+                log.groupBy("item_idx")
+                .agg(sf.mean("relevance").alias("probability"))
+                .select("item_idx", "probability")
+            )
         else:
             self.item_popularity = (
                 log.select("item_idx")
