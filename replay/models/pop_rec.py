@@ -49,10 +49,10 @@ class PopRec(Recommender):
     >>> res = PopRec(use_relevance=True).fit_predict(data_frame, 1)
     >>> res.toPandas().sort_values("user_id", ignore_index=True)
        user_id  item_id  relevance
-    0        1        3   0.833333
-    1        2        1   0.500000
-    2        3        2   0.550000
-    3        4        2   0.550000
+    0        1        3   0.609756
+    1        2        1   0.121951
+    2        3        2   0.268293
+    3        4        2   0.268293
     """
 
     item_popularity: DataFrame
@@ -60,7 +60,7 @@ class PopRec(Recommender):
 
     def __init__(self, use_relevance: bool = False):
         """
-        :param use_relevance: flag to convert relevance to binary form
+        :param use_relevance: flag to use relevance values as is or to treat them as 1
         """
         self.use_relevance = use_relevance
 
@@ -79,10 +79,17 @@ class PopRec(Recommender):
         item_features: Optional[DataFrame] = None,
     ) -> None:
         if self.use_relevance:
+            total_relevance = (
+                log.agg(sf.sum("relevance").alias("relevance"))
+                .first()
+                .asDict()["relevance"]
+            )
             self.item_popularity = (
                 log.groupBy("item_idx")
-                .agg(sf.mean("relevance").alias("relevance"))
-                .select("item_idx", "relevance")
+                .agg(sf.sum("relevance").alias("relevance"))
+                .withColumn(
+                    "relevance", sf.col("relevance") / sf.lit(total_relevance)
+                )
             )
         else:
             self.item_popularity = (

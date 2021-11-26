@@ -26,7 +26,7 @@ class KNN(NeighbourRec):
     ):
         """
         :param num_neighbours: number of neighbours
-        :param use_relevance: flag to convert relevance to binary form
+        :param use_relevance: flag to use relevance values as is or to treat them as 1
         :param shrink: term added to the denominator when calculating similarity
         """
         self.shrink = shrink
@@ -41,17 +41,17 @@ class KNN(NeighbourRec):
             "num_neighbours": self.num_neighbours,
         }
 
-    def _get_similarity_matrix(self, df: DataFrame) -> DataFrame:
+    def _get_similarity(self, log: DataFrame) -> DataFrame:
         """
-        Get similarity matrix
+        Calculate item similarities
 
-        :param df: DataFrame with interactions, `[user_idx, item_idx, relevance]`
+        :param log: DataFrame with interactions, `[user_idx, item_idx, relevance]`
         :return: similarity matrix `[item_id_one, item_id_two, similarity]`
         """
-        left = df.withColumnRenamed(
+        left = log.withColumnRenamed(
             "item_idx", "item_id_one"
         ).withColumnRenamed("relevance", "rel_one")
-        right = df.withColumnRenamed(
+        right = log.withColumnRenamed(
             "item_idx", "item_id_two"
         ).withColumnRenamed("relevance", "rel_two")
 
@@ -59,13 +59,12 @@ class KNN(NeighbourRec):
             left.join(right, how="inner", on="user_idx")
             .filter(sf.col("item_id_one") != sf.col("item_id_two"))
             .withColumn("relevance", sf.col("rel_one") * sf.col("rel_two"))
-            .drop("rel_one", "rel_two")
             .groupBy("item_id_one", "item_id_two")
             .agg(sf.sum("relevance").alias("dot_product"))
         )
 
         item_norms = (
-            df.withColumn("relevance", sf.col("relevance") ** 2)
+            log.withColumn("relevance", sf.col("relevance") ** 2)
             .groupBy("item_idx")
             .agg(sf.sum("relevance").alias("square_norm"))
             .select(sf.col("item_idx"), sf.sqrt("square_norm").alias("norm"))
@@ -123,5 +122,5 @@ class KNN(NeighbourRec):
         if not self.use_relevance:
             df = df.withColumn("relevance", sf.lit(1))
 
-        similarity_matrix = self._get_similarity_matrix(df)
+        similarity_matrix = self._get_similarity(df)
         self.similarity = self._get_k_most_similar(similarity_matrix).cache()

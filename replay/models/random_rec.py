@@ -179,10 +179,20 @@ class RandomRec(Recommender):
                 )
             )
         elif self.distribution == "relevance":
+            total_relevance = (
+                log.agg(sf.sum("relevance").alias("relevance"))
+                .first()
+                .asDict()["relevance"]
+            )
             self.item_popularity = (
                 log.groupBy("item_idx")
-                .agg(sf.mean("relevance").alias("probability"))
-                .select("item_idx", "probability")
+                .agg(sf.sum("relevance").alias("probability"))
+                .select(
+                    "item_idx",
+                    (sf.col("probability") / sf.lit(total_relevance)).alias(
+                        "probability"
+                    ),
+                )
             )
         else:
             self.item_popularity = (
