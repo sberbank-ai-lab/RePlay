@@ -79,16 +79,11 @@ class PopRec(Recommender):
         item_features: Optional[DataFrame] = None,
     ) -> None:
         if self.use_relevance:
-            total_relevance = (
-                log.agg(sf.sum("relevance").alias("relevance"))
-                .first()
-                .asDict()["relevance"]
-            )
             self.item_popularity = (
                 log.groupBy("item_idx")
                 .agg(sf.sum("relevance").alias("relevance"))
                 .withColumn(
-                    "relevance", sf.col("relevance") / sf.lit(total_relevance)
+                    "relevance", sf.col("relevance") / sf.lit(self.users_count)
                 )
             )
         else:
