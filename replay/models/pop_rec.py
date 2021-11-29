@@ -49,10 +49,11 @@ class PopRec(Recommender):
     >>> res = PopRec(use_relevance=True).fit_predict(data_frame, 1)
     >>> res.toPandas().sort_values("user_id", ignore_index=True)
        user_id  item_id  relevance
-    0        1        3   0.609756
-    1        2        1   0.121951
-    2        3        2   0.268293
-    3        4        2   0.268293
+    0        1        3      0.625
+    1        2        1      0.125
+    2        3        2      0.275
+    3        4        2      0.275
+
     """
 
     item_popularity: DataFrame
