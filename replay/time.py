@@ -15,10 +15,11 @@ def get_item_recency(
     Calculate item weight showing when the majority of interactions with this item happened.
 
     >>> import pandas as pd
-    >>> df = pd.DataFrame({\
-        "item_id": [1, 1, 2, 3, 3],\
-        "timestamp": ["2099-03-19", "2099-03-20", "2099-03-22", "2099-03-27", "2099-03-25"],\
-        "relevance": [1, 1, 1, 1, 1]})
+    >>> d = {}
+    >>> d["item_id"] = [1, 1, 2, 3, 3]
+    >>> d["timestamp"] = ["2099-03-19", "2099-03-20", "2099-03-22", "2099-03-27", "2099-03-25"]
+    >>> d["relevance"] = [1, 1, 1, 1, 1]
+    >>> df = pd.DataFrame(d)
     >>> df
        item_id   timestamp  relevance
     0        1  2099-03-19          1
@@ -30,10 +31,11 @@ def get_item_recency(
     Age in days is calculated for every item,
     which is transformed into a weight using some function.
     There are three types of smoothing types available: power, exp and linear.
-    Each type calculates a parameter `c` based on the `decay` argument,
-    so that an item with `age==decay` has weight 0.5.
+    Each type calculates a parameter ``c`` based on the ``decay`` argument,
+    so that an item with ``age==decay`` has weight 0.5.
 
-    Power smoothing falls quickly in the beginning but decays slowly afterwards as `age^c`.
+    Power smoothing falls quickly in the beginning but decays slowly afterwards as ``age^c``.
+
     >>> get_item_recency(df, kind="power").orderBy("item_id").show()
     +-------+-------------------+------------------+
     |item_id|          timestamp|         relevance|
@@ -44,7 +46,8 @@ def get_item_recency(
     +-------+-------------------+------------------+
     <BLANKLINE>
 
-    Exponential smoothing is the other way around. Old objects decay more quickly as `c^age`.
+    Exponential smoothing is the other way around. Old objects decay more quickly as ``c^age``.
+
     >>> get_item_recency(df, kind="exp").orderBy("item_id").show()
     +-------+-------------------+------------------+
     |item_id|          timestamp|         relevance|
@@ -55,7 +58,8 @@ def get_item_recency(
     +-------+-------------------+------------------+
     <BLANKLINE>
 
-    Last type is a linear smoothing: `1 - c*age`.
+    Last type is a linear smoothing: ``1 - c*age``.
+
     >>> get_item_recency(df, kind="linear").orderBy("item_id").show()
     +-------+-------------------+------------------+
     |item_id|          timestamp|         relevance|
@@ -66,14 +70,15 @@ def get_item_recency(
     +-------+-------------------+------------------+
     <BLANKLINE>
 
-    This function **does not** take relevance values of interaction into account.
+    This function **does not** take relevance values of interactions into account.
     Only item age is used.
 
     :param log: interactions log
     :param decay: number of days after which the weight is reduced by half, must be grater than 1
     :param limit: minimal value the weight can reach
     :param kind: type of smoothing, one of [power, exp, linear]
-        Corresponding functions are `power`: `age^c`, `exp`: `c^age`, `linear`: `1-c*age`
+        Corresponding functions are ``power``: ``age^c``,
+        ``exp``: ``c^age``, ``linear``: ``1-c*age``
     :return: DataFrame with item weights
     """
     log = convert2spark(log)
@@ -96,13 +101,14 @@ def smoothe_time(
     kind: str = "power",
 ):
     """
-    Weighs `relevance` column with a time-dependent weight.
+    Weighs ``relevance`` column with a time-dependent weight.
 
     >>> import pandas as pd
-    >>> df = pd.DataFrame({\
-        "item_id": [1, 1, 2, 3, 3], \
-        "timestamp": ["2099-03-19", "2099-03-20", "2099-03-22", "2099-03-27", "2099-03-25"], \
-        "relevance": [1, 1, 1, 1, 1]})
+    >>> d = {}
+    >>> d["item_id"] = [1, 1, 2, 3, 3]
+    >>> d["timestamp"] = ["2099-03-19", "2099-03-20", "2099-03-22", "2099-03-27", "2099-03-25"]
+    >>> d["relevance"] = [1, 1, 1, 1, 1]
+    >>> df = pd.DataFrame(d)
     >>> df
        item_id   timestamp  relevance
     0        1  2099-03-19          1
@@ -111,7 +117,8 @@ def smoothe_time(
     3        3  2099-03-27          1
     4        3  2099-03-25          1
 
-        Power smoothing falls quickly in the beginning but decays slowly afterwards as `age^c`.
+    Power smoothing falls quickly in the beginning but decays slowly afterwards as ``age^c``.
+
     >>> smoothe_time(df, kind="power").orderBy("timestamp").show()
     +-------+-------------------+------------------+
     |item_id|          timestamp|         relevance|
@@ -124,7 +131,8 @@ def smoothe_time(
     +-------+-------------------+------------------+
     <BLANKLINE>
 
-    Exponential smoothing is the other way around. Old objects decay more quickly as `c^age`.
+    Exponential smoothing is the other way around. Old objects decay more quickly as ``c^age``.
+
     >>> smoothe_time(df, kind="exp").orderBy("timestamp").show()
     +-------+-------------------+------------------+
     |item_id|          timestamp|         relevance|
@@ -137,7 +145,8 @@ def smoothe_time(
     +-------+-------------------+------------------+
     <BLANKLINE>
 
-    Last type is a linear smoothing: `1 - c*age`.
+    Last type is a linear smoothing: ``1 - c*age``.
+
     >>> smoothe_time(df, kind="linear").orderBy("timestamp").show()
     +-------+-------------------+------------------+
     |item_id|          timestamp|         relevance|
@@ -153,13 +162,16 @@ def smoothe_time(
     These examples use constant relevance 1, so resulting weight equals the time dependent weight.
     But actually this value is an updated relevance.
 
-    >>> df = pd.DataFrame({"item_id": [1, 2, 3], "timestamp": ["2099-03-19", "2099-03-20", "2099-03-22"], "relevance": [10, 3, 0.1]})
+    >>> d = {}
+    >>> d["item_id"] = [1, 2, 3]
+    >>> d["timestamp"] = ["2099-03-19", "2099-03-20", "2099-03-22"]
+    >>> d["relevance"] = [10, 3, 0.1]
+    >>> df = pd.DataFrame(d)
     >>> df
        item_id   timestamp  relevance
     0        1  2099-03-19       10.0
     1        2  2099-03-20        3.0
     2        3  2099-03-22        0.1
-
     >>> smoothe_time(df).orderBy("timestamp").show()
     +-------+-------------------+------------------+
     |item_id|          timestamp|         relevance|
@@ -174,7 +186,8 @@ def smoothe_time(
     :param decay: number of days after which the weight is reduced by half, must be grater than 1
     :param limit: minimal value the weight can reach
     :param kind: type of smoothing, one of [power, exp, linear].
-        Corresponding functions are `power`: `age^c`, `exp`: `c^age`, `linear`: `1-c*age`
+        Corresponding functions are ``power``: ``age^c``,
+        ``exp``: ``c^age``, ``linear``: ``1-c*age``
     :return: modified DataFrame
     """
     log = convert2spark(log)
