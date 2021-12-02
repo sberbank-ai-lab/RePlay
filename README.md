@@ -28,3 +28,5 @@ pip install replay-rec
 ```
 
 It is preferable to use a virtual environment for your installation.
+
+Follow the [guideline](https://sberbank-ai-lab.github.io/RePlay/pages/installation.html) to install with poetry.
