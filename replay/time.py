@@ -9,10 +9,18 @@ def get_item_recency(
     log: AnyDataFrame,
     decay: float = 30,
     limit: float = 0.1,
-    kind: str = "power",
+    kind: str = "exp",
 ):
     """
     Calculate item weight showing when the majority of interactions with this item happened.
+
+    :param log: interactions log
+    :param decay: number of days after which the weight is reduced by half, must be grater than 1
+    :param limit: minimal value the weight can reach
+    :param kind: type of smoothing, one of [power, exp, linear]
+        Corresponding functions are ``power``: ``age^c``,
+        ``exp``: ``c^age``, ``linear``: ``1-c*age``
+    :return: DataFrame with item weights
 
     >>> import pandas as pd
     >>> d = {}
@@ -72,14 +80,6 @@ def get_item_recency(
 
     This function **does not** take relevance values of interactions into account.
     Only item age is used.
-
-    :param log: interactions log
-    :param decay: number of days after which the weight is reduced by half, must be grater than 1
-    :param limit: minimal value the weight can reach
-    :param kind: type of smoothing, one of [power, exp, linear]
-        Corresponding functions are ``power``: ``age^c``,
-        ``exp``: ``c^age``, ``linear``: ``1-c*age``
-    :return: DataFrame with item weights
     """
     log = convert2spark(log)
     items = log.select(
@@ -98,10 +98,18 @@ def smoothe_time(
     log: AnyDataFrame,
     decay: float = 30,
     limit: float = 0.1,
-    kind: str = "power",
+    kind: str = "exp",
 ):
     """
     Weighs ``relevance`` column with a time-dependent weight.
+
+    :param log: interactions log
+    :param decay: number of days after which the weight is reduced by half, must be grater than 1
+    :param limit: minimal value the weight can reach
+    :param kind: type of smoothing, one of [power, exp, linear].
+        Corresponding functions are ``power``: ``age^c``,
+        ``exp``: ``c^age``, ``linear``: ``1-c*age``
+    :return: modified DataFrame
 
     >>> import pandas as pd
     >>> d = {}
@@ -176,19 +184,11 @@ def smoothe_time(
     +-------+-------------------+------------------+
     |item_id|          timestamp|         relevance|
     +-------+-------------------+------------------+
-    |      1|2099-03-19 00:00:00| 7.538816210156114|
-    |      2|2099-03-20 00:00:00|2.3982050112877635|
+    |      1|2099-03-19 00:00:00| 9.330329915368074|
+    |      2|2099-03-20 00:00:00|2.8645248117312496|
     |      3|2099-03-22 00:00:00|               0.1|
     +-------+-------------------+------------------+
     <BLANKLINE>
-
-    :param log: interactions log
-    :param decay: number of days after which the weight is reduced by half, must be grater than 1
-    :param limit: minimal value the weight can reach
-    :param kind: type of smoothing, one of [power, exp, linear].
-        Corresponding functions are ``power``: ``age^c``,
-        ``exp``: ``c^age``, ``linear``: ``1-c*age``
-    :return: modified DataFrame
     """
     log = convert2spark(log)
     log = log.withColumn(
