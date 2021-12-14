@@ -84,7 +84,7 @@ def process_k(func):
 
         res = func(self, recs, k_list, *args)
 
-        if len(res) == 1:
+        if isinstance(k, int):
             return res[k]
         return res
 
