@@ -79,7 +79,6 @@ class AssociationRulesItemRec(Recommender):
         log = log.select(
             self.session_col, "item_idx", rel_col.alias("relevance")
         ).distinct()
-        log.show()
         num_sessions = log.select(self.session_col).distinct().count()
 
         frequent_items_cached = (
