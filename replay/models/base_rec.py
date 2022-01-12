@@ -402,26 +402,23 @@ class BaseRecommender(ABC):
         recs: DataFrame, log: DataFrame, k: int, users: DataFrame
     ):
         """
-        Filter seen items from prediction:
-            - counts maximal number of items seen by users is prediction (max_seen)
-            - crop recommendations to first k + max_seen items for each user
-            - join cropped recommendations with history length for each user with broadcast join
-            - leave k + number of items seen by user items for each user
-            - anti-join interactions log to liter seen items
-        For each user returns from k to k + number of seen by user recommendations.
+        Filter seen items (presented in log) out of the users' recommendations.
+        For each user return from `k` to `k + number of seen by user` recommendations.
         """
 
         users_log = log.join(users, on="user_idx").cache()
-        num_of_seen = (
+        num_seen = (
             users_log.groupBy("user_idx").agg(
                 sf.count("item_idx").alias("seen_count")
             )
         ).cache()
 
+        # count maximal number of items seen by users
         max_seen = 0
-        if num_of_seen.count() > 0:
-            max_seen = num_of_seen.select(sf.max("seen_count")).collect()[0][0]
+        if num_seen.count() > 0:
+            max_seen = num_seen.select(sf.max("seen_count")).collect()[0][0]
 
+        # crop recommendations to first k + max_seen items for each user
         recs = recs.withColumn(
             "temp_rank",
             sf.row_number().over(
@@ -431,13 +428,15 @@ class BaseRecommender(ABC):
             ),
         ).filter(sf.col("temp_rank") <= sf.lit(max_seen + k))
 
+        # leave k + number of items seen by user recommendations in recs
         recs = (
-            recs.join(sf.broadcast(num_of_seen), on="user_idx", how="left")
+            recs.join(num_seen, on="user_idx", how="left")
             .fillna(0)
             .filter(sf.col("temp_rank") <= sf.col("seen_count") + sf.lit(k))
             .drop("temp_rank", "seen_count")
         )
 
+        # filter recommendations presented in interactions log
         recs = recs.join(
             users_log.withColumnRenamed("item_idx", "item")
             .withColumnRenamed("user_idx", "user")
@@ -448,7 +447,7 @@ class BaseRecommender(ABC):
         ).drop("user", "item")
 
         users_log.unpersist()
-        num_of_seen.unpersist()
+        num_seen.unpersist()
 
         return recs
 

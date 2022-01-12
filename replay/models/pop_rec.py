@@ -135,6 +135,7 @@ class PopRec(Recommender):
                 .select(sf.max("items_count"))
                 .collect()[0][0]
             )
+            # all users have empty history
             if max_hist_len is None:
                 max_hist_len = 0
 
