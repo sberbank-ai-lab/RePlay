@@ -679,10 +679,10 @@ class TwoStagesScenario(HybridRecommender):
             unpersist_if_exists(dataframe)
 
         self.second_stage_model.fit_predict(
-            full_second_level_train_pd, roles={"target": "relevance"}
+            full_second_level_train_pd,
+            roles={"target": "relevance"},
+            verbose=1,
         )
-
-        self.logger.info("Second level is trained")
 
     # pylint: disable=too-many-arguments
     def _predict(
