@@ -308,7 +308,7 @@ class BaseRecommender(ABC):
         force_reindex: bool = True,
     ) -> tuple:
         """
-        Wrapper for fit to allow for fewer arguments in a model.
+        Convert arbitrary id to numerical idx.
 
         :param log: historical log of interactions
             ``[user_id, item_id, timestamp, relevance]``
