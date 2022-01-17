@@ -535,8 +535,9 @@ class TwoStagesScenario(HybridRecommender):
         candidates = self._predict_with_first_level_model(**passed_arguments)
 
         if self.fallback_model is not None:
+            passed_arguments.pop("model")
             fallback_candidates = self._predict_with_first_level_model(
-                **passed_arguments
+                model=self.fallback_model, **passed_arguments
             )
 
             candidates = fallback(
