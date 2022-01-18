@@ -448,16 +448,16 @@ class TwoStagesScenario(HybridRecommender):
                 for df in [log, users, user_features]
             ]
 
-        max_positives_to_filter = min(
-            [
-                log_to_filter.groupBy("user_idx")
+        log_to_filter_cached = log_to_filter.join(users, on="user_idx").cache()
+        max_positives_to_filter = 0
+
+        if log_to_filter_cached.count() > 0:
+            max_positives_to_filter = (
+                log_to_filter_cached.groupBy("user_idx")
                 .agg(sf.count("item_idx").alias("num_positives"))
                 .select(sf.max("num_positives"))
-                .collect()[0][0],
-                log.select("item_idx").distinct().count() - k,
-                items.select("item_idx").distinct().count() - k,
-            ]
-        )
+                .collect()[0][0]
+            )
 
         pred = model._predict(
             log,
@@ -470,10 +470,12 @@ class TwoStagesScenario(HybridRecommender):
         )
 
         pred = pred.join(
-            log_to_filter.select("user_idx", "item_idx"),
+            log_to_filter_cached.select("user_idx", "item_idx"),
             on=["user_idx", "item_idx"],
             how="anti",
         ).drop("user", "item")
+
+        log_to_filter_cached.unpersist()
 
         return get_top_k_recs(pred, k, id_type="idx")
 
