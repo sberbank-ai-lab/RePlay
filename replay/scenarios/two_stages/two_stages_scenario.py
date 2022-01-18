@@ -448,7 +448,11 @@ class TwoStagesScenario(HybridRecommender):
                 for df in [log, users, user_features]
             ]
 
-        log_to_filter_cached = log_to_filter.join(users, on="user_idx").cache()
+        log_to_filter_cached = ugly_join(
+            left=log_to_filter,
+            right=users,
+            on_col_name="user_idx",
+        ).cache()
         max_positives_to_filter = 0
 
         if log_to_filter_cached.count() > 0:
