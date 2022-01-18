@@ -2,327 +2,209 @@
 Contains classes ``DataPreparator`` and ``CatFeaturesTransformer``.
 ``DataPreparator`` is used to transform DataFrames to a library format.
 
-`CatFeaturesTransformer`` transforms cateforical features with one-hot encoding.
+`CatFeaturesTransformer`` transforms categorical features with one-hot encoding.
 """
 import string
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import List, Optional
 
+from pyspark.ml.feature import StringIndexerModel, IndexToString, StringIndexer
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as sf
-from pyspark.sql.types import (
-    DoubleType,
-    StringType,
-    TimestampType,
-)
-
-from replay.constants import AnyDataFrame
-from replay.utils import convert2spark, process_timestamp_column
-from replay.session_handler import State
 
 
-# pylint: disable=too-few-public-methods
-class DataPreparator:
-    """Transforms data to a library format. If both user id and item id are provided, DataFrame
-    is trated as a log, otherwise as a feature DataFrame.
-
-    Examples:
-
-    Loading log DataFrame
-
-    >>> import pandas as pd
-    >>> from replay.data_preparator import DataPreparator
-    >>>
-    >>> log = pd.DataFrame({"user_id": [2, 2, 2, 1],
-    ...                     "item_id": [1, 2, 3, 3],
-    ...                     "relevance": [5, 5, 5, 5]}
-    ...                    )
-    >>> dp = DataPreparator()
-    >>> correct_log = dp.transform(data=log,
-    ...                            columns_names={"user_id": "user_id",
-    ...                                           "item_id": "item_id",
-    ...                                           "relevance": "relevance"}
-    ...                             )
-    >>> correct_log.show(2)
-    +-------+-------+---------+-------------------+
-    |user_id|item_id|relevance|          timestamp|
-    +-------+-------+---------+-------------------+
-    |      2|      1|      5.0|1999-05-01 00:00:00|
-    |      2|      2|      5.0|1999-05-01 00:00:00|
-    +-------+-------+---------+-------------------+
-    only showing top 2 rows
-    <BLANKLINE>
-
-
-    Loading user features
-
-    >>> import pandas as pd
-    >>> from replay.data_preparator import DataPreparator
-    >>>
-    >>> log = pd.DataFrame({"user": ["user1", "user1", "user2"],
-    ...                     "f0": ["feature1","feature2","feature1"],
-    ...                     "f1": ["left","left","center"],
-    ...                     "ts": ["2019-01-01","2019-01-01","2019-01-01"]}
-    ...             )
-    >>> dp = DataPreparator()
-    >>> correct_log = dp.transform(data=log,
-    ...                            columns_names={"user_id": "user"},
-    ...                            features_columns=["f0"]
-    ...                             )
-    >>> correct_log.show(3)
-    +-------+--------+
-    |user_id|      f0|
-    +-------+--------+
-    |  user1|feature1|
-    |  user1|feature2|
-    |  user2|feature1|
-    +-------+--------+
-    <BLANKLINE>
-
-    If feature_columns is not set, all extra columns are trated as feature columns
-
-    >>> import pandas as pd
-    >>> from replay.data_preparator import DataPreparator
-    >>>
-    >>> log = pd.DataFrame({"user": ["user1", "user1", "user2"],
-    ...                     "f0": ["feature1","feature2","feature1"],
-    ...                     "f1": ["left","left","center"],
-    ...                     "ts": ["2019-01-01","2019-01-01","2019-01-01"]}
-    ...             )
-    >>> dp = DataPreparator()
-    >>> correct_log = dp.transform(data=log,
-    ...                            columns_names={"user_id": "user"}
-    ...                             )
-    >>> correct_log.show(3)
-    +-------+--------+------+----------+
-    |user_id|      f0|    f1|        ts|
-    +-------+--------+------+----------+
-    |  user1|feature1|  left|2019-01-01|
-    |  user1|feature2|  left|2019-01-01|
-    |  user2|feature1|center|2019-01-01|
-    +-------+--------+------+----------+
-    <BLANKLINE>
+class Indexer:
+    """
+    This class is used to convert arbitrary id to numerical idx and back.
     """
 
-    @staticmethod
-    def _read_data(path: str, format_type: str, **kwargs) -> DataFrame:
-        spark = State().session
-        if format_type == "csv":
-            dataframe = spark.read.csv(path, inferSchema=True, **kwargs)
-        elif format_type == "parquet":
-            dataframe = spark.read.parquet(path)
-        elif format_type == "json":
-            dataframe = spark.read.json(path, **kwargs)
-        elif format_type == "table":
-            dataframe = spark.read.table(path)
+    user_indexer: StringIndexerModel
+    item_indexer: StringIndexerModel
+    inv_user_indexer: IndexToString
+    inv_item_indexer: IndexToString
+    user_type: None
+    item_type: None
+
+    def fit(
+        self,
+        log: DataFrame,
+        user_features: Optional[DataFrame] = None,
+        item_features: Optional[DataFrame] = None,
+    ) -> None:
+        """
+        Creates indexers to map raw id to numerical idx so that spark can handle them.
+        :param log: historical log of interactions
+            ``[user_id, item_id, timestamp, relevance]``
+        :param user_features: user features (must have ``user_id``)
+        :param item_features: item features (must have ``item_id``)
+        :return:
+        """
+        if user_features is None:
+            users = log.select("user_id")
         else:
-            raise ValueError(f"Invalid value of format_type='{format_type}'")
-
-        return dataframe
-
-    @staticmethod
-    def _check_columns(
-        given_columns: Set[str],
-        required_columns: Set[str],
-        optional_columns: Set[str],
-    ):
-        if not required_columns.issubset(given_columns):
-            raise ValueError(
-                "Required columns are missing: "
-                f"{required_columns.difference(given_columns)}"
+            users = log.select("user_id").union(
+                user_features.select("user_id")
             )
-
-        excess_columns = given_columns.difference(required_columns).difference(
-            optional_columns
+        if item_features is None:
+            items = log.select("item_id")
+        else:
+            items = log.select("item_id").union(
+                item_features.select("item_id")
+            )
+        self.user_indexer = StringIndexer(
+            inputCol="user_id", outputCol="user_idx"
+        ).fit(users)
+        self.item_indexer = StringIndexer(
+            inputCol="item_id", outputCol="item_idx"
+        ).fit(items)
+        self.inv_user_indexer = IndexToString(
+            inputCol="user_idx",
+            outputCol="user_id",
+            labels=self.user_indexer.labels,
         )
-        if excess_columns:
-            raise ValueError(
-                "'columns_names' has excess columns: " f"{excess_columns}"
-            )
-
-    @staticmethod
-    def _check_dataframe(
-        dataframe: DataFrame,
-        columns_names: Dict[str, str],
-        feature_columns: List[str],
-    ):
-        if not dataframe.head(1):
-            raise ValueError("DataFrame is empty")
-
-        columns_to_check = {*columns_names.values(), *feature_columns}
-        dataframe_columns = set(dataframe.columns)
-        if not columns_to_check.issubset(dataframe_columns):
-            raise ValueError(
-                "feature_columns or columns_names has columns that are not present in DataFrame "
-                f"{columns_to_check.difference(dataframe_columns)}"
-            )
-
-        for column in columns_names.values():
-            if dataframe.where(sf.col(column).isNull()).count() > 0:
-                raise ValueError(f"Column '{column}' has NULL values")
-
-    @staticmethod
-    def _rename_columns(
-        dataframe: DataFrame,
-        columns_names: Dict[str, str],
-        features_columns: List[str],
-        default_schema: Dict[str, Tuple[Any, Any]],
-        date_format: Optional[str] = None,
-    ):
-        dataframe = dataframe.select(
-            [
-                sf.col(column).alias(new_name)
-                for new_name, column in columns_names.items()
-            ]
-            + [sf.col(column) for column in features_columns]
+        self.inv_item_indexer = IndexToString(
+            inputCol="item_idx",
+            outputCol="item_id",
+            labels=self.item_indexer.labels,
         )
+        self.user_type = log.schema["user_id"].dataType
+        self.item_type = log.schema["item_id"].dataType
 
-        for (
-            column_name,
-            (default_value, default_type),
-        ) in default_schema.items():
-            if column_name not in dataframe.columns:
-                dataframe = dataframe.withColumn(
-                    column_name, sf.lit(default_value)
-                )
-            if column_name == "timestamp":
-                dataframe = process_timestamp_column(
-                    dataframe, column_name, date_format
-                )
-            else:
-                dataframe = dataframe.withColumn(
-                    column_name, sf.col(column_name).cast(default_type)
-                )
-        return dataframe
+    def update(
+        self,
+        log: DataFrame,
+        user_features: Optional[DataFrame] = None,
+        item_features: Optional[DataFrame] = None,
+    ) -> None:
+        """
+        Update indexers with new ids if there are any.
 
-    # pylint: disable=too-many-arguments
+        :param log: historical log of interactions
+            ``[user_id, item_id, timestamp, relevance]``
+        :param user_features: user features (must have ``user_id``)
+        :param item_features: item features (must have ``item_id``)
+        :return:
+        """
+        for df in [log, user_features, item_features]:
+            self._reindex(df, "user")
+            self._reindex(df, "item")
+
     def transform(
         self,
-        columns_names: Dict[str, str],
-        data: Optional[AnyDataFrame] = None,
-        path: Optional[str] = None,
-        format_type: Optional[str] = None,
-        date_format: Optional[str] = None,
-        features_columns: Optional[Union[str, Iterable[str]]] = None,
-        reader_kwargs: Optional[Dict] = None,
-    ) -> DataFrame:
+        log: DataFrame,
+        user_features: Optional[DataFrame] = None,
+        item_features: Optional[DataFrame] = None,
+    ) -> tuple:
         """
-        Transforms log, user or item features into a Spark DataFrame
-        ``[user_id, user_id, timestamp, relevance]``,
-        ``[user_id, *features]``, or  ``[item_id, *features]``.
-        Input is either file of ``format_type``
-        at ``path``, or ``pandas.DataFrame`` or ``spark.DataFrame``.
-        :param columns_names: dictionary mapping "default column name:
-        column name in input DataFrame"
-        ``user_id`` and ``item_id`` mappings are required,
-        ``timestamp`` and``relevance`` are optional.
+        Convert ids into idxs for provided DataFrames
 
-            Mapping specifies the meaning of the DataFrame:
-            - Both ``[user_id, item_id]`` are present, then it's log
-            - Only ``[user_id]`` is present, then it's user features
-            - Only ``[item_id]`` is present, then it's item features
-
-        :param data: DataFrame to process
-        :param path: path to data
-        :param format_type: file type, one of ``[csv , parquet , json , table]``
-        :param date_format: format for the ``timestamp``
-        :param features_columns: names of the feature columns
-        :param reader_kwargs: extra arguments passed to
-            ``spark.read.<format>(path, **reader_kwargs)``
-        :return: processed DataFrame
+        :param log: historical log of interactions
+            ``[user_id, item_id, timestamp, relevance]``
+        :param user_features: user features (must have ``user_id``)
+        :param item_features: item features (must have ``item_id``)
+        :return: three converted DataFrames
         """
-        if data is not None:
-            dataframe = convert2spark(data)
-        elif path and format_type:
-            if reader_kwargs is None:
-                reader_kwargs = {}
-            dataframe = self._read_data(path, format_type, **reader_kwargs)
-        else:
-            raise ValueError("Either data or path parameters must not be None")
+        log_i = self._transform(log)
+        user_features_i = self._transform(user_features)
+        item_features_i = self._transform(item_features)
+        return log_i, user_features_i, item_features_i
 
-        optional_columns = {}
+    def fit_transform(
+        self,
+        log: DataFrame,
+        user_features: Optional[DataFrame] = None,
+        item_features: Optional[DataFrame] = None,
+    ) -> tuple:
+        """
+        Creates indexers and convert provided DataFrames
 
-        if "user_id" in columns_names and "item_id" in columns_names:
-            (
-                features_columns,
-                optional_columns,
-                required_columns,
-            ) = self.base_columns(features_columns)
-        else:
-            if len(columns_names) > 1:
-                raise ValueError(
-                    "Feature DataFrame mappings must contain mapping only for one id, user or item."
-                )
-            (features_columns, required_columns,) = self.feature_columns(
-                columns_names, dataframe, features_columns  # type: ignore
+        :param log: historical log of interactions
+            ``[user_id, item_id, timestamp, relevance]``
+        :param user_features: user features (must have ``user_id``)
+        :param item_features: item features (must have ``item_id``)
+        :return: three converted DataFrames
+        """
+        self.fit(log, user_features, item_features)
+        return self.transform(log, user_features, item_features)
+
+    def _transform(
+        self, data_frame: Optional[DataFrame]
+    ) -> Optional[DataFrame]:
+        """
+        Convert raw ``user_id`` and ``item_id`` to numerical ``user_idx`` and ``item_idx``
+
+        :param data_frame: dataframe with raw indexes
+        :return: dataframe with converted indexes
+        """
+        if data_frame is None:
+            return None
+        if "user_id" in data_frame.columns:
+            self._reindex(data_frame, "user")
+            data_frame = self.user_indexer.transform(data_frame).drop(
+                "user_id"
             )
-
-        self._check_columns(
-            set(columns_names.keys()),
-            required_columns=set(required_columns),
-            optional_columns=set(optional_columns),
-        )
-
-        self._check_dataframe(dataframe, columns_names, features_columns)
-
-        dataframe2 = self._rename_columns(
-            dataframe,  # type: ignore
-            columns_names,
-            features_columns,
-            default_schema={**required_columns, **optional_columns},
-            date_format=date_format,
-        )
-        return dataframe2
-
-    @staticmethod
-    def feature_columns(
-        columns_names: Dict[str, str],
-        dataframe: DataFrame,
-        features_columns: Union[str, Iterable[str], None],
-    ) -> Tuple[List[str], Dict]:
-        """Get feature columns"""
-        if "user_id" in columns_names:
-            required_columns = {"user_id": (None, StringType())}
-        elif "item_id" in columns_names:
-            required_columns = {"item_id": (None, StringType())}
-        else:
-            raise ValueError(
-                "columns_names have neither 'user_id', nor 'item_id'"
+            data_frame = data_frame.withColumn(
+                "user_idx", sf.col("user_idx").cast("int")
             )
-
-        if features_columns is None:
-            given_columns = set(columns_names.values())
-            dataframe_columns = set(dataframe.columns)
-            features_columns = sorted(
-                list(dataframe_columns.difference(given_columns))
+        if "item_id" in data_frame.columns:
+            self._reindex(data_frame, "item")
+            data_frame = self.item_indexer.transform(data_frame).drop(
+                "item_id"
             )
-            if not features_columns:
-                raise ValueError("Feature columns missing")
+            data_frame = data_frame.withColumn(
+                "item_idx", sf.col("item_idx").cast("int")
+            )
+        return data_frame
 
-        else:
-            if isinstance(features_columns, str):
-                features_columns = [features_columns]
-            else:
-                features_columns = list(features_columns)
-        return features_columns, required_columns
+    def inverse_transform(self, df: DataFrame) -> DataFrame:
+        """
+        Convert DataFrame to the initial indexes.
 
-    @staticmethod
-    def base_columns(
-        features_columns: Union[str, Iterable[str], None]
-    ) -> Tuple[List, Dict, Dict]:
-        """Get base columns"""
-        required_columns = {
-            "user_id": (None, StringType()),
-            "item_id": (None, StringType()),
-        }
-        optional_columns = {
-            "timestamp": ("1999-05-01", TimestampType()),
-            "relevance": (1.0, DoubleType()),
-        }
-        if features_columns is None:
-            features_columns = []
-        else:
-            raise ValueError("features are not used")
-        return features_columns, optional_columns, required_columns
+        :param df: DataFrame with idxs
+        :return: DataFrame with ids
+        """
+        res = df
+        if "user_idx" in df.columns:
+            res = (
+                self.inv_user_indexer.transform(res)
+                .drop("user_idx")
+                .withColumn("user_id", sf.col("user_id").cast(self.user_type))
+            )
+        if "item_idx" in df.columns:
+            res = (
+                self.inv_item_indexer.transform(res)
+                .drop("item_idx")
+                .withColumn("item_id", sf.col("item_id").cast(self.item_type))
+            )
+        return res
+
+    def _reindex(self, df: DataFrame, entity: str):
+        """
+        Update indexer with new entries.
+
+        :param df: DataFrame with users/items
+        :param entity: user or item
+        """
+        indexer = getattr(self, f"{entity}_indexer")
+        inv_indexer = getattr(self, f"inv_{entity}_indexer")
+        new_objects = set(
+            map(
+                str,
+                df.select(sf.collect_list(indexer.getInputCol())).first()[0],
+            )
+        ).difference(indexer.labels)
+        if new_objects:
+            new_labels = indexer.labels + list(new_objects)
+            setattr(
+                self,
+                f"{entity}_indexer",
+                indexer.from_labels(
+                    new_labels,
+                    inputCol=indexer.getInputCol(),
+                    outputCol=indexer.getOutputCol(),
+                    handleInvalid="error",
+                ),
+            )
+            inv_indexer.setLabels(new_labels)
 
 
 class CatFeaturesTransformer:
@@ -330,10 +212,7 @@ class CatFeaturesTransformer:
     with one-hot encoding and delete other columns."""
 
     def __init__(
-        self,
-        cat_cols_list: List,
-        threshold: Optional[int] = None,
-        alias: str = "ohe",
+        self, cat_cols_list: List, alias: str = "ohe",
     ):
         """
         :param cat_cols_list: list of categorical columns
@@ -341,12 +220,7 @@ class CatFeaturesTransformer:
         """
         self.cat_cols_list = cat_cols_list
         self.expressions_list = []
-        self.threshold = threshold
         self.alias = alias
-        if threshold is not None:
-            State().logger.info(
-                "threshold не будет применен, функциональность в разработке"
-            )
 
     def fit(self, spark_df: Optional[DataFrame]) -> None:
         """
