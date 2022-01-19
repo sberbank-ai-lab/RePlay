@@ -37,7 +37,7 @@ class Indexer:
         """
         Creates indexers to map raw id to numerical idx so that spark can handle them.
         :param log: historical log of interactions
-            ``[user_id, item_id, timestamp, relevance]``
+        ``[user_id, item_id, timestamp, relevance]``
         :param user_features: user features (must have ``user_id``)
         :param item_features: item features (must have ``item_id``)
         :return:
