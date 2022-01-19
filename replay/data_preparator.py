@@ -5,11 +5,15 @@ Contains classes ``DataPreparator`` and ``CatFeaturesTransformer``.
 `CatFeaturesTransformer`` transforms categorical features with one-hot encoding.
 """
 import string
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from pyspark.ml.feature import StringIndexerModel, IndexToString, StringIndexer
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as sf
+
+
+from replay.constants import AnyDataFrame
+from replay.utils import convert2spark
 
 
 class Indexer:
@@ -262,3 +266,59 @@ class CatFeaturesTransformer:
         return spark_df.select(*spark_df.columns, *self.expressions_list).drop(
             *self.cat_cols_list
         )
+
+
+class DataPreparator:
+    """
+    Convert pandas DataFrame to Spark, rename columns and apply indexer.
+    """
+
+    def __init__(self):
+        self.indexer = Indexer()
+
+    def __call__(
+        self,
+        log: AnyDataFrame,
+        user_features: Optional[AnyDataFrame] = None,
+        item_features: Optional[AnyDataFrame] = None,
+        mapping: Optional[Dict] = None,
+    ) -> tuple:
+        """
+        Convert ids into idxs for provided DataFrames
+
+        :param log: historical log of interactions
+            ``[user_id, item_id, timestamp, relevance]``
+        :param user_features: user features (must have ``user_id``)
+        :param item_features: item features (must have ``item_id``)
+        :param mapping: dictionary mapping "default column name:
+        column name in input DataFrame"
+        ``user_id`` and ``item_id`` mappings are required,
+        ``timestamp`` and``relevance`` are optional.
+        :return: three converted DataFrames
+        """
+        log, user_features, item_features = [
+            convert2spark(df) for df in [log, user_features, item_features]
+        ]
+        log, user_features, item_features = [
+            self._rename(df, mapping)
+            for df in [log, user_features, item_features]
+        ]
+        return self.indexer.fit_transform(log, user_features, item_features)
+
+    @staticmethod
+    def _rename(df: DataFrame, mapping: Dict) -> DataFrame:
+        if df is None or mapping is None:
+            return df
+        for out_col, in_col in mapping.items():
+            if in_col in df.columns:
+                df = df.withColumnRenamed(in_col, out_col)
+        return df
+
+    def back(self, df: DataFrame) -> DataFrame:
+        """
+        Convert DataFrame to the initial indexes.
+
+        :param df: DataFrame with idxs
+        :return: DataFrame with ids
+        """
+        return self.indexer.inverse_transform(df)
