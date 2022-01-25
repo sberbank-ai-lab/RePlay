@@ -49,7 +49,7 @@ def indexer():
 
 
 def test_indexer(indexer, long_log_with_features):
-    indexer.fit(long_log_with_features)
+    indexer.fit(long_log_with_features, long_log_with_features)
     res = indexer.transform(long_log_with_features)
     log = indexer.inverse_transform(res)
     sparkDataFrameEqual(log, long_log_with_features)
