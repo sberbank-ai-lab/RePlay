@@ -16,7 +16,7 @@ from replay.constants import AnyDataFrame
 from replay.utils import convert2spark
 
 
-class Indexer:
+class Indexer:  # pylint: disable=too-many-instance-attributes
     """
     This class is used to convert arbitrary id to numerical idx and back.
     """
@@ -28,136 +28,58 @@ class Indexer:
     user_type: None
     item_type: None
 
-    def fit(
-        self,
-        log: DataFrame,
-        user_features: Optional[DataFrame] = None,
-        item_features: Optional[DataFrame] = None,
-    ) -> None:
+    def __init__(self, user_col="user_id", item_col="item_id"):
+        """
+        Provide column names for indexer to use
+        """
+        self.user_col = user_col
+        self.item_col = item_col
+
+    def fit(self, users: DataFrame, items: DataFrame,) -> None:
         """
         Creates indexers to map raw id to numerical idx so that spark can handle them.
-        :param log: historical log of interactions
-        ``[user_id, item_id, timestamp, relevance]``
-        :param user_features: user features (must have ``user_id``)
-        :param item_features: item features (must have ``item_id``)
+        :param user: DataFrame containing user column
+        :param item: DataFrame containing item column
         :return:
         """
-        if user_features is None:
-            users = log.select("user_id")
-        else:
-            users = log.select("user_id").union(
-                user_features.select("user_id")
-            )
-        if item_features is None:
-            items = log.select("item_id")
-        else:
-            items = log.select("item_id").union(
-                item_features.select("item_id")
-            )
+        users = users.select(self.user_col)
+        items = items.select(self.item_col)
+        self.user_type = users.schema[self.user_col].dataType
+        self.item_type = items.schema[self.item_col].dataType
+
         self.user_indexer = StringIndexer(
-            inputCol="user_id", outputCol="user_idx"
+            inputCol=self.user_col, outputCol="user_idx"
         ).fit(users)
         self.item_indexer = StringIndexer(
-            inputCol="item_id", outputCol="item_idx"
+            inputCol=self.item_col, outputCol="item_idx"
         ).fit(items)
         self.inv_user_indexer = IndexToString(
             inputCol="user_idx",
-            outputCol="user_id",
+            outputCol=self.user_col,
             labels=self.user_indexer.labels,
         )
         self.inv_item_indexer = IndexToString(
             inputCol="item_idx",
-            outputCol="item_id",
+            outputCol=self.item_col,
             labels=self.item_indexer.labels,
         )
-        self.user_type = log.schema["user_id"].dataType
-        self.item_type = log.schema["item_id"].dataType
 
-    def update(
-        self,
-        log: DataFrame,
-        user_features: Optional[DataFrame] = None,
-        item_features: Optional[DataFrame] = None,
-    ) -> None:
-        """
-        Update indexers with new ids if there are any.
-
-        :param log: historical log of interactions
-            ``[user_id, item_id, timestamp, relevance]``
-        :param user_features: user features (must have ``user_id``)
-        :param item_features: item features (must have ``item_id``)
-        :return:
-        """
-        for df in [log, user_features, item_features]:
-            self._reindex(df, "user")
-            self._reindex(df, "item")
-
-    def transform(
-        self,
-        log: DataFrame,
-        user_features: Optional[DataFrame] = None,
-        item_features: Optional[DataFrame] = None,
-    ) -> tuple:
-        """
-        Convert ids into idxs for provided DataFrames
-
-        :param log: historical log of interactions
-            ``[user_id, item_id, timestamp, relevance]``
-        :param user_features: user features (must have ``user_id``)
-        :param item_features: item features (must have ``item_id``)
-        :return: three converted DataFrames
-        """
-        log_i = self._transform(log)
-        user_features_i = self._transform(user_features)
-        item_features_i = self._transform(item_features)
-        return log_i, user_features_i, item_features_i
-
-    def fit_transform(
-        self,
-        log: DataFrame,
-        user_features: Optional[DataFrame] = None,
-        item_features: Optional[DataFrame] = None,
-    ) -> tuple:
-        """
-        Creates indexers and convert provided DataFrames
-
-        :param log: historical log of interactions
-            ``[user_id, item_id, timestamp, relevance]``
-        :param user_features: user features (must have ``user_id``)
-        :param item_features: item features (must have ``item_id``)
-        :return: three converted DataFrames
-        """
-        self.fit(log, user_features, item_features)
-        return self.transform(log, user_features, item_features)
-
-    def _transform(
-        self, data_frame: Optional[DataFrame]
-    ) -> Optional[DataFrame]:
+    def transform(self, df: DataFrame) -> Optional[DataFrame]:
         """
         Convert raw ``user_id`` and ``item_id`` to numerical ``user_idx`` and ``item_idx``
 
         :param data_frame: dataframe with raw indexes
         :return: dataframe with converted indexes
         """
-        if data_frame is None:
-            return None
-        if "user_id" in data_frame.columns:
-            self._reindex(data_frame, "user")
-            data_frame = self.user_indexer.transform(data_frame).drop(
-                "user_id"
-            )
-            data_frame = data_frame.withColumn(
-                "user_idx", sf.col("user_idx").cast("int")
-            )
-        if "item_id" in data_frame.columns:
-            self._reindex(data_frame, "item")
-            data_frame = self.item_indexer.transform(data_frame).drop(
-                "item_id"
-            )
-            data_frame = data_frame.withColumn(
-                "item_idx", sf.col("item_idx").cast("int")
-            )
-        return data_frame
+        if self.user_col in df.columns:
+            self._reindex(df, "user")
+            df = self.user_indexer.transform(df).drop(self.user_col)
+            df = df.withColumn("user_idx", sf.col("user_idx").cast("int"))
+        if self.item_col in df.columns:
+            self._reindex(df, "item")
+            df = self.item_indexer.transform(df).drop(self.item_col)
+            df = df.withColumn("item_idx", sf.col("item_idx").cast("int"))
+        return df
 
     def inverse_transform(self, df: DataFrame) -> DataFrame:
         """
@@ -171,13 +93,17 @@ class Indexer:
             res = (
                 self.inv_user_indexer.transform(res)
                 .drop("user_idx")
-                .withColumn("user_id", sf.col("user_id").cast(self.user_type))
+                .withColumn(
+                    self.user_col, sf.col(self.user_col).cast(self.user_type)
+                )
             )
         if "item_idx" in df.columns:
             res = (
                 self.inv_item_indexer.transform(res)
                 .drop("item_idx")
-                .withColumn("item_id", sf.col("item_id").cast(self.item_type))
+                .withColumn(
+                    self.item_col, sf.col(self.item_col).cast(self.item_type)
+                )
             )
         return res
 
@@ -303,7 +229,23 @@ class DataPreparator:
             self._rename(df, mapping)
             for df in [log, user_features, item_features]
         ]
-        return self.indexer.fit_transform(log, user_features, item_features)
+        if user_features is None:
+            users = log.select("user_id")
+        else:
+            users = log.select("user_id").union(
+                user_features.select("user_id")
+            )
+            user_features = self.indexer.transform(user_features)
+        if item_features is None:
+            items = log.select("item_id")
+        else:
+            items = log.select("item_id").union(
+                item_features.select("item_id")
+            )
+            item_features = self.indexer.transform(item_features)
+        self.indexer.fit(users, items)
+        log = self.indexer.transform(log)
+        return log, user_features, item_features
 
     @staticmethod
     def _rename(df: DataFrame, mapping: Dict) -> DataFrame:
