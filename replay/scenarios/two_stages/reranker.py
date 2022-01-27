@@ -12,7 +12,7 @@ from replay.utils import (
 )
 
 
-class ReRankingModel:
+class ReRanker:
     """
     Base class for models which re-rank recommendations produced by other models.
     May be used as a part of two-stages recommendation pipeline.
@@ -57,7 +57,7 @@ class ReRankingModel:
         """
 
 
-class LamaWrap(ReRankingModel):
+class LamaWrap(ReRanker):
     """
     LightAutoML TabularPipeline binary classification model wrapper for recommendations re-ranking.
     Read more: https://github.com/sberbank-ai-lab/LightAutoML

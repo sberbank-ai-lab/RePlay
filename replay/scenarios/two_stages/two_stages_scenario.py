@@ -9,7 +9,7 @@ from replay.constants import AnyDataFrame
 from replay.metrics import Metric, Precision
 from replay.models import ALSWrap, RandomRec, PopRec
 from replay.models.base_rec import BaseRecommender, HybridRecommender
-from replay.scenarios.two_stages.second_level_wrap import LamaWrap
+from replay.scenarios.two_stages.reranker import LamaWrap
 from replay.scenarios.two_stages.feature_processor import (
     SecondLevelFeaturesProcessor,
     FirstLevelFeaturesProcessor,

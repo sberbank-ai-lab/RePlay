@@ -4,14 +4,12 @@ import pytest
 from pyspark.sql import functions as sf
 
 from replay.models import ALSWrap, KNN, PopRec, LightFMWrap
+from replay.scenarios import TwoStagesScenario
 from replay.scenarios.two_stages.feature_processor import (
     SecondLevelFeaturesProcessor,
     FirstLevelFeaturesProcessor,
 )
-
-from replay.scenarios.two_stages.second_level_wrap import LamaWrap
-
-from replay.scenarios import TwoStagesScenario
+from replay.scenarios.two_stages.reranker import LamaWrap
 from replay.splitters import DateSplitter
 
 from tests.utils import (
