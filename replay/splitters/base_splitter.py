@@ -15,9 +15,7 @@ class Splitter(ABC):
     """Base class"""
 
     def __init__(
-        self,
-        drop_cold_items: bool,
-        drop_cold_users: bool,
+        self, drop_cold_items: bool, drop_cold_users: bool,
     ):
         """
         :param drop_cold_items: flag to remove items that are not in train data
@@ -54,7 +52,7 @@ class Splitter(ABC):
         """
         if drop_cold_items:
             train_tmp = train.select(
-                sf.col("item_id").alias("item")
+                sf.col("item_idx").alias("item")
             ).distinct()
             test = test.join(train_tmp, train_tmp.item == test.item_id).drop(
                 "item"
@@ -62,7 +60,7 @@ class Splitter(ABC):
 
         if drop_cold_users:
             train_tmp = train.select(
-                sf.col("user_id").alias("user")
+                sf.col("user_idx").alias("user")
             ).distinct()
             test = test.join(train_tmp, train_tmp.user == test.user_id).drop(
                 "user"

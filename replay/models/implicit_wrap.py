@@ -23,10 +23,12 @@ class ImplicitWrap(Recommender):
     with conversions made under the hood.
 
     >>> import pandas as pd
-    >>> df = pd.DataFrame({"user_id": [1, 1, 2, 2], "item_id": [1, 2, 2, 3], "relevance": [1, 1, 1, 1]})
-    >>> als.fit_predict(df, 1, users=[1])[["user_id", "item_id"]].toPandas()
-       user_id  item_id
-    0        1        3
+    >>> from replay.utils import convert2spark
+    >>> df = pd.DataFrame({"user_idx": [1, 1, 2, 2], "item_idx": [1, 2, 2, 3], "relevance": [1, 1, 1, 1]})
+    >>> df = convert2spark(df)
+    >>> als.fit_predict(df, 1, users=[1])[["user_idx", "item_idx"]].toPandas()
+       user_idx  item_idx
+    0         1         3
     """
 
     def __init__(self, model):

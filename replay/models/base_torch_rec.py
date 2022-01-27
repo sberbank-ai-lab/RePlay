@@ -83,7 +83,7 @@ class TorchRecommender(Recommender):
                 ["user_idx", "item_idx", "relevance"]
             ]
 
-        self.logger.debug("Оценка релевантности для пар")
+        self.logger.debug("Pair relevance")
         user_history = (
             users.join(log, how="inner", on="user_idx")
             .groupBy("user_idx")

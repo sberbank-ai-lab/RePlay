@@ -167,8 +167,7 @@ class AssociationRulesItemRec(Recommender):
                     "similarity_order",
                     sf.row_number().over(
                         Window.partitionBy("antecedent").orderBy(
-                            sf.col("lift").desc(),
-                            sf.col("consequent").desc(),
+                            sf.col("lift").desc(), sf.col("consequent").desc(),
                         )
                     ),
                 )
@@ -219,27 +218,13 @@ class AssociationRulesItemRec(Recommender):
             f"use get_nearest_items method to get item-to-item recommendations"
         )
 
+    @property
     def get_pair_metrics(self):
         """
         Return matrix with calculated confidence, lift and confidence gain.
         :return: association rules measures calculated during ``fit`` stage
         """
-        res = (
-            self.inv_item_indexer.transform(
-                self.pair_metrics.withColumnRenamed("antecedent", "item_idx")
-            )
-            .drop("item_idx")
-            .withColumnRenamed("item_id", "antecedent")
-        )
-
-        res = (
-            self.inv_item_indexer.transform(
-                res.withColumnRenamed("consequent", "item_idx")
-            )
-            .drop("item_idx")
-            .withColumnRenamed("item_id", "consequent")
-        )
-        return res
+        return self.pair_metrics
 
     def get_nearest_items(
         self,
@@ -268,10 +253,7 @@ class AssociationRulesItemRec(Recommender):
             )
 
         return self._get_nearest_items_wrap(
-            items=items,
-            k=k,
-            metric=metric,
-            candidates=candidates,
+            items=items, k=k, metric=metric, candidates=candidates,
         )
 
     def _get_nearest_items(
