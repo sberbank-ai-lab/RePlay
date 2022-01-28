@@ -234,14 +234,10 @@ def test_filter_seen(log):
     assert pred.count() == 4
 
 
-def get_kwargs(model, user_features):
-    if isinstance(model, (HybridRecommender, UserRecommender)):
-        return {"user_features": user_features}
-    return {}
-
-
 def fit_predict_selected(model, train_log, inf_log, user_features, users):
-    kwargs = get_kwargs(model, user_features)
+    kwargs = {}
+    if isinstance(model, (HybridRecommender, UserRecommender)):
+        kwargs = {"user_features": user_features}
     model.fit(train_log, **kwargs)
     return model.predict(log=inf_log, users=users, k=1, **kwargs)
 
