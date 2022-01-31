@@ -95,7 +95,6 @@ def eval_quality(
         split_data.train,
         split_data.user_features_train,
         split_data.item_features_train,
-        False,
     )
     logger.debug("Predicting inside optimization")
     recs = recommender._predict_wrap(
@@ -161,7 +160,7 @@ class KNNObjective:
         ]
         model = self.kwargs["recommender"]
         split_data = self.kwargs["split_data"]
-        train, _, _ = model._fit_index(split_data.train, force_reindex=False)
+        train = split_data.train
         model.num_neighbours = max_neighbours
 
         df = train.select("user_idx", "item_idx", "relevance")

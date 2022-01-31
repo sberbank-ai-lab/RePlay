@@ -49,10 +49,12 @@ def indexer():
 
 
 def test_indexer(indexer, long_log_with_features):
-    indexer.fit(long_log_with_features, long_log_with_features)
-    res = indexer.transform(long_log_with_features)
+    df = long_log_with_features.withColumnRenamed("user_idx", "user_id")
+    df = df.withColumnRenamed("item_idx", "item_id")
+    indexer.fit(df, df)
+    res = indexer.transform(df)
     log = indexer.inverse_transform(res)
-    sparkDataFrameEqual(log, long_log_with_features)
+    sparkDataFrameEqual(log, df)
 
 
 # categorical features transformer tests
@@ -74,7 +76,7 @@ def test_cat_features_transformer(item_features):
         and "ohe_class_cat" in transformed.columns
     )
     assert (
-        transformed.filter(sf.col("item_id") == "i6")
+        transformed.filter(sf.col("item_idx") == 5)
         .select("ohe_class_mouse")
         .collect()[0][0]
         == 1.0
@@ -91,7 +93,7 @@ def test_cat_features_transformer_date(
     )
     assert (
         "ohe_timestamp_20190101000000" in transformed.columns
-        and "item_id" in transformed.columns
+        and "item_idx" in transformed.columns
     )
 
 

@@ -439,9 +439,11 @@ class BaseRecommender(ABC):
         self.logger.debug("Starting predict %s", type(self).__name__)
         user_data = users or log or user_features or self.fit_users
         users = self._get_ids(user_data, "user_idx")
+        users = self._filter_ids(users, "user_idx")
 
         item_data = items or log or item_features or self.fit_items
         items = self._get_ids(item_data, "item_idx")
+        items = self._filter_ids(items, "item_idx")
 
         num_items = items.count()
         if num_items < k:
@@ -478,6 +480,20 @@ class BaseRecommender(ABC):
         else:
             raise ValueError(f"Wrong type {type(log)}")
         return unique
+
+    def _filter_ids(self, log: DataFrame, column: str) -> DataFrame:
+        """
+        Filter out new ids if the model cannot predict cold items
+        """
+        entity = column[:4]
+        if getattr(self, f"can_predict_cold_{entity}s"):
+            return log
+        self.logger.warning(
+            "This model can't predict cold %ss, they will be ignored", entity
+        )
+        return log.join(
+            getattr(self, f"fit_{entity}s"), on=column, how="inner"
+        )
 
     # pylint: disable=too-many-arguments
     @abstractmethod

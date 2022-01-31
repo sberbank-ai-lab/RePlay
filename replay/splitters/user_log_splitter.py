@@ -37,6 +37,9 @@ class UserSplitter(Splitter):
     4         2         2          5          2
     5         2         3          6          1
 
+    >>> from replay.utils import convert2spark
+    >>> data_frame = convert2spark(data_frame)
+
     By default, test is one last item for each user
 
     >>> UserSplitter(seed=80083).split(data_frame)[-1].toPandas()
@@ -73,10 +76,10 @@ class UserSplitter(Splitter):
 
     `user_test_size` allows to put exact number of users into test set
 
-    >>> UserSplitter(user_test_size=1, item_test_size=2, seed=42).split(data_frame)[-1].toPandas().user_id.nunique()
+    >>> UserSplitter(user_test_size=1, item_test_size=2, seed=42).split(data_frame)[-1].toPandas().user_idx.nunique()
     1
 
-    >>> UserSplitter(user_test_size=0.5, item_test_size=2, seed=42).split(data_frame)[-1].toPandas().user_id.nunique()
+    >>> UserSplitter(user_test_size=0.5, item_test_size=2, seed=42).split(data_frame)[-1].toPandas().user_idx.nunique()
     1
 
     """

@@ -281,13 +281,13 @@ class AssociationRulesItemRec(Recommender):
             )
 
         return (
-            pairs_to_consider.withColumnRenamed("antecedent", "item_id_one")
-            .withColumnRenamed("consequent", "item_id_two")
+            pairs_to_consider.withColumnRenamed("antecedent", "item_idx_one")
+            .withColumnRenamed("consequent", "item_idx_two")
             .join(
                 sf.broadcast(
-                    items.withColumnRenamed("item_idx", "item_id_one")
+                    items.withColumnRenamed("item_idx", "item_idx_one")
                 ),
-                on="item_id_one",
+                on="item_idx_one",
             )
         )
 

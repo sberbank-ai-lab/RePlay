@@ -6,7 +6,7 @@ from pyspark.sql import DataFrame
 
 from replay.models.base_rec import Recommender
 from replay.utils import to_csr
-from replay.constants import IDX_REC_SCHEMA
+from replay.constants import REC_SCHEMA
 
 
 class ImplicitWrap(Recommender):
@@ -93,5 +93,5 @@ class ImplicitWrap(Recommender):
         return (
             users.select("user_idx")
             .groupby("user_idx")
-            .applyInPandas(predict_by_user, IDX_REC_SCHEMA)
+            .applyInPandas(predict_by_user, REC_SCHEMA)
         )

@@ -10,14 +10,14 @@ from tests.utils import *
 
 @pytest.fixture
 def one_user():
-    df = pd.DataFrame({"user_id": [1], "item_id": [1], "relevance": [1]})
+    df = pd.DataFrame({"user_idx": [1], "item_idx": [1], "relevance": [1]})
     return df
 
 
 @pytest.fixture
 def two_users():
     df = pd.DataFrame(
-        {"user_id": [1, 2], "item_id": [1, 2], "relevance": [1, 1]}
+        {"user_idx": [1, 2], "item_idx": [1, 2], "relevance": [1, 1]}
     )
     return df
 

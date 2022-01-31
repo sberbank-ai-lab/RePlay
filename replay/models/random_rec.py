@@ -8,7 +8,7 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as sf
 
 from replay.models.base_rec import Recommender
-from replay.constants import IDX_REC_SCHEMA
+from replay.constants import REC_SCHEMA
 
 
 class RandomRec(Recommender):
@@ -276,7 +276,7 @@ class RandomRec(Recommender):
                 "user_idx", f"LEAST(cnt + {k}, {items_np.shape[0]}) AS cnt",
             )
             .groupby("user_idx")
-            .applyInPandas(grouped_map, IDX_REC_SCHEMA)
+            .applyInPandas(grouped_map, REC_SCHEMA)
         )
 
         return recs

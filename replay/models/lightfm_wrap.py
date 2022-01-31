@@ -12,7 +12,7 @@ from pyspark.sql import DataFrame
 from scipy.sparse import csr_matrix, hstack, diags
 from sklearn.preprocessing import MinMaxScaler
 
-from replay.constants import IDX_REC_SCHEMA
+from replay.constants import REC_SCHEMA
 from replay.models.base_rec import HybridRecommender
 from replay.utils import to_csr, check_numeric
 from replay.session_handler import State
@@ -237,7 +237,7 @@ class LightFMWrap(HybridRecommender):
         )
 
         return pairs.groupby("user_idx").applyInPandas(
-            predict_by_user, IDX_REC_SCHEMA
+            predict_by_user, REC_SCHEMA
         )
 
     # pylint: disable=too-many-arguments

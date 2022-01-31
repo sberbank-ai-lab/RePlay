@@ -8,26 +8,33 @@ from implicit.als import AlternatingLeastSquares
 from pyspark.sql import functions as sf
 
 import replay
+from replay.data_preparator import Indexer
 from replay.model_handler import save, load
 from replay.models import *
+from replay.utils import convert2spark
 from tests.utils import sparkDataFrameEqual, long_log_with_features, spark
 
 
 @pytest.fixture
 def user_features(spark):
     return spark.createDataFrame(
-        [("u1", 20.0, -3.0, 1), ("u2", 30.0, 4.0, 0), ("u3", 40.0, 0.0, 1)]
-    ).toDF("user_id", "age", "mood", "gender")
+        [(1, 20.0, -3.0, 1), (2, 30.0, 4.0, 0), (3, 40.0, 0.0, 1)]
+    ).toDF("user_idx", "age", "mood", "gender")
 
 
 @pytest.fixture
 def df():
     folder = dirname(replay.__file__)
-    return pd.read_csv(
+    res = pd.read_csv(
         join(folder, "../experiments/data/ml1m_ratings.dat"),
         sep="\t",
         names=["user_id", "item_id", "relevance", "timestamp"],
     ).head(1000)
+    res = convert2spark(res)
+    indexer = Indexer()
+    indexer.fit(res, res)
+    res = indexer.transform(res)
+    return res
 
 
 @pytest.mark.parametrize(
@@ -70,10 +77,10 @@ def test_rules(df, tmp_path):
     path = (tmp_path / "rules").resolve()
     model = AssociationRulesItemRec()
     model.fit(df)
-    base_pred = model.get_nearest_items(["i1"], 5, metric="lift")
+    base_pred = model.get_nearest_items([1], 5, metric="lift")
     save(model, path)
     m = load(path)
-    new_pred = m.get_nearest_items(["i1"], 5, metric="lift")
+    new_pred = m.get_nearest_items([1], 5, metric="lift")
     sparkDataFrameEqual(base_pred, new_pred)
 
 

@@ -54,7 +54,7 @@ class Splitter(ABC):
             train_tmp = train.select(
                 sf.col("item_idx").alias("item")
             ).distinct()
-            test = test.join(train_tmp, train_tmp.item == test.item_id).drop(
+            test = test.join(train_tmp, train_tmp.item == test.item_idx).drop(
                 "item"
             )
 
@@ -62,7 +62,7 @@ class Splitter(ABC):
             train_tmp = train.select(
                 sf.col("user_idx").alias("user")
             ).distinct()
-            test = test.join(train_tmp, train_tmp.user == test.user_id).drop(
+            test = test.join(train_tmp, train_tmp.user == test.user_idx).drop(
                 "user"
             )
         return test

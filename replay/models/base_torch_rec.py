@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader
 
 from replay.models.base_rec import Recommender
 from replay.session_handler import State
-from replay.constants import IDX_REC_SCHEMA
+from replay.constants import REC_SCHEMA
 
 
 class TorchRecommender(Recommender):
@@ -64,7 +64,7 @@ class TorchRecommender(Recommender):
             users.join(log, how=join_type, on="user_idx")
             .selectExpr("user_idx AS user_idx", "item_idx AS item_idx",)
             .groupby("user_idx")
-            .applyInPandas(grouped_map, IDX_REC_SCHEMA)
+            .applyInPandas(grouped_map, REC_SCHEMA)
         )
         return recs
 
@@ -97,7 +97,7 @@ class TorchRecommender(Recommender):
         full_df = user_pairs.join(user_history, on="user_idx", how="inner")
 
         recs = full_df.groupby("user_idx").applyInPandas(
-            grouped_map, IDX_REC_SCHEMA
+            grouped_map, REC_SCHEMA
         )
 
         return recs

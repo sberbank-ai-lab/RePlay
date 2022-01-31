@@ -180,14 +180,14 @@ class ADMMSLIM(NeighbourRec):
         mat_c_sparse = coo_matrix(mat_c)
         mat_c_pd = pd.DataFrame(
             {
-                "item_id_one": mat_c_sparse.row.astype(np.int32),
-                "item_id_two": mat_c_sparse.col.astype(np.int32),
+                "item_idx_one": mat_c_sparse.row.astype(np.int32),
+                "item_idx_two": mat_c_sparse.col.astype(np.int32),
                 "similarity": mat_c_sparse.data,
             }
         )
         self.similarity = State().session.createDataFrame(
             mat_c_pd,
-            schema="item_id_one int, item_id_two int, similarity double",
+            schema="item_idx_one int, item_idx_two int, similarity double",
         )
         self.similarity.cache()
 

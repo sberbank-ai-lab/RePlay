@@ -542,6 +542,8 @@ class TwoStagesScenario(HybridRecommender):
 
         self.logger.info("Data split")
         first_level_train, second_level_positive = self._split_data(log)
+        # second_level_positive = second_level_positive
+        # .join(first_level_train.select("user_idx"), on="user_idx", how="left")
 
         self.first_level_item_len = (
             first_level_train.select("item_idx").distinct().count()
@@ -580,7 +582,7 @@ class TwoStagesScenario(HybridRecommender):
             self.random_model,
             self.fallback_model,
         ]:
-            base_model._fit(
+            base_model._fit_wrap(
                 log=first_level_train,
                 user_features=first_level_user_features.filter(
                     sf.col("user_idx") < self.first_level_user_len

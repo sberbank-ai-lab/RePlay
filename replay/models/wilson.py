@@ -16,11 +16,13 @@ class Wilson(PopRec):
 
     >>> import pandas as pd
     >>> data_frame = pd.DataFrame({"user_idx": [1, 2], "item_idx": [1, 2], "relevance": [1, 1]})
+    >>> from replay.utils import convert2spark
+    >>> data_frame = convert2spark(data_frame)
     >>> model = Wilson()
     >>> model.fit_predict(data_frame,k=1).toPandas()
-      user_idx item_idx  relevance
-    0        1        2   0.206549
-    1        2        1   0.206549
+       user_idx  item_idx  relevance
+    0         1         2   0.206549
+    1         2         1   0.206549
 
     """
 
