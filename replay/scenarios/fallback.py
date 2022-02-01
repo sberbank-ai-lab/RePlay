@@ -109,8 +109,8 @@ class Fallback(BaseScenario):
         user_features: Optional[DataFrame] = None,
         item_features: Optional[DataFrame] = None,
     ) -> None:
-        self.main_model._fit(log, user_features, item_features)
-        self.fb_model._fit(log, user_features, item_features)
+        self.main_model._fit_wrap(log, user_features, item_features)
+        self.fb_model._fit_wrap(log, user_features, item_features)
 
     def _predict(
         self,
