@@ -256,13 +256,13 @@ def fit_predict_selected(model, train_log, inf_log, user_features, users):
 def test_predict_new_users(model, long_log_with_features, user_features):
     pred = fit_predict_selected(
         model,
-        train_log=long_log_with_features.filter(sf.col("user_id") != "u1"),
+        train_log=long_log_with_features.filter(sf.col("user_idx") != 0),
         inf_log=long_log_with_features,
         user_features=user_features.drop("gender"),
-        users=["u1"],
+        users=[0],
     )
     assert pred.count() == 1
-    assert pred.collect()[0][0] == "u1"
+    assert pred.collect()[0][0] == 0
 
 
 @pytest.mark.parametrize(
@@ -278,13 +278,13 @@ def test_predict_new_users(model, long_log_with_features, user_features):
 def test_predict_cold_users(model, long_log_with_features, user_features):
     pred = fit_predict_selected(
         model,
-        train_log=long_log_with_features.filter(sf.col("user_id") != "u1"),
-        inf_log=long_log_with_features.filter(sf.col("user_id") != "u1"),
+        train_log=long_log_with_features.filter(sf.col("user_idx") != 0),
+        inf_log=long_log_with_features.filter(sf.col("user_idx") != 0),
         user_features=user_features.drop("gender"),
-        users=["u1"],
+        users=[0],
     )
     assert pred.count() == 1
-    assert pred.collect()[0][0] == "u1"
+    assert pred.collect()[0][0] == 0
 
 
 @pytest.mark.parametrize(
@@ -311,10 +311,10 @@ def test_predict_cold_users(model, long_log_with_features, user_features):
 def test_predict_cold_and_new_filter_out(model, long_log_with_features):
     pred = fit_predict_selected(
         model,
-        train_log=long_log_with_features.filter(sf.col("user_id") != "u1"),
+        train_log=long_log_with_features.filter(sf.col("user_idx") != 0),
         inf_log=long_log_with_features,
         user_features=None,
-        users=["u1", "cold_user"],
+        users=[0, 3],
     )
     # assert new/cold users are filtered out in `predict`
     if isinstance(model, LightFMWrap) or not model.can_predict_cold_users:

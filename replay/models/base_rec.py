@@ -491,9 +491,8 @@ class BaseRecommender(ABC):
         self.logger.warning(
             "This model can't predict cold %ss, they will be ignored", entity
         )
-        return log.join(
-            getattr(self, f"fit_{entity}s"), on=column, how="inner"
-        )
+        res = log.join(getattr(self, f"fit_{entity}s"), on=column, how="inner")
+        return res
 
     # pylint: disable=too-many-arguments
     @abstractmethod
@@ -544,7 +543,7 @@ class BaseRecommender(ABC):
         :returns: number of users the model was trained on
         """
         try:
-            return self.fit_users.count()
+            return self.fit_users.agg({"user_idx": "max"}).collect()[0][0] + 1
         except AttributeError as error:
             raise AttributeError(
                 "Must run fit before calling this method"
@@ -556,7 +555,7 @@ class BaseRecommender(ABC):
         :returns: number of items the model was trained on
         """
         try:
-            return self.fit_items.count()
+            return self.fit_items.agg({"item_idx": "max"}).collect()[0][0] + 1
         except AttributeError as error:
             raise AttributeError(
                 "Must run fit before calling this method"
@@ -617,6 +616,9 @@ class BaseRecommender(ABC):
             raise ValueError(
                 "pairs must be a dataframe with columns strictly [user_idx, item_idx]"
             )
+
+        pairs = self._filter_ids(pairs, "item_idx")
+        pairs = self._filter_ids(pairs, "user_idx")
 
         pred = self._predict_pairs(
             pairs=pairs,
