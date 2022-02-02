@@ -445,6 +445,9 @@ class BaseRecommender(ABC):
         items = self._get_ids(item_data, "item_idx")
         items = self._filter_ids(items, "item_idx")
 
+        log = self._filter_ids(log, "user_idx")
+        log = self._filter_ids(log, "item_idx")
+
         num_items = items.count()
         if num_items < k:
             message = f"k = {k} > number of items = {num_items}"
