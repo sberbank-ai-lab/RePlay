@@ -62,7 +62,7 @@ class TorchRecommender(Recommender):
         join_type = "inner" if self.__str__() == "MultVAE" else "left"
         recs = (
             users.join(log, how=join_type, on="user_idx")
-            .selectExpr("user_idx AS user_idx", "item_idx AS item_idx",)
+            .select("user_idx", "item_idx")
             .groupby("user_idx")
             .applyInPandas(grouped_map, REC_SCHEMA)
         )
