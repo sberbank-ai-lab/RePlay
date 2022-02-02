@@ -655,18 +655,13 @@ class TwoStagesScenario(HybridRecommender):
         )
 
         self.logger.info("Adding features to second-level train dataset")
-        second_level_train = self._add_features_for_second_level(
+        second_level_train_to_convert = self._add_features_for_second_level(
             log_to_add_features=second_level_train,
             log_for_first_level_models=first_level_train,
             user_features=user_features,
             item_features=item_features,
-        )
+        ).cache()
 
-        second_level_train_to_convert = second_level_train.drop(
-            "user_idx", "item_idx"
-        )
-        self.logger.info("Converting to pandas")
-        second_level_train_to_convert.cache()
         self.cached_list.append(second_level_train_to_convert)
         self.second_stage_model.fit(second_level_train_to_convert)
         for dataframe in self.cached_list:

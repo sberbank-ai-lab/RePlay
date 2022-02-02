@@ -20,13 +20,6 @@ class ReRanker:
 
     _logger: Optional[logging.Logger] = None
 
-    def __init__(self, drop_ids: bool = True):
-        """
-        :param drop_ids: it True, user's and item's ids are not used
-            as features during model training.
-        """
-        self.drop_ids = drop_ids
-
     @property
     def logger(self) -> logging.Logger:
         """
@@ -67,17 +60,13 @@ class LamaWrap(ReRanker):
         self,
         params: Optional[Dict] = None,
         config_path: Optional[str] = None,
-        drop_ids: bool = True,
     ):
         """
         Initialize LightAutoML TabularPipeline with passed params/configuration file.
 
         :param params: dict of model parameters
         :param config_path: path to configuration file
-        :param drop_ids: it True, user's and item's ids are not used
-            as features during model training
         """
-        super().__init__(drop_ids)
         self.model = TabularAutoML(
             task=Task("binary"),
             config_path=config_path,
@@ -98,8 +87,7 @@ class LamaWrap(ReRanker):
 
         params = {"roles": {"target": "target"}, "verbose": 1}
         params.update({} if fit_params is None else fit_params)
-        if self.drop_ids:
-            data = data.drop("user_idx", "item_idx")
+        data = data.drop("user_idx", "item_idx")
         data_pd = data.toPandas()
         self.model.fit_predict(data_pd, **params)
 
@@ -115,8 +103,7 @@ class LamaWrap(ReRanker):
         """
         data_pd = data.toPandas()
         candidates_ids = data_pd[["user_idx", "item_idx"]]
-        if self.drop_ids:
-            data_pd.drop(columns=["user_idx", "item_idx"], inplace=True)
+        data_pd.drop(columns=["user_idx", "item_idx"], inplace=True)
         self.logger.info("Starting re-ranking")
         candidates_pred = self.model.predict(data_pd)
         candidates_ids.loc[:, "relevance"] = candidates_pred.data[:, 0]
