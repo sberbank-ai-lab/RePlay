@@ -99,7 +99,7 @@ class LightFMWrap(HybridRecommender):
             log_ids_list, on=idx_col_name, how="inner"
         )
 
-        num_entities_in_fit = getattr(self, f"fit_{entity}s").count()
+        num_entities_in_fit = getattr(self, f"{entity}s_count")
         matrix_height = max(
             num_entities_in_fit,
             log_ids_list.select(sf.max(idx_col_name)).collect()[0][0] + 1,
