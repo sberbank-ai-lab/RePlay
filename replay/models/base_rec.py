@@ -445,8 +445,9 @@ class BaseRecommender(ABC):
         items = self._get_ids(item_data, "item_idx")
         items = self._filter_ids(items, "item_idx")
 
-        log = self._filter_ids(log, "user_idx")
-        log = self._filter_ids(log, "item_idx")
+        if log is not None:
+            log = self._filter_ids(log, "user_idx")
+            log = self._filter_ids(log, "item_idx")
 
         num_items = items.count()
         if num_items < k:
@@ -620,8 +621,9 @@ class BaseRecommender(ABC):
                 "pairs must be a dataframe with columns strictly [user_idx, item_idx]"
             )
 
-        log = self._filter_ids(log, "user_idx")
-        log = self._filter_ids(log, "item_idx")
+        if log is not None:
+            log = self._filter_ids(log, "user_idx")
+            log = self._filter_ids(log, "item_idx")
         pairs = self._filter_ids(pairs, "item_idx")
         pairs = self._filter_ids(pairs, "user_idx")
 

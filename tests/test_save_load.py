@@ -143,7 +143,7 @@ def test_study(df, tmp_path):
 
 def test_indexer(df, tmp_path):
     path = (tmp_path / "indexer").resolve()
-    indexer = Indexer("user_id", "item_id")
+    indexer = Indexer("user_idx", "item_idx")
     df = convert2spark(df)
     indexer.fit(df, df)
     save_indexer(indexer, path)
