@@ -276,7 +276,7 @@ class LightFMWrap(HybridRecommender):
 
         :param ids: id item_idx/user_idx to get features for
         :param features: features for item_idx/user_idx
-        :return: spark-dataframe с bias и векторами пользователей/объектов, размерность вектора
+        :return: spark-dataframe with biases and vectors for users/items and vector size
         """
         entity = "item" if "item_idx" in ids.columns else "user"
         ids_list = ids.toPandas()[f"{entity}_idx"]

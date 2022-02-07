@@ -420,7 +420,7 @@ class BaseRecommender(ABC):
 
         :param log: historical log of interactions
             ``[user_idx, item_idx, timestamp, relevance]``
-        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param k: number of recommendations for each user
         :param users: users to create recommendations for
             dataframe containing ``[user_idx]`` or ``array-like``;
             if ``None``, recommend to all users from ``log``
@@ -514,7 +514,7 @@ class BaseRecommender(ABC):
 
         :param log: historical log of interactions
             ``[user_idx, item_idx, timestamp, relevance]``
-        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param k: number of recommendations for each user
         :param users: users to create recommendations for
             dataframe containing ``[user_idx]`` or ``array-like``;
             if ``None``, recommend to all users from ``log``
@@ -698,7 +698,8 @@ class BaseRecommender(ABC):
         """
 
         self.logger.info(
-            "Метод реализован только для моделей ALS и LightFMWrap. Признаки не будут возвращены"
+            "get_features method is not defined for the model %s. Features will not be returned.",
+            self.__str__(),
         )
         return None, None
 
@@ -920,7 +921,7 @@ class HybridRecommender(BaseRecommender, ABC):
 
         :param log: historical log of interactions
             ``[user_idx, item_idx, timestamp, relevance]``
-        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param k: number of recommendations for each user
         :param users: users to create recommendations for
             dataframe containing ``[user_idx]`` or ``array-like``;
             if ``None``, recommend to all users from ``log``
@@ -961,7 +962,7 @@ class HybridRecommender(BaseRecommender, ABC):
 
         :param log: historical log of interactions
             ``[user_idx, item_idx, timestamp, relevance]``
-        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param k: number of recommendations for each user
         :param users: users to create recommendations for
             dataframe containing ``[user_idx]`` or ``array-like``;
             if ``None``, recommend to all users from ``log``
@@ -1056,7 +1057,7 @@ class Recommender(BaseRecommender, ABC):
 
         :param log: historical log of interactions
             ``[user_idx, item_idx, timestamp, relevance]``
-        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param k: number of recommendations for each user
         :param users: users to create recommendations for
             dataframe containing ``[user_idx]`` or ``array-like``;
             if ``None``, recommend to all users from ``log``
@@ -1108,7 +1109,7 @@ class Recommender(BaseRecommender, ABC):
 
         :param log: historical log of interactions
             ``[user_idx, item_idx, timestamp, relevance]``
-        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param k: number of recommendations for each user
         :param users: users to create recommendations for
             dataframe containing ``[user_idx]`` or ``array-like``;
             if ``None``, recommend to all users from ``log``
@@ -1172,7 +1173,7 @@ class UserRecommender(BaseRecommender, ABC):
 
         :param log: historical log of interactions
             ``[user_idx, item_idx, timestamp, relevance]``
-        :param k: length of recommendation lists, should be less that the total number of ``items``
+        :param k: number of recommendations for each user
         :param users: users to create recommendations for
             dataframe containing ``[user_idx]`` or ``array-like``;
             if ``None``, recommend to all users from ``log``

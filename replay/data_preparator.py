@@ -27,6 +27,8 @@ class Indexer:  # pylint: disable=too-many-instance-attributes
     inv_item_indexer: IndexToString
     user_type: None
     item_type: None
+    internal_user_col: str = "replay_user_id"
+    internal_item_col: str = "replay_item_id"
 
     def __init__(self, user_col="user_id", item_col="item_id"):
         """
@@ -35,6 +37,13 @@ class Indexer:  # pylint: disable=too-many-instance-attributes
         self.user_col = user_col
         self.item_col = item_col
 
+    @property
+    def _init_args(self):
+        return {
+            "user_col": self.user_col,
+            "item_col": self.item_col,
+        }
+
     def fit(self, users: DataFrame, items: DataFrame,) -> None:
         """
         Creates indexers to map raw id to numerical idx so that spark can handle them.
@@ -42,16 +51,21 @@ class Indexer:  # pylint: disable=too-many-instance-attributes
         :param item: DataFrame containing item column
         :return:
         """
-        users = users.select(self.user_col)
-        items = items.select(self.item_col)
-        self.user_type = users.schema[self.user_col].dataType
-        self.item_type = items.schema[self.item_col].dataType
+        users = users.select(self.user_col).withColumnRenamed(
+            self.user_col, self.internal_user_col
+        )
+        items = items.select(self.item_col).withColumnRenamed(
+            self.item_col, self.internal_item_col
+        )
+
+        self.user_type = users.schema[self.internal_user_col].dataType
+        self.item_type = items.schema[self.internal_item_col].dataType
 
         self.user_indexer = StringIndexer(
-            inputCol=self.user_col, outputCol="user_idx"
+            inputCol=self.internal_user_col, outputCol="user_idx"
         ).fit(users)
         self.item_indexer = StringIndexer(
-            inputCol=self.item_col, outputCol="item_idx"
+            inputCol=self.internal_item_col, outputCol="item_idx"
         ).fit(items)
         self.inv_user_indexer = IndexToString(
             inputCol="user_idx",
@@ -72,12 +86,14 @@ class Indexer:  # pylint: disable=too-many-instance-attributes
         :return: dataframe with converted indexes
         """
         if self.user_col in df.columns:
+            df = df.withColumnRenamed(self.user_col, self.internal_user_col)
             self._reindex(df, "user")
-            df = self.user_indexer.transform(df).drop(self.user_col)
+            df = self.user_indexer.transform(df).drop(self.internal_user_col)
             df = df.withColumn("user_idx", sf.col("user_idx").cast("int"))
         if self.item_col in df.columns:
+            df = df.withColumnRenamed(self.item_col, self.internal_item_col)
             self._reindex(df, "item")
-            df = self.item_indexer.transform(df).drop(self.item_col)
+            df = self.item_indexer.transform(df).drop(self.internal_item_col)
             df = df.withColumn("item_idx", sf.col("item_idx").cast("int"))
         return df
 

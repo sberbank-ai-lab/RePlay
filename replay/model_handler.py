@@ -7,6 +7,9 @@ from inspect import getfullargspec
 import joblib
 from os.path import exists, join
 
+from pyspark.ml.feature import StringIndexerModel, IndexToString
+
+from replay.data_preparator import Indexer
 from replay.models import *
 from replay.models.base_rec import BaseRecommender
 from replay.session_handler import State
@@ -39,6 +42,53 @@ def save(model: BaseRecommender, path: str):
     model.fit_items.write.parquet(join(df_path, "fit_items"))
 
     joblib.dump(model.study, join(path, "study"))
+
+
+def save_indexer(indexer: Indexer, path: str):
+    """
+    Save fitted indexer to disk as a folder
+
+    :param model: Trained indexer
+    :param path: destination where indexer files will be stored
+    :return:
+    """
+    if exists(path):
+        shutil.rmtree(path)
+    os.makedirs(path)
+
+    init_args = indexer._init_args
+    with open(join(path, "init_args.json"), "w") as json_file:
+        json.dump(init_args, json_file)
+
+    indexer.user_indexer.save(join(path, "user_indexer"))
+    indexer.item_indexer.save(join(path, "item_indexer"))
+    indexer.inv_user_indexer.save(join(path, "inv_user_indexer"))
+    indexer.inv_item_indexer.save(join(path, "inv_item_indexer"))
+
+
+def load_indexer(path: str):
+    """
+    Load saved indexer from disk
+
+    :param path: path to folder
+    :return: Restored trained model
+    """
+    State()
+    with open(join(path, "init_args.json"), "r") as json_file:
+        args = json.load(json_file)
+
+    indexer = Indexer(**args)
+
+    indexer.user_indexer = StringIndexerModel.load(join(path, "user_indexer"))
+    indexer.item_indexer = StringIndexerModel.load(join(path, "item_indexer"))
+    indexer.inv_user_indexer = IndexToString.load(
+        join(path, "inv_user_indexer")
+    )
+    indexer.inv_item_indexer = IndexToString.load(
+        join(path, "inv_item_indexer")
+    )
+
+    return indexer
 
 
 def load(path: str):
