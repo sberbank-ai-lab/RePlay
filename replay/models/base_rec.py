@@ -620,6 +620,8 @@ class BaseRecommender(ABC):
                 "pairs must be a dataframe with columns strictly [user_idx, item_idx]"
             )
 
+        log = self._filter_ids(log, "user_idx")
+        log = self._filter_ids(log, "item_idx")
         pairs = self._filter_ids(pairs, "item_idx")
         pairs = self._filter_ids(pairs, "user_idx")
 
