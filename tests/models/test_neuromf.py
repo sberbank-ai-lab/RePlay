@@ -86,7 +86,7 @@ def test_predict(log, model):
         pred.toPandas()[["user_idx", "item_idx"]]
         .sort_values("user_idx")
         .values.astype(int),
-        [[0, 3], [1, 3], [2, 0]],
+        [[0, 3], [1, 2], [2, 0]],
         atol=1.0e-3,
     )
 
