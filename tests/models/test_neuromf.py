@@ -81,14 +81,11 @@ def test_fit(log, model):
 
 def test_predict(log, model):
     model.fit(log)
-    pred = model.predict(log=log, k=1)
-    assert np.allclose(
-        pred.toPandas()[["user_idx", "item_idx"]]
-        .sort_values("user_idx")
-        .values.astype(int),
-        [[0, 3], [1, 2], [2, 0]],
-        atol=1.0e-3,
-    )
+    try:
+        pred = model.predict(log=log, k=1)
+        pred.count()
+    except RuntimeError:  # noqa
+        pytest.fail()
 
 
 def test_check_gmf_only(log):
