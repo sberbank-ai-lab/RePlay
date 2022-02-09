@@ -6,8 +6,8 @@ from pyspark.sql import functions as sf
 from replay.models import ALSWrap, KNN, PopRec, LightFMWrap
 from replay.scenarios import TwoStagesScenario
 from replay.scenarios.two_stages.feature_processor import (
-    SecondLevelFeaturesProcessor,
-    FirstLevelFeaturesProcessor,
+    HistoryBasedFeaturesProcessor,
+    AllToNumericFeatureTransformer,
 )
 from replay.scenarios.two_stages.reranker import LamaWrap
 from replay.splitters import DateSplitter
@@ -51,11 +51,11 @@ def test_init(two_stages_kwargs):
     assert isinstance(two_stages.fallback_model, PopRec)
     assert isinstance(two_stages.second_stage_model, LamaWrap)
     assert isinstance(
-        two_stages.features_processor, SecondLevelFeaturesProcessor
+        two_stages.features_processor, HistoryBasedFeaturesProcessor
     )
     assert isinstance(
         two_stages.first_level_item_features_transformer,
-        FirstLevelFeaturesProcessor,
+        AllToNumericFeatureTransformer,
     )
     assert two_stages.use_first_level_models_feat == [True, True, True]
 

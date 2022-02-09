@@ -42,7 +42,11 @@ class Indexer:  # pylint: disable=too-many-instance-attributes
             "item_col": self.item_col,
         }
 
-    def fit(self, users: DataFrame, items: DataFrame,) -> None:
+    def fit(
+        self,
+        users: DataFrame,
+        items: DataFrame,
+    ) -> None:
         """
         Creates indexers to map raw id to numerical idx so that spark can handle them.
         :param user: DataFrame containing user column
@@ -146,10 +150,12 @@ class Indexer:  # pylint: disable=too-many-instance-attributes
 
 class CatFeaturesTransformer:
     """Transform categorical features in ``cat_cols_list``
-    with one-hot encoding and delete other columns."""
+    with one-hot encoding and remove original columns."""
 
     def __init__(
-        self, cat_cols_list: List, alias: str = "ohe",
+        self,
+        cat_cols_list: List,
+        alias: str = "ohe",
     ):
         """
         :param cat_cols_list: list of categorical columns

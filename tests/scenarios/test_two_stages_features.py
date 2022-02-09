@@ -8,8 +8,8 @@ import pytest
 from pyspark.sql import functions as sf
 
 from replay.scenarios.two_stages.feature_processor import (
-    SecondLevelFeaturesProcessor,
-    FirstLevelFeaturesProcessor,
+    HistoryBasedFeaturesProcessor,
+    AllToNumericFeatureTransformer,
 )
 from tests.utils import (
     spark,
@@ -60,7 +60,7 @@ def item_features_second_stage(spark):
 
 @pytest.fixture
 def second_stage_fp():
-    return SecondLevelFeaturesProcessor()
+    return HistoryBasedFeaturesProcessor()
 
 
 def test_second_level_fp_log_features_unary_relevance_no_timestamp(
@@ -269,7 +269,7 @@ def test_second_level_fp_fit_transform_one_features_df(
 
 
 def test_first_level_features_processor(item_features):
-    processor = FirstLevelFeaturesProcessor(threshold=3)
+    processor = AllToNumericFeatureTransformer(threshold=3)
     processor.fit(item_features.filter(sf.col("class") != "dog"))
     transformed = processor.transform(item_features)
     assert "iq" in transformed.columns and "color" not in transformed.columns
@@ -288,7 +288,7 @@ def test_first_level_features_processor(item_features):
 
 
 def test_first_level_features_processor_threshold(item_features):
-    processor = FirstLevelFeaturesProcessor(threshold=1)
+    processor = AllToNumericFeatureTransformer(threshold=1)
     processor.fit(item_features.filter(sf.col("class") != "dog"))
     transformed = processor.transform(item_features)
     assert "iq" in transformed.columns and "color" not in transformed.columns
@@ -296,7 +296,7 @@ def test_first_level_features_processor_threshold(item_features):
 
 
 def test_first_level_features_processor_only_numeric(item_features):
-    processor = FirstLevelFeaturesProcessor(threshold=1)
+    processor = AllToNumericFeatureTransformer(threshold=1)
     processor.fit(item_features.select("item_id", "iq"))
     transformed = processor.transform(item_features.select("item_id", "iq"))
     sparkDataFrameEqual(item_features.select("item_id", "iq"), transformed)
@@ -305,14 +305,14 @@ def test_first_level_features_processor_only_numeric(item_features):
 def test_first_level_features_processor_numeric_and_greater_threshold(
     item_features,
 ):
-    processor = FirstLevelFeaturesProcessor(threshold=0)
+    processor = AllToNumericFeatureTransformer(threshold=0)
     processor.fit(item_features)
     transformed = processor.transform(item_features)
     sparkDataFrameEqual(item_features.select("item_id", "iq"), transformed)
 
 
 def test_first_level_features_processor_empty(item_features):
-    processor = FirstLevelFeaturesProcessor(threshold=1)
+    processor = AllToNumericFeatureTransformer(threshold=1)
     processor.fit(None)
     assert processor.transform(item_features) is None
 
