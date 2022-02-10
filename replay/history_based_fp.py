@@ -1,137 +1,22 @@
+"""
+Contains classes for users' and items' features generation based on interactions history.
+
+``LogStatFeaturesProcessor`` to generate users' and items' features based on log.
+``ConditionalPopularityProcessor`` to generate popularity among users and items
+    conditioned on categorical feature value
+``HistoryBasedFeaturesProcessor`` applies LogStatFeaturesProcessor
+    and ConditionalPopularityProcessor as a pipeline.
+"""
+
 from typing import Dict, Optional, List
 
 import pyspark.sql.functions as sf
 
 from datetime import datetime
 from pyspark.sql import DataFrame
-from pyspark.sql.types import NumericType, TimestampType
+from pyspark.sql.types import TimestampType
 
-from replay.data_preparator import CatFeaturesTransformer
-from replay.session_handler import State
 from replay.utils import join_or_return, ugly_join, unpersist_if_exists
-
-
-class AllToNumericFeatureTransformer:
-    """Transform user/item features to numeric types:
-    - numeric features stays as is
-    - categorical features:
-        if threshold is defined:
-            - all non-numeric columns with less unique values than threshold are one-hot encoded
-            - remaining columns are dropped
-        else all non-numeric columns are one-hot encoded
-    """
-
-    cat_feat_transformer: Optional[CatFeaturesTransformer]
-    cols_to_ohe: Optional[List]
-    cols_to_del: Optional[List]
-    all_columns: Optional[List]
-
-    def __init__(self, threshold: Optional[int] = 100):
-        self.threshold = threshold
-        self.fitted = False
-
-    def fit(self, features: Optional[DataFrame]) -> None:
-        """
-        Determine categorical columns for one-hot encoding.
-        Non categorical columns with more values than threshold will be deleted.
-        Saves categories for each column.
-        :param features: input DataFrame
-        """
-        self.cat_feat_transformer = None
-        self.cols_to_del = []
-        self.fitted = True
-
-        if features is None:
-            self.all_columns = None
-            return
-
-        self.all_columns = sorted(features.columns)
-        idx_cols_set = {"user_idx", "item_idx", "user_id", "item_id"}
-
-        spark_df_non_numeric_cols = [
-            col
-            for col in features.columns
-            if (not isinstance(features.schema[col].dataType, NumericType))
-            and (col not in idx_cols_set)
-        ]
-
-        # numeric only
-        if len(spark_df_non_numeric_cols) == 0:
-            self.cols_to_ohe = []
-            return
-
-        if self.threshold is None:
-            self.cols_to_ohe = spark_df_non_numeric_cols
-        else:
-            counts_pd = (
-                features.agg(
-                    *[
-                        sf.approx_count_distinct(sf.col(c)).alias(c)
-                        for c in spark_df_non_numeric_cols
-                    ]
-                )
-                .toPandas()
-                .T
-            )
-            self.cols_to_ohe = (
-                counts_pd[counts_pd[0] <= self.threshold]
-            ).index.values
-
-            self.cols_to_del = [
-                col
-                for col in spark_df_non_numeric_cols
-                if col not in set(self.cols_to_ohe)
-            ]
-
-            if self.cols_to_del:
-                State().logger.warning(
-                    "%s columns contain more that threshold unique "
-                    "values and will be deleted",
-                    self.cols_to_del,
-                )
-
-        if len(self.cols_to_ohe) > 0:
-            self.cat_feat_transformer = CatFeaturesTransformer(
-                cat_cols_list=self.cols_to_ohe
-            )
-            self.cat_feat_transformer.fit(features.drop(*self.cols_to_del))
-
-    def transform(self, spark_df: Optional[DataFrame]) -> Optional[DataFrame]:
-        """
-        Transform categorical features.
-        Use one hot encoding for columns with the amount of unique values smaller
-        than threshold and delete other columns.
-        :param spark_df: input DataFrame
-        :return: processed DataFrame
-        """
-        if not self.fitted:
-            raise AttributeError("Call fit before running transform")
-
-        if spark_df is None or self.all_columns is None:
-            return None
-
-        if self.cat_feat_transformer is None:
-            return spark_df.drop(*self.cols_to_del)
-
-        if sorted(spark_df.columns) != self.all_columns:
-            raise ValueError(
-                f"Columns from fit do not match "
-                f"columns in transform. "
-                f"Fit columns: {self.all_columns},"
-                f"Transform columns: {spark_df.columns}"
-            )
-
-        return self.cat_feat_transformer.transform(
-            spark_df.drop(*self.cols_to_del)
-        )
-
-    def fit_transform(self, spark_df: DataFrame) -> DataFrame:
-        """
-        :param spark_df: input DataFrame
-        :return: output DataFrame
-        """
-        self.fit(spark_df)
-        return self.transform(spark_df)
 
 
 class EmptyFeatureProcessor:
@@ -448,12 +333,10 @@ class LogStatFeaturesProcessor(EmptyFeatureProcessor):
 
         joined = joined.withColumn(
             "u_i_log_num_interact_diff",
-            sf.col("u_log_num_interact")
-            - sf.col("i_mean_log_users_interact_count"),
+            sf.col("u_log_num_interact") - sf.col("i_mean_u_log_num_interact"),
         ).withColumn(
             "i_u_log_num_interact_diff",
-            sf.col("i_log_num_interact")
-            - sf.col("u_mean_log_items_interact_count"),
+            sf.col("i_log_num_interact") - sf.col("u_mean_i_log_num_interact"),
         )
 
         return joined
@@ -546,10 +429,16 @@ class ConditionalPopularityProcessor(EmptyFeatureProcessor):
             joined = join_or_return(
                 joined,
                 sf.broadcast(value),
-                on=["user_idx", key],
+                on=[self.entity_name, key],
                 how="left",
+            ).withColumn(
+                f"na_{self.entity_name[0]}_pop_by_{key}",
+                sf.when(
+                    sf.col(f"{self.entity_name[0]}_pop_by_{key}").isNull(),
+                    True,
+                ).otherwise(False),
             )
-            joined = joined.fillna({"user_pop_by_" + key: 0})
+            joined = joined.fillna({f"{self.entity_name[0]}_pop_by_{key}": 0})
         return joined
 
     def __del__(self):
@@ -617,8 +506,8 @@ class HistoryBasedFeaturesProcessor:
         """
         log = log.cache()
         self.log_processor.fit(log=log)
-        self.user_cond_pop_proc.fit(log=log, features=item_features)
-        self.item_cond_pop_proc.fit(log=log, features=user_features)
+        self.user_cond_pop_proc.fit(log=log, features=user_features)
+        self.item_cond_pop_proc.fit(log=log, features=item_features)
         self.fitted = True
         log.unpersist()
 

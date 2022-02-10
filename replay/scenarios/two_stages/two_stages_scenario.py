@@ -6,14 +6,12 @@ import pyspark.sql.functions as sf
 from pyspark.sql import DataFrame
 
 from replay.constants import AnyDataFrame
+from replay.data_preparator import ToNumericFeatureTransformer
+from replay.history_based_fp import HistoryBasedFeaturesProcessor
 from replay.metrics import Metric, Precision
 from replay.models import ALSWrap, RandomRec, PopRec
 from replay.models.base_rec import BaseRecommender, HybridRecommender
 from replay.scenarios.two_stages.reranker import LamaWrap
-from replay.scenarios.two_stages.feature_processor import (
-    HistoryBasedFeaturesProcessor,
-    AllToNumericFeatureTransformer,
-)
 
 from replay.session_handler import State
 from replay.splitters import Splitter, UserSplitter
@@ -221,10 +219,10 @@ class TwoStagesScenario(HybridRecommender):
         self.random_model = RandomRec(seed=seed)
         self.fallback_model = fallback_model
         self.first_level_user_features_transformer = (
-            AllToNumericFeatureTransformer()
+            ToNumericFeatureTransformer()
         )
         self.first_level_item_features_transformer = (
-            AllToNumericFeatureTransformer()
+            ToNumericFeatureTransformer()
         )
 
         if isinstance(use_first_level_models_feat, bool):
@@ -811,11 +809,11 @@ class TwoStagesScenario(HybridRecommender):
                 "Provide search grid or None for every first level model"
             )
 
-        first_level_user_features_tr = AllToNumericFeatureTransformer()
+        first_level_user_features_tr = ToNumericFeatureTransformer()
         first_level_user_features = first_level_user_features_tr.fit_transform(
             user_features
         )
-        first_level_item_features_tr = AllToNumericFeatureTransformer()
+        first_level_item_features_tr = ToNumericFeatureTransformer()
         first_level_item_features = first_level_item_features_tr.fit_transform(
             item_features
         )
