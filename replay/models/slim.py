@@ -51,7 +51,7 @@ class SLIM(NeighbourRec):
 
         interactions_matrix = csc_matrix(
             (pandas_log.relevance, (pandas_log.user_idx, pandas_log.item_idx)),
-            shape=(self.users_count, self.items_count),
+            shape=(self.max_user, self.max_item),
         )
         similarity = (
             State()

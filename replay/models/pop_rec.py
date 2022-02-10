@@ -36,26 +36,26 @@ class PopRec(Recommender):
     >>> res = PopRec().fit_predict(data_frame, 1)
     >>> res.toPandas().sort_values("user_idx", ignore_index=True)
        user_idx  item_idx  relevance
-    0         1         3        0.6
-    1         2         1        0.2
-    2         3         2        0.4
-    3         4         2        0.4
+    0         1         3       0.75
+    1         2         1       0.25
+    2         3         2       0.50
+    3         4         2       0.50
 
     >>> res = PopRec().fit_predict(data_frame, 1, filter_seen_items=False)
     >>> res.toPandas().sort_values("user_idx", ignore_index=True)
        user_idx  item_idx  relevance
-    0         1         3        0.6
-    1         2         3        0.6
-    2         3         3        0.6
-    3         4         3        0.6
+    0         1         3       0.75
+    1         2         3       0.75
+    2         3         3       0.75
+    3         4         3       0.75
 
     >>> res = PopRec(use_relevance=True).fit_predict(data_frame, 1)
     >>> res.toPandas().sort_values("user_idx", ignore_index=True)
        user_idx  item_idx  relevance
-    0         1         3       0.50
-    1         2         1       0.10
-    2         3         2       0.22
-    3         4         2       0.22
+    0         1         3      0.625
+    1         2         1      0.125
+    2         3         2      0.275
+    3         4         2      0.275
 
     """
 
