@@ -489,7 +489,7 @@ class BaseRecommender(ABC):
         """
         Filter out new ids if the model cannot predict cold items
         """
-        entity = column[:4]
+        entity = column.split("_")[0]
         if getattr(self, f"can_predict_cold_{entity}s"):
             return log
         self.logger.warning(
@@ -542,7 +542,7 @@ class BaseRecommender(ABC):
         return self._logger
 
     @property
-    def users_count(self) -> int:
+    def max_user(self) -> int:
         """
         :returns: number of users the model was trained on
         """
@@ -554,12 +554,36 @@ class BaseRecommender(ABC):
             ) from error
 
     @property
-    def items_count(self) -> int:
+    def max_item(self) -> int:
         """
         :returns: number of items the model was trained on
         """
         try:
             return self.fit_items.agg({"item_idx": "max"}).collect()[0][0] + 1
+        except AttributeError as error:
+            raise AttributeError(
+                "Must run fit before calling this method"
+            ) from error
+
+    @property
+    def users_count(self) -> int:
+        """
+        :returns: number of users the model was trained on
+        """
+        try:
+            return self.fit_users.distinct().count()
+        except AttributeError as error:
+            raise AttributeError(
+                "Must run fit before calling this method"
+            ) from error
+
+    @property
+    def items_count(self) -> int:
+        """
+        :returns: number of items the model was trained on
+        """
+        try:
+            return self.fit_items.distinct().count()
         except AttributeError as error:
             raise AttributeError(
                 "Must run fit before calling this method"

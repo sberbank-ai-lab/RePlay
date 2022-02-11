@@ -182,7 +182,7 @@ class LightFMWrap(HybridRecommender):
         self.user_feat_scaler = None
         self.item_feat_scaler = None
 
-        interactions_matrix = to_csr(log, self.users_count, self.items_count)
+        interactions_matrix = to_csr(log, self.max_user, self.max_item)
         csr_item_features = self._feature_table_to_csr(
             log.select("item_idx").distinct(), item_features
         )
