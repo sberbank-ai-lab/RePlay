@@ -326,13 +326,12 @@ class ToNumericFeatureTransformer:
             return
 
         self.all_columns = sorted(features.columns)
-        idx_cols_set = {"user_idx", "item_idx", "user_id", "item_id"}
 
         spark_df_non_numeric_cols = [
             col
             for col in features.columns
             if (not isinstance(features.schema[col].dataType, NumericType))
-            and (col not in idx_cols_set)
+            and (col not in {"user_idx", "item_idx"})
         ]
 
         # numeric only
