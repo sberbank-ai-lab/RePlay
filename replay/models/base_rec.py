@@ -470,7 +470,10 @@ class BaseRecommender(ABC):
         return recs.select("user_idx", "item_idx", "relevance")
 
     @staticmethod
-    def _get_ids(log: Union[Iterable, DataFrame], column: str,) -> DataFrame:
+    def _get_ids(
+        log: Union[Iterable, DataFrame],
+        column: str,
+    ) -> DataFrame:
         """
         Get unique values from ``array`` and put them into dataframe with column ``column``.
         """
@@ -541,53 +544,41 @@ class BaseRecommender(ABC):
             self._logger = logging.getLogger("replay")
         return self._logger
 
+    def _check_fit_attr_present(self, attr_name: str):
+        if not hasattr(self, attr_name):
+            raise AttributeError("Must run fit before calling this method")
+
     @property
     def max_user(self) -> int:
         """
-        :returns: number of users the model was trained on
+        :returns: maximum user_idx presented in the models' train dataset
         """
-        try:
-            return self.fit_users.agg({"user_idx": "max"}).collect()[0][0] + 1
-        except AttributeError as error:
-            raise AttributeError(
-                "Must run fit before calling this method"
-            ) from error
+        self._check_fit_attr_present("fit_users")
+        return self.fit_users.agg({"user_idx": "max"}).collect()[0][0]
 
     @property
     def max_item(self) -> int:
         """
-        :returns: number of items the model was trained on
+        :returns: maximum item_idx presented in the models' train dataset
         """
-        try:
-            return self.fit_items.agg({"item_idx": "max"}).collect()[0][0] + 1
-        except AttributeError as error:
-            raise AttributeError(
-                "Must run fit before calling this method"
-            ) from error
+        self._check_fit_attr_present("fit_items")
+        return self.fit_items.agg({"item_idx": "max"}).collect()[0][0]
 
     @property
     def users_count(self) -> int:
         """
         :returns: number of users the model was trained on
         """
-        try:
-            return self.fit_users.distinct().count()
-        except AttributeError as error:
-            raise AttributeError(
-                "Must run fit before calling this method"
-            ) from error
+        self._check_fit_attr_present("fit_users")
+        return self.fit_users.distinct().count()
 
     @property
     def items_count(self) -> int:
         """
         :returns: number of items the model was trained on
         """
-        try:
-            return self.fit_items.distinct().count()
-        except AttributeError as error:
-            raise AttributeError(
-                "Must run fit before calling this method"
-            ) from error
+        self._check_fit_attr_present("fit_items")
+        return self.fit_items.distinct().count()
 
     def _fit_predict(
         self,
@@ -757,7 +748,10 @@ class BaseRecommender(ABC):
 
         if self.can_predict_item_to_item:
             return self._get_nearest_items_wrap(
-                items=items, k=k, metric=metric, candidates=candidates,
+                items=items,
+                k=k,
+                metric=metric,
+                candidates=candidates,
             )
 
         raise ValueError(
@@ -779,7 +773,9 @@ class BaseRecommender(ABC):
             candidates = self._get_ids(candidates, "item_idx")
 
         nearest_items_to_filter = self._get_nearest_items(
-            items=items, metric=metric, candidates=candidates,
+            items=items,
+            metric=metric,
+            candidates=candidates,
         )
 
         rel_col_name = metric if metric is not None else "similarity"
@@ -928,7 +924,9 @@ class HybridRecommender(BaseRecommender, ABC):
         :return:
         """
         self._fit_wrap(
-            log=log, user_features=user_features, item_features=item_features,
+            log=log,
+            user_features=user_features,
+            item_features=item_features,
         )
 
     # pylint: disable=too-many-arguments
@@ -1066,7 +1064,9 @@ class Recommender(BaseRecommender, ABC):
         :return:
         """
         self._fit_wrap(
-            log=log, user_features=None, item_features=None,
+            log=log,
+            user_features=None,
+            item_features=None,
         )
 
     # pylint: disable=too-many-arguments
@@ -1172,7 +1172,11 @@ class UserRecommender(BaseRecommender, ABC):
     """Base class for models that use user features
     but not item features. ``log`` is not required for this class."""
 
-    def fit(self, log: DataFrame, user_features: DataFrame,) -> None:
+    def fit(
+        self,
+        log: DataFrame,
+        user_features: DataFrame,
+    ) -> None:
         """
         Finds user clusters and calculates item similarity in that clusters.
 
@@ -1291,7 +1295,11 @@ class NeighbourRec(Recommender, ABC):
                 how="inner",
                 on=sf.col("item_idx") == sf.col("item_idx_one"),
             )
-            .join(filter_df, how="inner", on=condition,)
+            .join(
+                filter_df,
+                how="inner",
+                on=condition,
+            )
             .groupby("user_idx", "item_idx_two")
             .agg(sf.sum("similarity").alias("relevance"))
             .withColumnRenamed("item_idx_two", "item_idx")
@@ -1363,7 +1371,10 @@ class NeighbourRec(Recommender, ABC):
             )
 
         return self._get_nearest_items_wrap(
-            items=items, k=k, metric=None, candidates=candidates,
+            items=items,
+            k=k,
+            metric=None,
+            candidates=candidates,
         )
 
     def _get_nearest_items(
