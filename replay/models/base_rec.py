@@ -35,6 +35,7 @@ from replay.utils import (
 )
 
 
+# pylint: disable=too-many-instance-attributes
 class BaseRecommender(ABC):
     """Base recommender"""
 
@@ -50,6 +51,11 @@ class BaseRecommender(ABC):
     study = None
     fit_users: DataFrame
     fit_items: DataFrame
+    fit_statistics: Optional[Dict[str, int]]
+    _num_users: int
+    _num_items: int
+    _user_dim_size: int
+    _item_dim_size: int
 
     # pylint: disable=too-many-arguments, too-many-locals, no-member
     def optimize(
@@ -327,8 +333,16 @@ class BaseRecommender(ABC):
                 .union(item_features.select("item_idx"))
                 .distinct()
             )
-        self.fit_users = users
-        self.fit_items = items
+        self.fit_users = users.cache()
+        self.fit_items = items.cache()
+        self._num_users = self.fit_users.count()
+        self._num_items = self.fit_items.count()
+        self._user_dim_size = (
+            self.fit_users.agg({"user_idx": "max"}).collect()[0][0] + 1
+        )
+        self._item_dim_size = (
+            self.fit_items.agg({"item_idx": "max"}).collect()[0][0] + 1
+        )
         self._fit(log, user_features, item_features)
 
     @abstractmethod
@@ -544,41 +558,54 @@ class BaseRecommender(ABC):
             self._logger = logging.getLogger("replay")
         return self._logger
 
-    def _check_fit_attr_present(self, attr_name: str):
-        if not hasattr(self, attr_name):
-            raise AttributeError("Must run fit before calling this method")
-
-    @property
-    def max_user(self) -> int:
-        """
-        :returns: maximum user_idx presented in the models' train dataset
-        """
-        self._check_fit_attr_present("fit_users")
-        return self.fit_users.agg({"user_idx": "max"}).collect()[0][0]
-
-    @property
-    def max_item(self) -> int:
-        """
-        :returns: maximum item_idx presented in the models' train dataset
-        """
-        self._check_fit_attr_present("fit_items")
-        return self.fit_items.agg({"item_idx": "max"}).collect()[0][0]
+    def _get_fit_counts(self, entity: str) -> int:
+        if not hasattr(self, f"_num_{entity}s"):
+            setattr(
+                self,
+                f"_num_{entity}s",
+                getattr(self, f"fit_{entity}s").count(),
+            )
+        return getattr(self, f"_num_{entity}s")
 
     @property
     def users_count(self) -> int:
         """
         :returns: number of users the model was trained on
         """
-        self._check_fit_attr_present("fit_users")
-        return self.fit_users.distinct().count()
+        return self._get_fit_counts("user")
 
     @property
     def items_count(self) -> int:
         """
         :returns: number of items the model was trained on
         """
-        self._check_fit_attr_present("fit_items")
-        return self.fit_items.distinct().count()
+        return self._get_fit_counts("item")
+
+    def _get_fit_dims(self, entity: str) -> int:
+        if not hasattr(self, f"_{entity}_dim_size"):
+            setattr(
+                self,
+                f"_{entity}_dim_size",
+                getattr(self, f"fit_{entity}s")
+                .agg({f"{entity}_idx": "max"})
+                .collect()[0][0]
+                + 1,
+            )
+        return getattr(self, f"_{entity}_dim_size")
+
+    @property
+    def _user_dim(self) -> int:
+        """
+        :returns: dimension of users matrix (maximal user idx + 1)
+        """
+        return self._get_fit_dims("user")
+
+    @property
+    def _item_dim(self) -> int:
+        """
+        :returns: dimension of items matrix (maximal item idx + 1)
+        """
+        return self._get_fit_dims("item")
 
     def _fit_predict(
         self,
