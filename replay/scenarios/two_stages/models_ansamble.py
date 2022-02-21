@@ -28,15 +28,150 @@ from replay.utils import (
 )
 
 
-# pylint: disable=too-many-instance-attributes
-class TwoStagesScenario(HybridRecommender):
+def add_labels(prediction: DataFrame, ground_truth: DataFrame, label_name: str = "target") -> DataFrame:
     """
-    *train*:
+    Add a column with class labels named as the `target_name`.
+    User-item pairs from `prediction` get label `1` if present in `ground_truth` otherwise `0`.
+    >>> import pandas as pd
+    >>> prediction = pd.DataFrame({"user_idx": [1, 1, 2], "item_idx": [1, 2, 2]})
+    >>> prediction
+       user_idx  item_idx
+    0         1         1
+    1         1         2
+    2         2         2
 
-    1) take input ``log`` and split it into first_level_train and second_level_train
-       default splitter splits each user's data 50/50
-    2) train ``first_stage_models`` on ``first_stage_train``
-    3) create negative examples to train second stage model using one of:
+    >>> ground_truth = pd.DataFrame({"user_idx": [1, 1, 3], "item_idx": [1, 4, 5]})
+    >>> ground_truth
+       user_idx  item_idx
+    0         1         1
+    1         1         4
+    2         3         5
+
+    >>> from replay.utils import convert2spark
+    >>> prediction = convert2spark(prediction)
+    >>> ground_truth = convert2spark(ground_truth)
+
+    >>> res = add_labels(prediction, ground_truth, label_name='class_label')
+    >>> res.toPandas().sort_values("user_idx", ignore_index=True)
+       user_idx  item_idx  class_label
+    0         1         1          1.0
+    1         1         2          0.0
+    2         2         2          0.0
+
+    :param prediction: spark dataframe with columns `[user-idx, item_idx, <feature_columns, ...>]`
+        to add class labels
+    :param ground_truth: spark dataframe with columns `[user-idx, item_idx]`.
+        Contains ground truth, actual user-item interactions.
+    :param label_name: name of a column with class labels which will be added
+    :return: labeled `prediction`
+    """
+
+    return (
+        prediction.join(
+            ground_truth.select(
+                "user_idx", "item_idx"
+            ).withColumn(label_name, sf.lit(1.0)),
+            on=["user_idx", "item_idx"],
+            how="left",
+        ).fillna(0.0, subset=label_name)
+    )
+
+
+# pylint: disable=too-many-locals, too-many-arguments
+def get_first_level_model_features(
+    model: DataFrame,
+    pairs: DataFrame,
+    user_features: Optional[DataFrame] = None,
+    item_features: Optional[DataFrame] = None,
+    add_factors_mult: bool = True,
+    prefix: str = "",
+) -> DataFrame:
+    """
+    Get user and item embeddings from replay model.
+    Can also compute elementwise multiplication between them with ``add_factors_mult`` parameter.
+    Zero vectors are returned if a model does not have embeddings for specific users/items.
+
+    :param model: trained model
+    :param pairs: user-item pairs to get vectors for `[user_idx, item_idx]`
+    :param user_features: user features `[user_idx, feature_1, ....]`
+    :param item_features: item features `[item_idx, feature_1, ....]`
+    :param add_factors_mult: flag to add elementwise multiplication
+    :param prefix: name to add to the columns
+    :return: DataFrame
+    """
+    users = pairs.select("user_idx").distinct()
+    items = pairs.select("item_idx").distinct()
+    user_factors, user_vector_len = model._get_features_wrap(
+        users, user_features
+    )
+    item_factors, item_vector_len = model._get_features_wrap(
+        items, item_features
+    )
+
+    pairs_with_features = join_or_return(
+        pairs, user_factors, how="left", on="user_idx"
+    )
+    pairs_with_features = join_or_return(
+        pairs_with_features, item_factors, how="left", on="item_idx",
+    )
+
+    factors_to_explode = []
+    if user_factors is not None:
+        pairs_with_features = pairs_with_features.withColumn(
+            "user_factors",
+            sf.coalesce(
+                sf.col("user_factors"),
+                sf.array([sf.lit(0.0)] * user_vector_len),
+            ),
+        )
+        factors_to_explode.append(("user_factors", "uf"))
+
+    if item_factors is not None:
+        pairs_with_features = pairs_with_features.withColumn(
+            "item_factors",
+            sf.coalesce(
+                sf.col("item_factors"),
+                sf.array([sf.lit(0.0)] * item_vector_len),
+            ),
+        )
+        factors_to_explode.append(("item_factors", "if"))
+
+    if model.__str__() == "LightFMWrap":
+        pairs_with_features = (
+            pairs_with_features.fillna({"user_bias": 0, "item_bias": 0})
+            .withColumnRenamed("user_bias", f"{prefix}_user_bias")
+            .withColumnRenamed("item_bias", f"{prefix}_item_bias")
+        )
+
+    if (
+        add_factors_mult
+        and user_factors is not None
+        and item_factors is not None
+    ):
+        pairs_with_features = pairs_with_features.withColumn(
+            "factors_mult",
+            array_mult(sf.col("item_factors"), sf.col("user_factors")),
+        )
+        factors_to_explode.append(("factors_mult", "fm"))
+
+    for col_name, feature_prefix in factors_to_explode:
+        col_set = set(pairs_with_features.columns)
+        col_set.remove(col_name)
+        pairs_with_features = horizontal_explode(
+            data_frame=pairs_with_features,
+            column_to_explode=col_name,
+            other_columns=[sf.col(column) for column in sorted(list(col_set))],
+            prefix=f"{prefix}_{feature_prefix}",
+        )
+
+    return pairs_with_features
+
+
+# pylint: disable=too-many-instance-attributes
+class RecAnsamble(HybridRecommender):
+    """
+    1) train ``models``
+    2) create negative examples to train second stage model using one of:
 
        - wrong recommendations from first stage
        - random examples
@@ -66,101 +201,58 @@ class TwoStagesScenario(HybridRecommender):
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        train_splitter: Splitter = UserSplitter(
-            item_test_size=0.5, shuffle=True, seed=42
-        ),
-        first_level_models: Union[
+        models: Union[
             List[BaseRecommender], BaseRecommender
         ] = ALSWrap(rank=128),
         fallback_model: Optional[BaseRecommender] = PopRec(),
-        use_first_level_models_feat: Union[List[bool], bool] = False,
-        second_model_params: Optional[Union[Dict, str]] = None,
-        second_model_config_path: Optional[str] = None,
-        num_negatives: int = 100,
-        negatives_type: str = "first_level",
-        use_generated_features: bool = False,
-        user_cat_features_list: Optional[List] = None,
-        item_cat_features_list: Optional[List] = None,
-        custom_features_processor: HistoryBasedFeaturesProcessor = None,
-        seed: int = 123,
+        num_recs_by_one_model: Union[int, List[int]] = 100,
+        add_models_feat: Union[bool, List[bool]] = False,
+        use_user_item_features: Union[bool, List[bool]] = False,
+        seed: int = 123
     ) -> None:
         """
-        :param train_splitter: splitter to get ``first_level_train`` and ``second_level_train``.
-            Default is random 50% split.
-        :param first_level_models: model or a list of models
-        :param fallback_model: model used to fill missing recommendations at first level models
-        :param use_first_level_models_feat: flag or a list of flags to use
+        :param models: model or a list of models to use
+        :param fallback_model: model used to add recommendations
+            for users with insufficient recommendations number
+            (use it to get exactly num_recs_by_one_model * len(models) recommendations for each user)
+        :param num_recs_by_one_model: number of recommendations generated by each model.
+            Fallback model generates num_recs_by_one_model * len(models) or sum(num_recs_by_one_model)
+            recommendations for each user
+        :param add_models_feat: flag or a list of flags to use
             features created by first level models
-        :param second_model_params: TabularAutoML parameters
-        :param second_model_config_path: path to config file for TabularAutoML
-        :param num_negatives: number of negative examples used during train
-        :param negatives_type: negative examples creation strategy,``random``
-            or most relevant examples from ``first-level``
-        :param use_generated_features: flag to use generated features to train second level
-        :param user_cat_features_list: list of user categorical features
-        :param item_cat_features_list: list of item categorical features
-        :param custom_features_processor: you can pass custom feature processor
         :param seed: random seed
 
         """
-        self.train_splitter = train_splitter
-        self.cached_list = []
-
         self.first_level_models = (
-            first_level_models
-            if isinstance(first_level_models, Iterable)
-            else [first_level_models]
+            models
+            if isinstance(models, Iterable)
+            else [models]
         )
-
-        self.first_level_item_len = 0
-        self.first_level_user_len = 0
-
-        self.random_model = RandomRec(seed=seed)
         self.fallback_model = fallback_model
-        self.first_level_user_features_transformer = (
-            ToNumericFeatureTransformer()
-        )
-        self.first_level_item_features_transformer = (
-            ToNumericFeatureTransformer()
-        )
 
-        if isinstance(use_first_level_models_feat, bool):
-            self.use_first_level_models_feat = [
-                use_first_level_models_feat
+        if isinstance(add_models_feat, bool):
+            self.add_models_feat = [
+                add_models_feat
             ] * len(self.first_level_models)
         else:
             if len(self.first_level_models) != len(
-                use_first_level_models_feat
+                add_models_feat
             ):
                 raise ValueError(
-                    f"For each model from first_level_models specify "
+                    f"For each model from models specify "
                     f"flag to use first level features."
-                    f"Length of first_level_models is {len(first_level_models)}, "
-                    f"Length of use_first_level_models_feat is {len(use_first_level_models_feat)}"
+                    f"Length of models is {len(models)}, "
+                    f"Length of add_models_feat is {len(add_models_feat)}"
                 )
 
-            self.use_first_level_models_feat = use_first_level_models_feat
+            self.add_models_feat = add_models_feat
 
-        self.second_stage_model = LamaWrap(
-            params=second_model_params, config_path=second_model_config_path
-        )
-
-        self.num_negatives = num_negatives
-        if negatives_type not in ["random", "first_level"]:
-            raise ValueError(
-                f"Invalid negatives_type value: {negatives_type}. Use 'random' or 'first_level'"
-            )
-        self.negatives_type = negatives_type
-
-        self.use_generated_features = use_generated_features
-        self.features_processor = (
-            custom_features_processor
-            if custom_features_processor
-            else HistoryBasedFeaturesProcessor(
-                user_cat_features_list=user_cat_features_list,
-                item_cat_features_list=item_cat_features_list,
-            )
-        )
+        self.use_features = (use_user_item_features
+                             if isinstance(use_user_item_features, Iterable)
+                             else [use_user_item_features]
+                )
+        self.num_recs_by_one_model = num_recs_by_one_model
+        self.add_models_feat = add_models_feat
         self.seed = seed
 
     # pylint: disable=too-many-locals
@@ -208,7 +300,7 @@ class TwoStagesScenario(HybridRecommender):
                 how="left",
             )
 
-            if self.use_first_level_models_feat[idx]:
+            if self.add_models_feat[idx]:
                 features = get_first_level_model_features(
                     model=model,
                     pairs=full_second_level_train.select(
@@ -243,7 +335,7 @@ class TwoStagesScenario(HybridRecommender):
             full_second_level_train, item_features, on="item_idx", how="left",
         )
 
-        if self.use_generated_features:
+        if self.add_models_feat:
             if not self.features_processor.fitted:
                 self.features_processor.fit(
                     log=log_for_first_level_models,
@@ -273,14 +365,6 @@ class TwoStagesScenario(HybridRecommender):
             "second_level_train info: %s", get_log_info(second_level_train)
         )
         return first_level_train, second_level_train
-
-    def _fit_wrap(
-        self,
-        log: AnyDataFrame,
-        user_features: Optional[AnyDataFrame] = None,
-        item_features: Optional[AnyDataFrame] = None,
-    ) -> None:
-        self._fit(log, user_features, item_features)
 
     @staticmethod
     def _filter_or_return(dataframe, condition):
@@ -416,7 +500,7 @@ class TwoStagesScenario(HybridRecommender):
             candidates = fallback(
                 base=candidates,
                 fill=fallback_candidates,
-                k=self.num_negatives,
+                k=self.num_recs_by_one_model,
             )
         return candidates
 
@@ -427,60 +511,25 @@ class TwoStagesScenario(HybridRecommender):
         user_features: Optional[DataFrame] = None,
         item_features: Optional[DataFrame] = None,
     ) -> None:
-
-        self.cached_list = []
-
-        self.logger.info("Data split")
-        first_level_train, second_level_positive = self._split_data(log)
-        # second_level_positive = second_level_positive
-        # .join(first_level_train.select("user_idx"), on="user_idx", how="left")
-
-        self.first_level_item_len = (
-            first_level_train.select("item_idx").distinct().count()
-        )
-        self.first_level_user_len = (
-            first_level_train.select("user_idx").distinct().count()
-        )
-
-        log.cache()
-        first_level_train.cache()
-        second_level_positive.cache()
-        self.cached_list.extend(
-            [log, first_level_train, second_level_positive]
-        )
-
-        if user_features is not None:
-            user_features.cache()
-            self.cached_list.append(user_features)
-
-        if item_features is not None:
-            item_features.cache()
-            self.cached_list.append(item_features)
-
-        self.first_level_item_features_transformer.fit(item_features)
-        self.first_level_user_features_transformer.fit(user_features)
-
-        first_level_item_features = cache_if_exists(
-            self.first_level_item_features_transformer.transform(item_features)
-        )
-        first_level_user_features = cache_if_exists(
-            self.first_level_user_features_transformer.transform(user_features)
-        )
+        item_features_tr, user_features_tr = None, None
+        if any(self.use_features):
+            self.first_level_item_features_transformer.fit(item_features)
+            self.first_level_user_features_transformer.fit(user_features)
+            item_features_tr = cache_if_exists(
+                self.first_level_item_features_transformer.transform(item_features)
+            )
+            user_features_tr = cache_if_exists(
+                self.first_level_user_features_transformer.transform(user_features)
+            )
 
         for base_model in [
             *self.first_level_models,
-            self.random_model,
             self.fallback_model,
         ]:
             base_model._fit_wrap(
-                log=first_level_train,
-                user_features=first_level_user_features.filter(
-                    sf.col("user_idx") < self.first_level_user_len
-                ),
-                item_features=first_level_item_features.filter(
-                    sf.col("item_idx") < self.first_level_item_len
-                ),
-            )
+                log=log,
+                user_features=user_features_tr,
+                item_features=item_features_tr)
 
         self.logger.info("Generate negative examples")
         negatives_source = (
@@ -492,16 +541,16 @@ class TwoStagesScenario(HybridRecommender):
         first_level_candidates = self._get_first_level_candidates(
             model=negatives_source,
             log=first_level_train,
-            k=self.num_negatives,
+            k=self.num_recs_by_one_model,
             users=log.select("user_idx").distinct(),
             items=log.select("item_idx").distinct(),
-            user_features=first_level_user_features,
-            item_features=first_level_item_features,
+            user_features=user_features_tr,
+            item_features=item_features_tr,
             log_to_filter=first_level_train,
         ).select("user_idx", "item_idx")
 
-        unpersist_if_exists(first_level_user_features)
-        unpersist_if_exists(first_level_item_features)
+        unpersist_if_exists(user_features_tr)
+        unpersist_if_exists(item_features_tr)
 
         self.logger.info("Crate train dataset for second level")
 
@@ -569,7 +618,7 @@ class TwoStagesScenario(HybridRecommender):
         candidates = self._get_first_level_candidates(
             model=self.first_level_models[0],
             log=log,
-            k=self.num_negatives,
+            k=self.num_recs_by_one_model,
             users=users,
             items=items,
             user_features=first_level_user_features,
@@ -678,7 +727,7 @@ class TwoStagesScenario(HybridRecommender):
             Param grid is a dict ``{param: [low, high]}``.
         :param criterion: metric to optimize
         :param k: length of a recommendation list
-        :param budget: number of points to train each model
+        :param budget: number of optuna trials to train each model
         :param new_study: keep searching with previous study or start a new study
         :return: list of dicts of parameters
         """
@@ -689,18 +738,6 @@ class TwoStagesScenario(HybridRecommender):
             raise ValueError(
                 "Provide search grid or None for every first level model"
             )
-
-        first_level_user_features_tr = ToNumericFeatureTransformer()
-        first_level_user_features = first_level_user_features_tr.fit_transform(
-            user_features
-        )
-        first_level_item_features_tr = ToNumericFeatureTransformer()
-        first_level_item_features = first_level_item_features_tr.fit_transform(
-            item_features
-        )
-
-        first_level_user_features = cache_if_exists(first_level_user_features)
-        first_level_item_features = cache_if_exists(first_level_item_features)
 
         params_found = []
         for i, model in enumerate(self.first_level_models):
@@ -717,8 +754,8 @@ class TwoStagesScenario(HybridRecommender):
                         model=model,
                         train=train,
                         test=test,
-                        user_features=first_level_user_features,
-                        item_features=first_level_item_features,
+                        user_features=user_features,
+                        item_features=item_features,
                         param_borders=param_borders[i],
                         criterion=criterion,
                         k=k,
@@ -739,12 +776,10 @@ class TwoStagesScenario(HybridRecommender):
             model=self.fallback_model,
             train=train,
             test=test,
-            user_features=first_level_user_features,
-            item_features=first_level_item_features,
+            user_features=user_features,
+            item_features=item_features,
             param_borders=param_borders[-1],
             criterion=criterion,
             new_study=new_study,
         )
-        unpersist_if_exists(first_level_item_features)
-        unpersist_if_exists(first_level_user_features)
         return params_found, fallback_params
