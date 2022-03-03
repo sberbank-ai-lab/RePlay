@@ -51,7 +51,6 @@ class BaseRecommender(ABC):
     study = None
     fit_users: DataFrame
     fit_items: DataFrame
-    fit_statistics: Optional[Dict[str, int]]
     _num_users: int
     _num_items: int
     _user_dim_size: int

@@ -28,6 +28,99 @@ from replay.utils import (
 )
 
 
+# pylint: disable=too-many-locals, too-many-arguments
+def get_first_level_model_features(
+    model: DataFrame,
+    pairs: DataFrame,
+    user_features: Optional[DataFrame] = None,
+    item_features: Optional[DataFrame] = None,
+    add_factors_mult: bool = True,
+    prefix: str = "",
+) -> DataFrame:
+    """
+    Get user and item embeddings from replay model.
+    Can also compute elementwise multiplication between them with ``add_factors_mult`` parameter.
+    Zero vectors are returned if a model does not have embeddings for specific users/items.
+
+    :param model: trained model
+    :param pairs: user-item pairs to get vectors for `[user_id/user_idx, item_id/item_id]`
+    :param user_features: user features `[user_id/user_idx, feature_1, ....]`
+    :param item_features: item features `[item_id/item_idx, feature_1, ....]`
+    :param add_factors_mult: flag to add elementwise multiplication
+    :param prefix: name to add to the columns
+    :return: DataFrame
+    """
+    users = pairs.select("user_idx").distinct()
+    items = pairs.select("item_idx").distinct()
+    user_factors, user_vector_len = model._get_features_wrap(
+        users, user_features
+    )
+    item_factors, item_vector_len = model._get_features_wrap(
+        items, item_features
+    )
+
+    pairs_with_features = join_or_return(
+        pairs, user_factors, how="left", on="user_idx"
+    )
+    pairs_with_features = join_or_return(
+        pairs_with_features,
+        item_factors,
+        how="left",
+        on="item_idx",
+    )
+
+    factors_to_explode = []
+    if user_factors is not None:
+        pairs_with_features = pairs_with_features.withColumn(
+            "user_factors",
+            sf.coalesce(
+                sf.col("user_factors"),
+                sf.array([sf.lit(0.0)] * user_vector_len),
+            ),
+        )
+        factors_to_explode.append(("user_factors", "uf"))
+
+    if item_factors is not None:
+        pairs_with_features = pairs_with_features.withColumn(
+            "item_factors",
+            sf.coalesce(
+                sf.col("item_factors"),
+                sf.array([sf.lit(0.0)] * item_vector_len),
+            ),
+        )
+        factors_to_explode.append(("item_factors", "if"))
+
+    if model.__str__() == "LightFMWrap":
+        pairs_with_features = (
+            pairs_with_features.fillna({"user_bias": 0, "item_bias": 0})
+            .withColumnRenamed("user_bias", f"{prefix}_user_bias")
+            .withColumnRenamed("item_bias", f"{prefix}_item_bias")
+        )
+
+    if (
+        add_factors_mult
+        and user_factors is not None
+        and item_factors is not None
+    ):
+        pairs_with_features = pairs_with_features.withColumn(
+            "factors_mult",
+            array_mult(sf.col("item_factors"), sf.col("user_factors")),
+        )
+        factors_to_explode.append(("factors_mult", "fm"))
+
+    for col_name, feature_prefix in factors_to_explode:
+        col_set = set(pairs_with_features.columns)
+        col_set.remove(col_name)
+        pairs_with_features = horizontal_explode(
+            data_frame=pairs_with_features,
+            column_to_explode=col_name,
+            other_columns=[sf.col(column) for column in sorted(list(col_set))],
+            prefix=f"{prefix}_{feature_prefix}",
+        )
+
+    return pairs_with_features
+
+
 # pylint: disable=too-many-instance-attributes
 class TwoStagesScenario(HybridRecommender):
     """
@@ -133,9 +226,9 @@ class TwoStagesScenario(HybridRecommender):
                 use_first_level_models_feat
             ):
                 raise ValueError(
-                    f"For each model from first_level_models specify "
+                    f"For each model from models specify "
                     f"flag to use first level features."
-                    f"Length of first_level_models is {len(first_level_models)}, "
+                    f"Length of models is {len(first_level_models)}, "
                     f"Length of use_first_level_models_feat is {len(use_first_level_models_feat)}"
                 )
 
@@ -240,7 +333,10 @@ class TwoStagesScenario(HybridRecommender):
             how="left",
         )
         full_second_level_train = join_or_return(
-            full_second_level_train, item_features, on="item_idx", how="left",
+            full_second_level_train,
+            item_features,
+            on="item_idx",
+            how="left",
         )
 
         if self.use_generated_features:
@@ -320,7 +416,9 @@ class TwoStagesScenario(HybridRecommender):
             ]
 
         log_to_filter_cached = ugly_join(
-            left=log_to_filter, right=users, on_col_name="user_idx",
+            left=log_to_filter,
+            right=users,
+            on_col_name="user_idx",
         ).cache()
         max_positives_to_filter = 0
 

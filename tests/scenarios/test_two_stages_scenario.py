@@ -34,9 +34,9 @@ def two_stages_kwargs():
             "timeout": 30,
             "general_params": {"use_algos": ["lgb"]},
         },
-        "num_recs_by_one_model": 6,
+        "num_negatives": 6,
         "negatives_type": "first_level",
-        "add_models_feat": True,
+        "use_generated_features": True,
         "user_cat_features_list": ["gender"],
         "item_cat_features_list": ["class"],
         "custom_features_processor": None,
@@ -59,7 +59,7 @@ def test_init(two_stages_kwargs):
 
     two_stages_kwargs["use_first_level_models_feat"] = [True]
     with pytest.raises(
-        ValueError, match="For each model from first_level_models specify.*"
+        ValueError, match="For each model from models specify.*"
     ):
         TwoStagesScenario(**two_stages_kwargs)
 
@@ -103,7 +103,10 @@ def test_fit(
 
 
 def test_predict(
-    long_log_with_features, user_features, item_features, two_stages_kwargs,
+    long_log_with_features,
+    user_features,
+    item_features,
+    two_stages_kwargs,
 ):
     two_stages = TwoStagesScenario(**two_stages_kwargs)
 

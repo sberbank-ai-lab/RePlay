@@ -283,14 +283,16 @@ class LightFMWrap(HybridRecommender):
 
         # models without features use sparse matrix
         if features is None:
-            matrix_width = getattr(self, f"fit_{entity}s").count()
-            warm_ids = ids_list[ids_list < matrix_width]
+            ids_list = ids.join(
+                getattr(self, f"fit_{entity}s"), on=f"{entity}_idx"
+            ).toPandas()[f"{entity}_idx"]
+            matrix_dim = getattr(self, f"_{entity}_dim")
             sparse_features = csr_matrix(
                 (
-                    [1] * warm_ids.shape[0],
-                    (warm_ids, warm_ids),
+                    [1] * ids_list.shape[0],
+                    (ids_list, ids_list),
                 ),
-                shape=(ids_list.max() + 1, matrix_width),
+                shape=(matrix_dim, matrix_dim),
             )
         else:
             sparse_features = self._feature_table_to_csr(ids, features)
