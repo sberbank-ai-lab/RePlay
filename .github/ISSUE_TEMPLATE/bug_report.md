@@ -1,3 +1,12 @@
+---
+name: Bug
+about: Create a bug report to help us improve
+title: ''
+labels: bug, help wanted
+assignees: Scitator, bagxi, Ditwoo
+
+---
+
 ## 🐛 Bug
 
 <!-- A clear and concise description of the bug. -->
