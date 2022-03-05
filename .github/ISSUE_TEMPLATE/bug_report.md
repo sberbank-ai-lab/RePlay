@@ -1,16 +1,9 @@
----
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
-
----
-
 ## 🐛 Bug
+
 <!-- A clear and concise description of the bug. -->
 
-**To Reproduce**
+### To Reproduce
+
 Steps to reproduce the behavior:
 1. Go to '...'
 1. Run '....'
@@ -20,10 +13,11 @@ Steps to reproduce the behavior:
 
 
 
-**Expected behavior**
+### Expected behavior
+
 <!-- A clear and concise description of what you expected to happen. -->
 
-**Additional context**
+### Additional context
 
 <!-- Add any other context about the problem here. -->
 
