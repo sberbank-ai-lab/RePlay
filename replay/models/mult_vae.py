@@ -10,14 +10,13 @@ from pyspark.sql import DataFrame
 from scipy.sparse import csr_matrix
 from sklearn.model_selection import GroupShuffleSplit
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, TensorDataset
 
 from replay.models.base_torch_rec import TorchRecommender
-from replay.session_handler import State
 
 
 class VAE(nn.Module):
@@ -173,7 +172,6 @@ class MultVAE(TorchRecommender):
         :param gamma: reduce learning rate by this coefficient per epoch
         """
         super().__init__()
-        self.device = State().device
         self.learning_rate = learning_rate
         self.epochs = epochs
         self.latent_dim = latent_dim
@@ -225,7 +223,7 @@ class MultVAE(TorchRecommender):
         user_features: Optional[DataFrame] = None,
         item_features: Optional[DataFrame] = None,
     ) -> None:
-        self.logger.debug("Creating batch:")
+        self.logger.debug("Creating batch")
         data = log.select("user_idx", "item_idx").toPandas()
         splitter = GroupShuffleSplit(
             n_splits=1, test_size=self.valid_split_size, random_state=self.seed
@@ -257,15 +255,47 @@ class MultVAE(TorchRecommender):
         )
         lr_scheduler = ReduceLROnPlateau(optimizer, factor=0.5, patience=3)
 
-        vae_trainer, _ = self._create_trainer_evaluator(
-            optimizer,
-            valid_data_loader,
-            lr_scheduler,
-            self.patience,
-            self.n_saved,
-        )
+        def _run_train_step(batch):
+            self.model.train()
+            optimizer.zero_grad()
+            model_result = self._batch_pass(batch, self.model)
+            loss = self._loss(**model_result)
+            loss.backward()
+            optimizer.step()
+            return loss.item()
 
-        vae_trainer.run(train_data_loader, max_epochs=self.epochs)
+        def _run_val_step(batch):
+            self.model.eval()
+            with torch.no_grad():
+                model_result = self._batch_pass(batch, self.model)
+                return self._loss(**model_result)
+
+        for epoch in range(self.epochs):
+            for batch in train_data_loader:
+                train_loss = _run_train_step(batch)
+            train_debug_message = f"""Epoch[{epoch}] current loss: 
+                                    {train_loss:.5f}"""
+            self.logger.debug(train_debug_message)
+            
+            valid_loss = 0
+            best_valid_loss = np.inf
+            for batch in valid_data_loader:
+                valid_loss += _run_val_step(batch)
+            valid_loss /= len(valid_data_loader)
+            valid_debug_message = f"""Epoch[{epoch}] validation 
+                                    average loss: {valid_loss:.5f}"""
+            self.logger.debug(valid_debug_message)
+            
+            if valid_loss < best_valid_loss:
+                best_checkpoint = '/'.join([
+                        self.checkpoint_path,
+                        f'/best_multvae_{epoch+1}_loss=-{valid_loss}.pt'
+                    ])
+                self._save_model(best_checkpoint)
+                best_valid_loss = valid_loss
+
+            lr_scheduler.step(valid_loss)
+        self._load_model(best_checkpoint)
 
     # pylint: disable=arguments-differ
     def _loss(self, y_pred, y_true, mu_latent, logvar_latent):
@@ -291,11 +321,12 @@ class MultVAE(TorchRecommender):
         pred_user_batch, latent_mu, latent_logvar = self.model.forward(
             user_batch
         )
-        return (
-            pred_user_batch,
-            user_batch,
-            {"mu_latent": latent_mu, "logvar_latent": latent_logvar},
-        )
+        return {
+            "y_pred": pred_user_batch,
+            "y_true": user_batch,
+            "mu_latent": latent_mu,
+            "logvar_latent": latent_logvar,
+        }
 
     @staticmethod
     def _predict_pairs_inner(
