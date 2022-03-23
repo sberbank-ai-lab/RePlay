@@ -7,17 +7,16 @@ from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-from pyspark.sql import DataFrame
-from sklearn.model_selection import train_test_split
 import torch
 import torch.nn.functional as F
+from pyspark.sql import DataFrame
+from sklearn.model_selection import train_test_split
 from torch import LongTensor, Tensor, nn
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import DataLoader, TensorDataset
 
 from replay.models.base_torch_rec import TorchRecommender
-
 
 EMBED_DIM = 128
 
@@ -319,6 +318,7 @@ class NeuroMF(TorchRecommender):
         )
         return negative_items
 
+    # pylint: disable=too-many-locals
     def _fit(
         self,
         log: DataFrame,
@@ -344,7 +344,7 @@ class NeuroMF(TorchRecommender):
             hidden_mlp_dims=self.hidden_mlp_dims,
         ).to(self.device)
 
-        optimizer = torch.optim.Adam(
+        optimizer = Adam(
             self.model.parameters(),
             lr=self.learning_rate,
             weight_decay=self.l2_reg / self.batch_size_users,
@@ -360,7 +360,6 @@ class NeuroMF(TorchRecommender):
             optimizer.step()
             return loss.item()
 
-        # pylint: disable=unused-argument
         def _run_val_step(batch):
             self.model.eval()
             with torch.no_grad():
@@ -370,7 +369,7 @@ class NeuroMF(TorchRecommender):
         for epoch in range(self.epochs):
             for batch in train_data_loader:
                 train_loss = _run_train_step(batch)
-            train_debug_message = f"""Epoch[{epoch}] current loss: 
+            train_debug_message = f"""Epoch[{epoch}] current loss:
                                     {train_loss:.5f}"""
             self.logger.debug(train_debug_message)
 
@@ -379,23 +378,25 @@ class NeuroMF(TorchRecommender):
             for batch in valid_data_loader:
                 valid_loss += _run_val_step(batch)
             valid_loss /= len(valid_data_loader)
-            valid_debug_message = f"""Epoch[{epoch}] validation 
+            valid_debug_message = f"""Epoch[{epoch}] validation
                                     average loss: {valid_loss:.5f}"""
             self.logger.debug(valid_debug_message)
-            
+
             if valid_loss < best_valid_loss:
-                best_checkpoint = '/'.join([
+                best_checkpoint = "/".join(
+                    [
                         self.checkpoint_path,
-                        f'/best_neuromf_{epoch+1}_loss=-{valid_loss}.pt'
-                    ])
+                        f"/best_neuromf_{epoch+1}_loss=-{valid_loss}.pt",
+                    ]
+                )
                 self._save_model(best_checkpoint)
                 best_valid_loss = valid_loss
 
             lr_scheduler.step()
         self._load_model(best_checkpoint)
 
-    # pylint: disable=arguments-differ
-    def _loss(self, y_pred, y_true):
+    @staticmethod
+    def _loss(y_pred, y_true):
         return F.binary_cross_entropy(y_pred, y_true).mean()
 
     def _batch_pass(self, batch, model):
