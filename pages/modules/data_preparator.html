@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Preparation &mdash; RePlay  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Distributions" href="distributions.html" />
+    <link rel="prev" title="Scenarios" href="scenarios.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> RePlay
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spark.html">Settings</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../modules.html">Modules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="filters.html">Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time.html">Time Smoothing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saver.html">Serializer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitters.html">Splitters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="experiment.html">Compare Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Data Preparation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html">Distributions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../useful.html">Useful Info</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">RePlay</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../modules.html">Modules</a> &raquo;</li>
+      <li>Data Preparation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/pages/modules/data_preparator.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="data-preparation">
+<span id="data-preparator"></span><h1>Data Preparation<a class="headerlink" href="#data-preparation" title="Permalink to this headline"></a></h1>
+<p>Replay has a number of requirements for input data.
+We await that input columns are in the form <code class="docutils literal notranslate"><span class="pre">[user_id,</span> <span class="pre">item_id,</span> <span class="pre">timestamp,</span> <span class="pre">relevance]</span></code>.
+And internal format is a spark DataFrame with indexed integer values for <code class="docutils literal notranslate"><span class="pre">[user_idx,</span> <span class="pre">item_idx]</span></code>.
+You can convert indexes of your Spark DataFrame with <code class="docutils literal notranslate"><span class="pre">Indexer</span></code> class.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.data_preparator.Indexer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.data_preparator.</span></span><span class="sig-name descname"><span class="pre">Indexer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'user_id'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'item_id'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.data_preparator.Indexer" title="Permalink to this definition"></a></dt>
+<dd><p>This class is used to convert arbitrary id to numerical idx and back.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.data_preparator.Indexer.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">users</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.data_preparator.Indexer.fit" title="Permalink to this definition"></a></dt>
+<dd><p>Creates indexers to map raw id to numerical idx so that spark can handle them.
+:param user: DataFrame containing user column
+:param item: DataFrame containing item column
+:rtype: <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>
+:return:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.data_preparator.Indexer.inverse_transform">
+<span class="sig-name descname"><span class="pre">inverse_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.data_preparator.Indexer.inverse_transform" title="Permalink to this definition"></a></dt>
+<dd><p>Convert DataFrame to the initial indexes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>df</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>) – DataFrame with idxs</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>DataFrame with ids</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.data_preparator.Indexer.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.data_preparator.Indexer.transform" title="Permalink to this definition"></a></dt>
+<dd><p>Convert raw <code class="docutils literal notranslate"><span class="pre">user_id</span></code> and <code class="docutils literal notranslate"><span class="pre">item_id</span></code> to numerical <code class="docutils literal notranslate"><span class="pre">user_idx</span></code> and <code class="docutils literal notranslate"><span class="pre">item_idx</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data_frame</strong> – dataframe with raw indexes</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>dataframe with converted indexes</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p>If your DataFrame is in the form of Pandas DataFrame and has different column names, you can either
+preprocess it yourself with <code class="docutils literal notranslate"><span class="pre">convert2spark</span></code> function or use <code class="docutils literal notranslate"><span class="pre">DataPreparator</span></code> class</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.data_preparator.DataPreparator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.data_preparator.</span></span><span class="sig-name descname"><span class="pre">DataPreparator</span></span><a class="headerlink" href="#replay.data_preparator.DataPreparator" title="Permalink to this definition"></a></dt>
+<dd><p>Convert pandas DataFrame to Spark, rename columns and apply indexer.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.data_preparator.DataPreparator.back">
+<span class="sig-name descname"><span class="pre">back</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.data_preparator.DataPreparator.back" title="Permalink to this definition"></a></dt>
+<dd><p>Convert DataFrame to the initial indexes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>df</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>) – DataFrame with idxs</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>DataFrame with ids</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="scenarios.html" class="btn btn-neutral float-left" title="Scenarios" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="distributions.html" class="btn btn-neutral float-right" title="Distributions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Sberbank AI Laboratory.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

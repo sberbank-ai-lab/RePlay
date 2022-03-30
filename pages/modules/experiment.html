@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compare Results &mdash; RePlay  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Scenarios" href="scenarios.html" />
+    <link rel="prev" title="Metrics" href="metrics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> RePlay
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spark.html">Settings</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../modules.html">Modules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="filters.html">Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time.html">Time Smoothing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saver.html">Serializer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitters.html">Splitters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Compare Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_preparator.html">Data Preparation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html">Distributions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../useful.html">Useful Info</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">RePlay</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../modules.html">Modules</a> &raquo;</li>
+      <li>Compare Results</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/pages/modules/experiment.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="compare-results">
+<h1>Compare Results<a class="headerlink" href="#compare-results" title="Permalink to this headline"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.experiment.Experiment">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.experiment.</span></span><span class="sig-name descname"><span class="pre">Experiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">test</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calc_median</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calc_conf_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.experiment.Experiment" title="Permalink to this definition"></a></dt>
+<dd><p>This class calculates and stores metric values.
+Initialize it with test data and a dictionary mapping metrics to their depth cut-offs.</p>
+<p>Results are available with <code class="docutils literal notranslate"><span class="pre">pandas_df</span></code> attribute.</p>
+<p>Example:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">replay.metrics</span> <span class="kn">import</span> <span class="n">Coverage</span><span class="p">,</span> <span class="n">NDCG</span><span class="p">,</span> <span class="n">Precision</span><span class="p">,</span> <span class="n">Surprisal</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pred</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">recs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="p">{</span><span class="n">NDCG</span><span class="p">():</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">Surprisal</span><span class="p">(</span><span class="n">log</span><span class="p">):</span> <span class="mi">3</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span><span class="o">.</span><span class="n">add_result</span><span class="p">(</span><span class="s2">&quot;baseline&quot;</span><span class="p">,</span> <span class="n">recs</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span><span class="o">.</span><span class="n">add_result</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="n">pred</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span><span class="o">.</span><span class="n">results</span>
+<span class="go">            NDCG@2    NDCG@3  Surprisal@3</span>
+<span class="go">baseline  0.613147  0.469279     1.000000</span>
+<span class="go">model     0.386853  0.530721     0.666667</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span><span class="o">.</span><span class="n">compare</span><span class="p">(</span><span class="s2">&quot;baseline&quot;</span><span class="p">)</span>
+<span class="go">           NDCG@2  NDCG@3 Surprisal@3</span>
+<span class="go">baseline        –       –           –</span>
+<span class="go">model     -36.91%  13.09%     -33.33%</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="p">{</span><span class="n">Precision</span><span class="p">():</span> <span class="p">[</span><span class="mi">3</span><span class="p">]},</span> <span class="n">calc_median</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">calc_conf_interval</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span><span class="o">.</span><span class="n">add_result</span><span class="p">(</span><span class="s2">&quot;baseline&quot;</span><span class="p">,</span> <span class="n">recs</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span><span class="o">.</span><span class="n">add_result</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="n">pred</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span><span class="o">.</span><span class="n">results</span>
+<span class="go">          Precision@3  Precision@3_median  Precision@3_0.95_conf_interval</span>
+<span class="go">baseline     0.333333            0.333333                             0.0</span>
+<span class="go">model        0.666667            0.666667                             0.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="p">{</span><span class="n">Coverage</span><span class="p">(</span><span class="n">log</span><span class="p">):</span> <span class="mi">3</span><span class="p">},</span> <span class="n">calc_median</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">calc_conf_interval</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span><span class="o">.</span><span class="n">add_result</span><span class="p">(</span><span class="s2">&quot;baseline&quot;</span><span class="p">,</span> <span class="n">recs</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span><span class="o">.</span><span class="n">add_result</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="n">pred</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ex</span><span class="o">.</span><span class="n">results</span>
+<span class="go">          Coverage@3  Coverage@3_median  Coverage@3_0.95_conf_interval</span>
+<span class="go">baseline         1.0                1.0                            0.0</span>
+<span class="go">model            1.0                1.0                            0.0</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.experiment.Experiment.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">test</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calc_median</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calc_conf_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.experiment.Experiment.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>test</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – test DataFrame</p></li>
+<li><p><strong>metrics</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<a class="reference internal" href="metrics.html#replay.metrics.base_metric.Metric" title="replay.metrics.base_metric.Metric"><code class="xref py py-class docutils literal notranslate"><span class="pre">Metric</span></code></a>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – Dictionary of metrics to calculate.
+Key – metric, value – <code class="docutils literal notranslate"><span class="pre">int</span></code> or a list of ints.</p></li>
+<li><p><strong>calc_median</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – flag to calculate median value across users</p></li>
+<li><p><strong>calc_conf_interval</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – quantile value for the calculation of the confidence interval.
+Resulting value is the half of confidence interval.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.experiment.Experiment.add_result">
+<span class="sig-name descname"><span class="pre">add_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.experiment.Experiment.add_result" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate metrics for predictions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – name of the run to store in the resulting DataFrame</p></li>
+<li><p><strong>pred</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – model recommendations</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.experiment.Experiment.compare">
+<span class="sig-name descname"><span class="pre">compare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.experiment.Experiment.compare" title="Permalink to this definition"></a></dt>
+<dd><p>Show results as a percentage difference to record <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – name of the baseline record</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>results table in a percentage format</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="metrics.html" class="btn btn-neutral float-left" title="Metrics" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="scenarios.html" class="btn btn-neutral float-right" title="Scenarios" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Sberbank AI Laboratory.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

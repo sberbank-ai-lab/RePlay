@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Models &mdash; RePlay  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Serializer" href="saver.html" />
+    <link rel="prev" title="Time Smoothing" href="time.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> RePlay
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spark.html">Settings</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../modules.html">Modules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="filters.html">Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time.html">Time Smoothing</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#replay-recommenders">RePlay Recommenders</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#recommender-interface">Recommender interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#distributed-models">Distributed models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#popular-recommender">Popular Recommender</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#user-popular-recommender">User Popular Recommender</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#wilson-recommender">Wilson Recommender</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#random-recommender">Random Recommender</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#k-nearest-neighbours">K Nearest Neighbours</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#alternating-least-squares">Alternating Least Squares</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#slim">SLIM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#word2vec-recommender">Word2Vec Recommender</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#association-rules-item-to-item-recommender">Association Rules Item-to-Item Recommender</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cluster-recommender">Cluster Recommender</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#neural-models-with-distributed-inference">Neural models with distributed inference</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#neural-matrix-factorization">Neural Matrix Factorization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mult-vae">Mult-VAE</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#wrappers-and-other-models-with-distributed-inference">Wrappers and other models with distributed inference</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#admm-slim">ADMM SLIM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lightfm">LightFM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#implicit">implicit</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="saver.html">Serializer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitters.html">Splitters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="experiment.html">Compare Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_preparator.html">Data Preparation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html">Distributions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../useful.html">Useful Info</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">RePlay</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../modules.html">Modules</a> &raquo;</li>
+      <li>Models</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/pages/modules/models.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="module-replay.models">
+<span id="models"></span><h1>Models<a class="headerlink" href="#module-replay.models" title="Permalink to this headline"></a></h1>
+<p>This module contains recommender system algorithms including:</p>
+<ul class="simple">
+<li><p>distributed models built in PySpark</p></li>
+<li><p>neural networks build in PyTorch with distributed inference in PySpark</p></li>
+<li><dl class="simple">
+<dt>wrappers for commonly used recommender systems libraries and</dt><dd><p>models with non-distributed training and distributed inference in PySpark.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<div class="section" id="replay-recommenders">
+<h2>RePlay Recommenders<a class="headerlink" href="#replay-recommenders" title="Permalink to this headline"></a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Algorithm</p></th>
+<th class="head"><p>Implementation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Popular Recommender</p></td>
+<td><p>PySpark</p></td>
+</tr>
+<tr class="row-odd"><td><p>Popular By Users</p></td>
+<td><p>PySpark</p></td>
+</tr>
+<tr class="row-even"><td><p>Wilson Recommender</p></td>
+<td><p>PySpark</p></td>
+</tr>
+<tr class="row-odd"><td><p>Random Recommender</p></td>
+<td><p>PySpark</p></td>
+</tr>
+<tr class="row-even"><td><p>K-Nearest Neighbours</p></td>
+<td><p>PySpark</p></td>
+</tr>
+<tr class="row-odd"><td><p>Alternating Least Squares</p></td>
+<td><p>PySpark</p></td>
+</tr>
+<tr class="row-even"><td><p>SLIM</p></td>
+<td><p>PySpark</p></td>
+</tr>
+<tr class="row-odd"><td><p>Word2Vec Recommender</p></td>
+<td><p>PySpark</p></td>
+</tr>
+<tr class="row-even"><td><p>Association Rules Item-to-Item Recommender</p></td>
+<td><p>PySpark</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cluster Recommender</p></td>
+<td><p>PySpark</p></td>
+</tr>
+<tr class="row-even"><td><p>Neural Matrix Factorization</p></td>
+<td><p>Python CPU/GPU</p></td>
+</tr>
+<tr class="row-odd"><td><p>MultVAE</p></td>
+<td><p>Python CPU/GPU</p></td>
+</tr>
+<tr class="row-even"><td><p>ADMM SLIM</p></td>
+<td><p>Python CPU</p></td>
+</tr>
+<tr class="row-odd"><td><p>Обертка Implicit</p></td>
+<td><p>Python CPU</p></td>
+</tr>
+<tr class="row-even"><td><p>Обертка LightFM</p></td>
+<td><p>Python CPU</p></td>
+</tr>
+</tbody>
+</table>
+<p>To get more info on how to choose base model, please see this  <a class="reference internal" href="../useful_data/algorithm_selection.html"><span class="doc">page</span></a>.</p>
+</div>
+<div class="section" id="recommender-interface">
+<h2>Recommender interface<a class="headerlink" href="#recommender-interface" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.Recommender">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">Recommender</span></span><a class="headerlink" href="#replay.models.Recommender" title="Permalink to this definition"></a></dt>
+<dd><p>Usual recommender class for models without features.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.Recommender.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.Recommender.fit" title="Permalink to this definition"></a></dt>
+<dd><p>Fit a recommendation model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>log</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>) – historical log of interactions
+<code class="docutils literal notranslate"><span class="pre">[user_idx,</span> <span class="pre">item_idx,</span> <span class="pre">timestamp,</span> <span class="pre">relevance]</span></code></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.Recommender.fit_predict">
+<span class="sig-name descname"><span class="pre">fit_predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">users</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_seen_items</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.Recommender.fit_predict" title="Permalink to this definition"></a></dt>
+<dd><p>Fit model and get recommendations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>log</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>) – historical log of interactions
+<code class="docutils literal notranslate"><span class="pre">[user_idx,</span> <span class="pre">item_idx,</span> <span class="pre">timestamp,</span> <span class="pre">relevance]</span></code></p></li>
+<li><p><strong>k</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – number of recommendations for each user</p></li>
+<li><p><strong>users</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – users to create recommendations for
+dataframe containing <code class="docutils literal notranslate"><span class="pre">[user_idx]</span></code> or <code class="docutils literal notranslate"><span class="pre">array-like</span></code>;
+if <code class="docutils literal notranslate"><span class="pre">None</span></code>, recommend to all users from <code class="docutils literal notranslate"><span class="pre">log</span></code></p></li>
+<li><p><strong>items</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – candidate items for recommendations
+dataframe containing <code class="docutils literal notranslate"><span class="pre">[item_idx]</span></code> or <code class="docutils literal notranslate"><span class="pre">array-like</span></code>;
+if <code class="docutils literal notranslate"><span class="pre">None</span></code>, take all items from <code class="docutils literal notranslate"><span class="pre">log</span></code>.
+If it contains new items, <code class="docutils literal notranslate"><span class="pre">relevance</span></code> for them will be <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<li><p><strong>filter_seen_items</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – flag to remove seen items from recommendations based on <code class="docutils literal notranslate"><span class="pre">log</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>recommendation dataframe
+<code class="docutils literal notranslate"><span class="pre">[user_idx,</span> <span class="pre">item_idx,</span> <span class="pre">relevance]</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.Recommender.get_features">
+<span class="sig-name descname"><span class="pre">get_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ids</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.Recommender.get_features" title="Permalink to this definition"></a></dt>
+<dd><p>Returns user or item feature vectors as a Column with type ArrayType</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ids</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>) – Spark DataFrame with unique ids</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>feature vectors.
+If a model does not have a vector for some ids they are not present in the final result.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.Recommender.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">users</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_seen_items</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.Recommender.predict" title="Permalink to this definition"></a></dt>
+<dd><p>Get recommendations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>log</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>) – historical log of interactions
+<code class="docutils literal notranslate"><span class="pre">[user_idx,</span> <span class="pre">item_idx,</span> <span class="pre">timestamp,</span> <span class="pre">relevance]</span></code></p></li>
+<li><p><strong>k</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – number of recommendations for each user</p></li>
+<li><p><strong>users</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – users to create recommendations for
+dataframe containing <code class="docutils literal notranslate"><span class="pre">[user_idx]</span></code> or <code class="docutils literal notranslate"><span class="pre">array-like</span></code>;
+if <code class="docutils literal notranslate"><span class="pre">None</span></code>, recommend to all users from <code class="docutils literal notranslate"><span class="pre">log</span></code></p></li>
+<li><p><strong>items</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – candidate items for recommendations
+dataframe containing <code class="docutils literal notranslate"><span class="pre">[item_idx]</span></code> or <code class="docutils literal notranslate"><span class="pre">array-like</span></code>;
+if <code class="docutils literal notranslate"><span class="pre">None</span></code>, take all items from <code class="docutils literal notranslate"><span class="pre">log</span></code>.
+If it contains new items, <code class="docutils literal notranslate"><span class="pre">relevance</span></code> for them will be <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<li><p><strong>filter_seen_items</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – flag to remove seen items from recommendations based on <code class="docutils literal notranslate"><span class="pre">log</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>recommendation dataframe
+<code class="docutils literal notranslate"><span class="pre">[user_idx,</span> <span class="pre">item_idx,</span> <span class="pre">relevance]</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.Recommender.predict_pairs">
+<span class="sig-name descname"><span class="pre">predict_pairs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pairs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.Recommender.predict_pairs" title="Permalink to this definition"></a></dt>
+<dd><p>Get recommendations for specific user-item <code class="docutils literal notranslate"><span class="pre">pairs</span></code>.
+If a model can’t produce recommendation
+for specific pair it is removed from the resulting dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pairs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>) – dataframe with pairs to calculate relevance for, <code class="docutils literal notranslate"><span class="pre">[user_idx,</span> <span class="pre">item_idx]</span></code>.</p></li>
+<li><p><strong>log</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]) – historical log of interactions
+<code class="docutils literal notranslate"><span class="pre">[user_idx,</span> <span class="pre">item_idx,</span> <span class="pre">timestamp,</span> <span class="pre">relevance]</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>recommendation dataframe
+<code class="docutils literal notranslate"><span class="pre">[user_idx,</span> <span class="pre">item_idx,</span> <span class="pre">relevance]</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.base_rec.</span></span><span class="sig-name descname"><span class="pre">BaseRecommender</span></span></dt>
+<dd><p>Base recommender</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">optimize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_features=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_features=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_borders=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion=&lt;replay.metrics.ndcg.NDCG</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_study=True</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Searches best parameters with optuna.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>) – train data</p></li>
+<li><p><strong>test</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>) – test data</p></li>
+<li><p><strong>user_features</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]) – user features</p></li>
+<li><p><strong>item_features</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]) – item features</p></li>
+<li><p><strong>param_borders</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]]) – a dictionary with search borders, where
+key is the parameter name and value is the range of possible values
+<code class="docutils literal notranslate"><span class="pre">{param:</span> <span class="pre">[low,</span> <span class="pre">high]}</span></code>. In case of categorical parameters it is
+all possible values: <code class="docutils literal notranslate"><span class="pre">{cat_param:</span> <span class="pre">[cat_1,</span> <span class="pre">cat_2,</span> <span class="pre">cat_3]}</span></code>.</p></li>
+<li><p><strong>criterion</strong> (<a class="reference internal" href="metrics.html#replay.metrics.base_metric.Metric" title="replay.metrics.base_metric.Metric"><code class="xref py py-class docutils literal notranslate"><span class="pre">Metric</span></code></a>) – metric to use for optimization</p></li>
+<li><p><strong>k</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – recommendation list length</p></li>
+<li><p><strong>budget</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – number of points to try</p></li>
+<li><p><strong>new_study</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – keep searching with previous study or start a new study</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>dictionary with best parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="distributed-models">
+<h2>Distributed models<a class="headerlink" href="#distributed-models" title="Permalink to this headline"></a></h2>
+<p>Models with both training and inference implemented in pyspark.</p>
+<div class="section" id="popular-recommender">
+<h3>Popular Recommender<a class="headerlink" href="#popular-recommender" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.PopRec">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">PopRec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_relevance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.PopRec" title="Permalink to this definition"></a></dt>
+<dd><p>Recommend objects using their popularity.</p>
+<p>Popularity of an item is a probability that random user rated this item.</p>
+<div class="math notranslate nohighlight">
+\[Popularity(i) = \dfrac{N_i}{N}\]</div>
+<p><span class="math notranslate nohighlight">\(N_i\)</span> - number of users who rated item <span class="math notranslate nohighlight">\(i\)</span></p>
+<p><span class="math notranslate nohighlight">\(N\)</span> - total number of users</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data_frame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mi">1</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data_frame</span>
+<span class="go">   user_idx  item_idx  relevance</span>
+<span class="go">0         1         1        0.5</span>
+<span class="go">1         1         2        1.0</span>
+<span class="go">2         2         2        0.1</span>
+<span class="go">3         2         3        0.8</span>
+<span class="go">4         3         3        0.7</span>
+<span class="go">5         4         3        1.0</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">replay.utils</span> <span class="kn">import</span> <span class="n">convert2spark</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data_frame</span> <span class="o">=</span> <span class="n">convert2spark</span><span class="p">(</span><span class="n">data_frame</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">res</span> <span class="o">=</span> <span class="n">PopRec</span><span class="p">()</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">data_frame</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res</span><span class="o">.</span><span class="n">toPandas</span><span class="p">()</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;user_idx&quot;</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">   user_idx  item_idx  relevance</span>
+<span class="go">0         1         3       0.75</span>
+<span class="go">1         2         1       0.25</span>
+<span class="go">2         3         2       0.50</span>
+<span class="go">3         4         2       0.50</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">res</span> <span class="o">=</span> <span class="n">PopRec</span><span class="p">()</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">data_frame</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">filter_seen_items</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res</span><span class="o">.</span><span class="n">toPandas</span><span class="p">()</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;user_idx&quot;</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">   user_idx  item_idx  relevance</span>
+<span class="go">0         1         3       0.75</span>
+<span class="go">1         2         3       0.75</span>
+<span class="go">2         3         3       0.75</span>
+<span class="go">3         4         3       0.75</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">res</span> <span class="o">=</span> <span class="n">PopRec</span><span class="p">(</span><span class="n">use_relevance</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">data_frame</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res</span><span class="o">.</span><span class="n">toPandas</span><span class="p">()</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;user_idx&quot;</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">   user_idx  item_idx  relevance</span>
+<span class="go">0         1         3      0.625</span>
+<span class="go">1         2         1      0.125</span>
+<span class="go">2         3         2      0.275</span>
+<span class="go">3         4         2      0.275</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="user-popular-recommender">
+<h3>User Popular Recommender<a class="headerlink" href="#user-popular-recommender" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.UserPopRec">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">UserPopRec</span></span><a class="headerlink" href="#replay.models.UserPopRec" title="Permalink to this definition"></a></dt>
+<dd><p>Recommends old objects from each user’s personal top.
+Input is the number of interactions between users and items.</p>
+<p>Popularity for item <span class="math notranslate nohighlight">\(i\)</span> and user <span class="math notranslate nohighlight">\(u\)</span> is defined as the
+fraction of actions with item <span class="math notranslate nohighlight">\(i\)</span> among all interactions of user <span class="math notranslate nohighlight">\(u\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[Popularity(i_u) = \dfrac{N_iu}{N_u}\]</div>
+<p><span class="math notranslate nohighlight">\(N_iu\)</span> - number of interactions of user <span class="math notranslate nohighlight">\(u\)</span> with item <span class="math notranslate nohighlight">\(i\)</span>.
+<span class="math notranslate nohighlight">\(N_u\)</span> - total number of interactions of user <span class="math notranslate nohighlight">\(u\)</span>.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data_frame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data_frame</span>
+<span class="go">   user_idx  item_idx  relevance</span>
+<span class="go">0         1         1          2</span>
+<span class="go">1         1         2          1</span>
+<span class="go">2         3         3          1</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">replay.utils</span> <span class="kn">import</span> <span class="n">convert2spark</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data_frame</span> <span class="o">=</span> <span class="n">convert2spark</span><span class="p">(</span><span class="n">data_frame</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">UserPopRec</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">data_frame</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">filter_seen_items</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">user_item_popularity</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+<span class="go">3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res</span><span class="o">.</span><span class="n">toPandas</span><span class="p">()</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;user_idx&quot;</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">   user_idx  item_idx  relevance</span>
+<span class="go">0         1         1   0.666667</span>
+<span class="go">1         3         3   1.000000</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="wilson-recommender">
+<h3>Wilson Recommender<a class="headerlink" href="#wilson-recommender" title="Permalink to this headline"></a></h3>
+<p>Confidence interval for binomial distribution can be calculated as:</p>
+<div class="math notranslate nohighlight">
+\[WilsonScore = \frac{\widehat{p}+\frac{z_{ \frac{\alpha}{2}}^{2}}{2n}\pm z_
+{\frac{\alpha}{2}}\sqrt{\frac{\widehat{p}(1-\widehat{p})+\frac{z_
+{\frac{\alpha}{2}}^{2}}{4n}}{n}} }{1+\frac{z_{ \frac{\alpha}{2}}^{2}}{n}}\]</div>
+<p>Where <span class="math notranslate nohighlight">\(\hat{p}\)</span> – is an observed fraction of positive ratings.</p>
+<p><span class="math notranslate nohighlight">\(z_{\alpha}\)</span> 1-alpha quantile of normal distribution.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.Wilson">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">Wilson</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.Wilson" title="Permalink to this definition"></a></dt>
+<dd><p>Calculates lower confidence bound for the confidence interval
+of true fraction of positive ratings.</p>
+<p><code class="docutils literal notranslate"><span class="pre">relevance</span></code> must be converted to binary 0-1 form.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data_frame</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">replay.utils</span> <span class="kn">import</span> <span class="n">convert2spark</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data_frame</span> <span class="o">=</span> <span class="n">convert2spark</span><span class="p">(</span><span class="n">data_frame</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">Wilson</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">data_frame</span><span class="p">,</span><span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">toPandas</span><span class="p">()</span>
+<span class="go">   user_idx  item_idx  relevance</span>
+<span class="go">0         1         2   0.206549</span>
+<span class="go">1         2         1   0.206549</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="random-recommender">
+<h3>Random Recommender<a class="headerlink" href="#random-recommender" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.RandomRec">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">RandomRec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'uniform'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_cold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.RandomRec" title="Permalink to this definition"></a></dt>
+<dd><p>Recommend random items, either weighted by item popularity or uniform.</p>
+<div class="math notranslate nohighlight">
+\[P\left(i\right)\propto N_i + \alpha\]</div>
+<p><span class="math notranslate nohighlight">\(N_i\)</span> — number of users who rated item <span class="math notranslate nohighlight">\(i\)</span></p>
+<dl class="simple">
+<dt><span class="math notranslate nohighlight">\(\alpha\)</span> — bigger <span class="math notranslate nohighlight">\(\alpha\)</span> values increase amount of rare items in recommendations.</dt><dd><p>Must be bigger than -1. Default value is <span class="math notranslate nohighlight">\(\alpha = 0\)</span>.</p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">replay.session_handler</span> <span class="kn">import</span> <span class="n">get_spark_session</span><span class="p">,</span> <span class="n">State</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spark</span> <span class="o">=</span> <span class="n">get_spark_session</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">state</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="n">spark</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">replay.utils</span> <span class="kn">import</span> <span class="n">convert2spark</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log</span> <span class="o">=</span> <span class="n">convert2spark</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+<span class="gp">... </span>    <span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="gp">... </span><span class="p">}))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">log</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="go">+--------+--------+</span>
+<span class="go">|user_idx|item_idx|</span>
+<span class="go">+--------+--------+</span>
+<span class="go">|       1|       1|</span>
+<span class="go">|       1|       2|</span>
+<span class="go">|       2|       2|</span>
+<span class="go">|       2|       3|</span>
+<span class="go">|       3|       3|</span>
+<span class="go">|       4|       3|</span>
+<span class="go">+--------+--------+</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">random_pop</span> <span class="o">=</span> <span class="n">RandomRec</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="s2">&quot;popular_based&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+ <span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">alpha must be bigger than -1</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">random_pop</span> <span class="o">=</span> <span class="n">RandomRec</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="s2">&quot;abracadabra&quot;</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+ <span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">distribution can be one of [popular_based, relevance, uniform]</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">random_pop</span> <span class="o">=</span> <span class="n">RandomRec</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="s2">&quot;popular_based&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">777</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">random_pop</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">log</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">random_pop</span><span class="o">.</span><span class="n">item_popularity</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="go">+--------+-----------+</span>
+<span class="go">|item_idx|probability|</span>
+<span class="go">+--------+-----------+</span>
+<span class="go">|       1|        2.0|</span>
+<span class="go">|       2|        3.0|</span>
+<span class="go">|       3|        4.0|</span>
+<span class="go">+--------+-----------+</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">recs</span> <span class="o">=</span> <span class="n">random_pop</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">recs</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="go">+--------+--------+------------------+</span>
+<span class="go">|user_idx|item_idx|         relevance|</span>
+<span class="go">+--------+--------+------------------+</span>
+<span class="go">|       1|       3|0.3333333333333333|</span>
+<span class="go">|       2|       1|               0.5|</span>
+<span class="go">|       3|       2|               1.0|</span>
+<span class="go">|       3|       1|0.3333333333333333|</span>
+<span class="go">|       4|       2|               1.0|</span>
+<span class="go">|       4|       1|               0.5|</span>
+<span class="go">+--------+--------+------------------+</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">recs</span> <span class="o">=</span> <span class="n">random_pop</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">users</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">items</span><span class="o">=</span><span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">recs</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="go">+--------+--------+---------+</span>
+<span class="go">|user_idx|item_idx|relevance|</span>
+<span class="go">+--------+--------+---------+</span>
+<span class="go">|       1|       7|      1.0|</span>
+<span class="go">|       1|       8|      0.5|</span>
+<span class="go">+--------+--------+---------+</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">random_pop</span> <span class="o">=</span> <span class="n">RandomRec</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">555</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">random_pop</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">log</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">random_pop</span><span class="o">.</span><span class="n">item_popularity</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="go">+--------+-----------+</span>
+<span class="go">|item_idx|probability|</span>
+<span class="go">+--------+-----------+</span>
+<span class="go">|       1|        1.0|</span>
+<span class="go">|       2|        1.0|</span>
+<span class="go">|       3|        1.0|</span>
+<span class="go">+--------+-----------+</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.RandomRec.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'uniform'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_cold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.RandomRec.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>distribution</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – recommendation strategy:
+“uniform” - all items are sampled uniformly
+“popular_based” - recommend popular items more</p></li>
+<li><p><strong>alpha</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – bigger values adjust model towards less popular items</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – random seed</p></li>
+<li><p><strong>add_cold</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]) – flag to add cold items with minimal probability</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="k-nearest-neighbours">
+<h3>K Nearest Neighbours<a class="headerlink" href="#k-nearest-neighbours" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.KNN">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">KNN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_neighbours</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_relevance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shrink</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.KNN" title="Permalink to this definition"></a></dt>
+<dd><p>Item-based KNN with modified cosine similarity measure.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.KNN.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_neighbours</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_relevance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shrink</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.KNN.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_neighbours</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – number of neighbours</p></li>
+<li><p><strong>use_relevance</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – flag to use relevance values as is or to treat them as 1</p></li>
+<li><p><strong>shrink</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – term added to the denominator when calculating similarity</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="alternating-least-squares">
+<span id="als-rec"></span><h3>Alternating Least Squares<a class="headerlink" href="#alternating-least-squares" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.ALSWrap">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">ALSWrap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">implicit_prefs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.ALSWrap" title="Permalink to this definition"></a></dt>
+<dd><p>Wrapper for <a class="reference external" href="https://spark.apache.org/docs/latest/api/python/pyspark.mllib.html#pyspark.mllib.recommendation.ALS">Spark ALS</a>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.ALSWrap.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">implicit_prefs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.ALSWrap.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rank</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – hidden dimension for the approximate matrix</p></li>
+<li><p><strong>implicit_prefs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – flag to use implicit feedback</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – random seed</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="slim">
+<h3>SLIM<a class="headerlink" href="#slim" title="Permalink to this headline"></a></h3>
+<p>SLIM Recommender calculates similarity between objects to produce recommendations <span class="math notranslate nohighlight">\(W\)</span>.</p>
+<p>Loss function is:</p>
+<div class="math notranslate nohighlight">
+\[L = \frac 12||A - A W||^2_F + \frac \beta 2 ||W||_F^2+
+\lambda
+||W||_1\]</div>
+<p><span class="math notranslate nohighlight">\(W\)</span> – item similarity matrix</p>
+<p><span class="math notranslate nohighlight">\(A\)</span> – interaction matrix</p>
+<p>Finding <span class="math notranslate nohighlight">\(W\)</span> can be splitted into solving separate linear regressions with ElasticNet regularization.
+Thus each row in <span class="math notranslate nohighlight">\(W\)</span> is optimized with</p>
+<div class="math notranslate nohighlight">
+\[l = \frac 12||a_j - A w_j||^2_2 + \frac \beta 2 ||w_j||_2^2+
+\lambda ||w_j||_1\]</div>
+<p>To remove trivial solution, we add an extra requirements <span class="math notranslate nohighlight">\(w_{jj}=0\)</span>,
+and <span class="math notranslate nohighlight">\(w_{ij}\ge 0\)</span></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.SLIM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">SLIM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.SLIM" title="Permalink to this definition"></a></dt>
+<dd><p><a class="reference external" href="http://glaros.dtc.umn.edu/gkhome/fetch/papers/SLIM2011icdm.pdf">SLIM: Sparse Linear Methods for Top-N Recommender Systems</a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.SLIM.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.SLIM.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>beta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – l2 regularization</p></li>
+<li><p><strong>lambda</strong> – l1 regularization</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – random seed</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="word2vec-recommender">
+<h3>Word2Vec Recommender<a class="headerlink" href="#word2vec-recommender" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.Word2VecRec">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">Word2VecRec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.025</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_idf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.Word2VecRec" title="Permalink to this definition"></a></dt>
+<dd><p>Trains word2vec model where items ar treated as words and users as sentences.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.Word2VecRec.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.025</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_idf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.Word2VecRec.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rank</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – embedding size</p></li>
+<li><p><strong>min_count</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – the minimum number of times a token must
+appear to be included in the word2vec model’s vocabulary</p></li>
+<li><p><strong>step_size</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – step size to be used for each iteration of optimization</p></li>
+<li><p><strong>max_iter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – max number of iterations</p></li>
+<li><p><strong>window_size</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – window size</p></li>
+<li><p><strong>use_idf</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – flag to use inverse document frequency</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – random seed</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="association-rules-item-to-item-recommender">
+<h3>Association Rules Item-to-Item Recommender<a class="headerlink" href="#association-rules-item-to-item-recommender" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.AssociationRulesItemRec">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">AssociationRulesItemRec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_item_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_pair_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_neighbours</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_relevance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.AssociationRulesItemRec" title="Permalink to this definition"></a></dt>
+<dd><p>Item-to-item recommender based on association rules.
+Calculate pairs confidence, lift and confidence_gain defined as
+confidence(a, b)/confidence(!a, b) to get top-k associated items.</p>
+<p>Classical model uses items co-occurrence in sessions for
+confidence, lift and confidence_gain calculation
+but relevance could also be passed to the model, e.g.
+if you want to apply time smoothing and treat old sessions as less important.
+In this case all items in sessions should have the same relevance.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.AssociationRulesItemRec.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_item_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_pair_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_neighbours</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_relevance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.AssociationRulesItemRec.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>session_col</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – name of column to group sessions.
+Items are combined by the <code class="docutils literal notranslate"><span class="pre">user_id</span></code> column if <code class="docutils literal notranslate"><span class="pre">session_col</span></code> is not defined.</p></li>
+<li><p><strong>min_item_count</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – items with fewer sessions will be filtered out</p></li>
+<li><p><strong>min_pair_count</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – pairs with fewer sessions will be filtered out</p></li>
+<li><p><strong>num_neighbours</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – maximal number of neighbours to save for each item</p></li>
+<li><p><strong>use_relevance</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – flag to use relevance values instead of co-occurrence count
+If true, pair relevance in session is minimal relevance of item in pair.
+Item relevance is sum of relevance in all sessions.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.AssociationRulesItemRec.get_nearest_items">
+<span class="sig-name descname"><span class="pre">get_nearest_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lift'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.AssociationRulesItemRec.get_nearest_items" title="Permalink to this definition"></a></dt>
+<dd><p>Get k most similar items be the <cite>metric</cite> for each of the <cite>items</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>items</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>]) – spark dataframe or list of item ids to find neighbors</p></li>
+<li><p><strong>k</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – number of neighbors</p></li>
+<li><p><strong>metric</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – <cite>lift</cite> of ‘confidence_gain’</p></li>
+<li><p><strong>candidates</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – spark dataframe or list of items
+to consider as similar, e.g. popular/new items. If None,
+all items presented during model training are used.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>dataframe with the most similar items an distance,
+where bigger value means greater similarity.
+spark-dataframe with columns <code class="docutils literal notranslate"><span class="pre">[item_id,</span> <span class="pre">neighbour_item_id,</span> <span class="pre">similarity]</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="cluster-recommender">
+<h3>Cluster Recommender<a class="headerlink" href="#cluster-recommender" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.ClusterRec">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">ClusterRec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_clusters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.ClusterRec" title="Permalink to this definition"></a></dt>
+<dd><p>Generate recommendations for cold users using k-means clusters</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.ClusterRec.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_clusters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.ClusterRec.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>num_clusters</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – number of clusters</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="neural-models-with-distributed-inference">
+<h2>Neural models with distributed inference<a class="headerlink" href="#neural-models-with-distributed-inference" title="Permalink to this headline"></a></h2>
+<p>Models implemented in pytorch with distributed inference in pyspark.</p>
+<div class="section" id="neural-matrix-factorization">
+<h3>Neural Matrix Factorization<a class="headerlink" href="#neural-matrix-factorization" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.NeuroMF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">NeuroMF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_gmf_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_mlp_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_mlp_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l2_reg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count_negative_sample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.NeuroMF" title="Permalink to this definition"></a></dt>
+<dd><p>Neural Matrix Factorization model (NeuMF, NCF).</p>
+<p>In this implementation MLP and GMF modules are optional.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.NeuroMF.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_gmf_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embedding_mlp_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_mlp_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l2_reg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count_negative_sample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.NeuroMF.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>MLP or GMF model can be ignored if
+its embedding size (embedding_mlp_dim or embedding_gmf_dim) is set to <code class="docutils literal notranslate"><span class="pre">None</span></code>.
+Default variant is MLP + GMF with embedding size 128.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>learning_rate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – learning rate</p></li>
+<li><p><strong>epochs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – number of epochs to train model</p></li>
+<li><p><strong>embedding_gmf_dim</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – embedding size for gmf</p></li>
+<li><p><strong>embedding_mlp_dim</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – embedding size for mlp</p></li>
+<li><p><strong>hidden_mlp_dims</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – list of hidden dimension sized for mlp</p></li>
+<li><p><strong>l2_reg</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – l2 regularization term</p></li>
+<li><p><strong>gamma</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – decrease learning rate by this coefficient per epoch</p></li>
+<li><p><strong>count_negative_sample</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – number of negative samples to use</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="mult-vae">
+<h3>Mult-VAE<a class="headerlink" href="#mult-vae" title="Permalink to this headline"></a></h3>
+<p>Variation AutoEncoder</p>
+<img alt="../../_images/vae-gaussian.png" src="../../_images/vae-gaussian.png" />
+<p><strong>Problem formulation</strong></p>
+<p>We have a sample of independent equally distributed random values from true distribution
+<span class="math notranslate nohighlight">\(x_i \sim p_d(x)\)</span>, <span class="math notranslate nohighlight">\(i = 1, \dots, N\)</span>.</p>
+<p>Build a probability model <span class="math notranslate nohighlight">\(p_\theta(x)\)</span> for true distribution <span class="math notranslate nohighlight">\(p_d(x)\)</span>.</p>
+<p>Distribution <span class="math notranslate nohighlight">\(p_\theta(x)\)</span> allows both to estimate probability density for a given item <span class="math notranslate nohighlight">\(x\)</span>,
+and to sample <span class="math notranslate nohighlight">\(x \sim p_\theta(x)\)</span>.</p>
+<p><strong>Probability model</strong></p>
+<p><span class="math notranslate nohighlight">\(z \in \mathbb{R}^d\)</span> - is a local latent variable, one for each item <span class="math notranslate nohighlight">\(x\)</span>.</p>
+<p>Generative process for variational autoencoder:</p>
+<ol class="arabic simple">
+<li><p>Sample <span class="math notranslate nohighlight">\(z \sim p(z)\)</span>.</p></li>
+<li><p>Sample <span class="math notranslate nohighlight">\(x \sim p_\theta(x | z)\)</span>.</p></li>
+</ol>
+<p>Distribution parameters <span class="math notranslate nohighlight">\(p_\theta(x | z)\)</span> are defined with neural net weights <span class="math notranslate nohighlight">\(\theta\)</span>, with input <span class="math notranslate nohighlight">\(z\)</span>.</p>
+<p>Item probability density
+<span class="math notranslate nohighlight">\(x\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[p_\theta(x) = \mathbb{E}_{z \sim p(z)} p_\theta(x | z)\]</div>
+<p>Use lower estimate bound for the log likelihood.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\log p_\theta(x) = \mathbb{E}_{z \sim q_\phi(z | x)} \log p_\theta(
+x) = \mathbb{E}_{z \sim q_\phi(z | x)} \log \frac{p_\theta(x,
+z) q_\phi(z | x)} {q_\phi(z | x) p_\theta(z | x)} = \\
+= \mathbb{E}_{z
+\sim q_\phi(z | x)} \log \frac{p_\theta(x, z)}{q_\phi(z | x)} + KL(
+q_\phi(z | x) || p_\theta(z | x))\end{split}\]</div>
+<div class="math notranslate nohighlight">
+\[\begin{split}\log p_\theta(x) \geqslant \mathbb{E}_{z \sim q_\phi(z | x)}
+\log \frac{p_\theta(x | z)p(z)}{q_\phi(z | x)} =
+\mathbb{E}_{z \sim q_\phi(z | x)} \log p_\theta(x | z) -
+KL(q_\phi(z | x) || p(z)) = \\
+= L(x; \phi, \theta) \to \max\limits_{\phi, \theta}\end{split}\]</div>
+<p><span class="math notranslate nohighlight">\(q_\phi(z | x)\)</span> is a proposal or a recognition distribution. It is a gaussian with weights <span class="math notranslate nohighlight">\(\phi\)</span>:
+<span class="math notranslate nohighlight">\(q_\phi(z | x) = \mathcal{N}(z | \mu_\phi(x), \sigma^2_\phi(x)I)\)</span>.</p>
+<p>Difference between lower estimate bound <span class="math notranslate nohighlight">\(L(x; \phi, \theta)\)</span> and log likelihood
+<span class="math notranslate nohighlight">\(\log p_\theta(x)\)</span> - is a KL-divergence between a proposal and aposteriory distribution on <span class="math notranslate nohighlight">\(z\)</span>:
+<span class="math notranslate nohighlight">\(KL(q_\phi(z | x) || p_\theta(z | x))\)</span>. Maximum value
+<span class="math notranslate nohighlight">\(L(x; \phi, \theta)\)</span> for fixed model parameters
+<span class="math notranslate nohighlight">\(\theta\)</span>
+is reached with <span class="math notranslate nohighlight">\(q_\phi(z | x) = p_\theta(z | x)\)</span>, but explicit calculation of
+<span class="math notranslate nohighlight">\(p_\theta(z | x)\)</span> is not efficient to calculate,
+so it is also optimized by <span class="math notranslate nohighlight">\(\phi\)</span>. The closer <span class="math notranslate nohighlight">\(q_\phi(z | x)\)</span> to
+<span class="math notranslate nohighlight">\(p_\theta(z | x)\)</span>, the better the estimate.</p>
+<p>We usually take normal distribution for <span class="math notranslate nohighlight">\(p(z)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\varepsilon \sim \mathcal{N}(\varepsilon | 0, I)\]</div>
+<div class="math notranslate nohighlight">
+\[z = \mu + \sigma \varepsilon \Rightarrow z \sim \mathcal{N}(z | \mu,
+\sigma^2I)\]</div>
+<div class="math notranslate nohighlight">
+\[\frac{\partial}{\partial \phi} L(x; \phi, \theta) = \mathbb{E}_{
+\varepsilon \sim \mathcal{N}(\varepsilon | 0, I)} \frac{\partial}
+{\partial \phi} \log p_\theta(x | \mu_\phi(x) + \sigma_\phi(x)
+\varepsilon) - \frac{\partial}{\partial \phi} KL(q_\phi(z | x) ||
+p(z))\]</div>
+<div class="math notranslate nohighlight">
+\[\frac{\partial}{\partial \theta} L(x; \phi, \theta) = \mathbb{E}_{z
+\sim q_\phi(z | x)} \frac{\partial}{\partial \theta} \log
+p_\theta(x | z)\]</div>
+<p>In this case</p>
+<div class="math notranslate nohighlight">
+\[KL(q_\phi(z | x) || p(z)) = -\frac{1}{2}\sum_{i=1}^{dimZ}(1+
+log(\sigma_i^2) - \mu_i^2-\sigma_i^2)\]</div>
+<p>KL-divergence coefficient can also not be equal to one, in this case:</p>
+<div class="math notranslate nohighlight">
+\[L(x; \phi, \theta) =
+\mathbb{E}_{z \sim q_\phi(z | x)} \log p_\theta(x | z) -
+\beta \cdot KL(q_\phi(z | x) || p(z)) \to \max\limits_{\phi, \theta}\]</div>
+<p>With <span class="math notranslate nohighlight">\(\beta = 0\)</span> VAE is the same as the
+Denoising AutoEncoder.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.MultVAE">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">MultVAE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latent_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">600</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anneal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l2_reg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.MultVAE" title="Permalink to this definition"></a></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/pdf/1802.05814.pdf">Variational Autoencoders for Collaborative Filtering</a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.MultVAE.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latent_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">600</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anneal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l2_reg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.MultVAE.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>learning_rate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – learning rate</p></li>
+<li><p><strong>epochs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – number of epochs to train model</p></li>
+<li><p><strong>latent_dim</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – latent dimension size for user vectors</p></li>
+<li><p><strong>hidden_dim</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – hidden dimension size for encoder and decoder</p></li>
+<li><p><strong>dropout</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – dropout coefficient</p></li>
+<li><p><strong>anneal</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – anneal coefficient [0,1]</p></li>
+<li><p><strong>l2_reg</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – l2 regularization term</p></li>
+<li><p><strong>gamma</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – reduce learning rate by this coefficient per epoch</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="wrappers-and-other-models-with-distributed-inference">
+<h2>Wrappers and other models with distributed inference<a class="headerlink" href="#wrappers-and-other-models-with-distributed-inference" title="Permalink to this headline"></a></h2>
+<p>Wrappers for popular recommendation libraries and algorithms
+implemented in python with distributed inference in pyspark.</p>
+<div class="section" id="admm-slim">
+<h3>ADMM SLIM<a class="headerlink" href="#admm-slim" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.ADMMSLIM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">ADMMSLIM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lambda_1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.ADMMSLIM" title="Permalink to this definition"></a></dt>
+<dd><p><a class="reference external" href="http://www.cs.columbia.edu/~jebara/papers/wsdm20_ADMM.pdf">ADMM SLIM: Sparse Recommendations for Many Users</a></p>
+<p>This is a modification for the basic SLIM model.
+Recommendations are improved with Alternating Direction Method of Multipliers.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.ADMMSLIM.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lambda_1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.ADMMSLIM.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lambda_1</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – l1 regularization term</p></li>
+<li><p><strong>lambda_2</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – l2 regularization term</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – random seed</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="lightfm">
+<h3>LightFM<a class="headerlink" href="#lightfm" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.LightFMWrap">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">LightFMWrap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'warp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.LightFMWrap" title="Permalink to this definition"></a></dt>
+<dd><p>Wrapper for LightFM.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.LightFMWrap.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">no_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'warp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.LightFMWrap.__init__" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="implicit">
+<h3>implicit<a class="headerlink" href="#implicit" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.models.ImplicitWrap">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.models.</span></span><span class="sig-name descname"><span class="pre">ImplicitWrap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.ImplicitWrap" title="Permalink to this definition"></a></dt>
+<dd><p>Wrapper for <a class="reference external" href="https://github.com/benfred/implicit">implicit</a></p>
+<p>Example:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">implicit</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">implicit</span><span class="o">.</span><span class="n">als</span><span class="o">.</span><span class="n">AlternatingLeastSquares</span><span class="p">(</span><span class="n">factors</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">als</span> <span class="o">=</span> <span class="n">ImplicitWrap</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This way you can use implicit models as any other in replay
+with conversions made under the hood.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">replay.utils</span> <span class="kn">import</span> <span class="n">convert2spark</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">convert2spark</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">als</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">users</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">])[[</span><span class="s2">&quot;user_idx&quot;</span><span class="p">,</span> <span class="s2">&quot;item_idx&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">toPandas</span><span class="p">()</span>
+<span class="go">   user_idx  item_idx</span>
+<span class="go">0         1         3</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.models.ImplicitWrap.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.models.ImplicitWrap.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Provide initialized <code class="docutils literal notranslate"><span class="pre">implicit</span></code> model.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="time.html" class="btn btn-neutral float-left" title="Time Smoothing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="saver.html" class="btn btn-neutral float-right" title="Serializer" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Sberbank AI Laboratory.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

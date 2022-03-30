@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Metrics &mdash; RePlay  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Compare Results" href="experiment.html" />
+    <link rel="prev" title="Splitters" href="splitters.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> RePlay
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spark.html">Settings</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../modules.html">Modules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="filters.html">Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="time.html">Time Smoothing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saver.html">Serializer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitters.html">Splitters</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Metrics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hitrate">HitRate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#precision">Precision</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#map">MAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#recall">Recall</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#roc-auc">ROC-AUC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mrr">MRR</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ndcg">NDCG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#surprisal">Surprisal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#unexpectedness">Unexpectedness</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#coverage">Coverage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#custom-metric">Custom Metric</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="experiment.html">Compare Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_preparator.html">Data Preparation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="distributions.html">Distributions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../useful.html">Useful Info</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">RePlay</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../modules.html">Modules</a> &raquo;</li>
+      <li>Metrics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/pages/modules/metrics.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="metrics">
+<span id="id1"></span><h1>Metrics<a class="headerlink" href="#metrics" title="Permalink to this headline"></a></h1>
+<span class="target" id="module-replay.metrics"></span><p>Most metrics require dataframe with recommendations
+and dataframe with ground truth values —
+which objects each user interacted with.</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>recommendations (Union[pandas.DataFrame, spark.DataFrame]):</dt><dd><p>predictions of a recommender system,
+DataFrame with columns <code class="docutils literal notranslate"><span class="pre">[user_id,</span> <span class="pre">item_id,</span> <span class="pre">relevance]</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>ground_truth (Union[pandas.DataFrame, spark.DataFrame]):</dt><dd><p>test data, DataFrame with columns
+<code class="docutils literal notranslate"><span class="pre">[user_id,</span> <span class="pre">item_id,</span> <span class="pre">timestamp,</span> <span class="pre">relevance]</span></code></p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Every metric is calculated using top <code class="docutils literal notranslate"><span class="pre">K</span></code> items for each user.
+It is also possible to calculate metrics
+using multiple values for <code class="docutils literal notranslate"><span class="pre">K</span></code> simultaneously.
+In this case the result will be a dictionary and not a number.</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>k (Union[Iterable[int], int]):</dt><dd><p>a single number or a list, specifying the
+truncation length for recommendation list for each user</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>By default metrics are averaged by users,
+but you can alternatively use method <code class="docutils literal notranslate"><span class="pre">metric.median</span></code>.
+Also you can get the lower bound
+of <code class="docutils literal notranslate"><span class="pre">conf_interval</span></code> for a given <code class="docutils literal notranslate"><span class="pre">alpha</span></code>.</p>
+<p>Diversity metrics require extra parameters on initialization stage,
+but do not use <code class="docutils literal notranslate"><span class="pre">ground_truth</span></code> parameter.</p>
+<p>You can also
+<a class="reference internal" href="#new-metric"><span class="std std-ref">add new metrics</span></a>.</p>
+<div class="section" id="hitrate">
+<span id="hit-rate"></span><h2>HitRate<a class="headerlink" href="#hitrate" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.metrics.HitRate">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.metrics.</span></span><span class="sig-name descname"><span class="pre">HitRate</span></span><a class="headerlink" href="#replay.metrics.HitRate" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Percentage of users that have at least one</dt><dd><p>correctly recommended item among top-k.</p>
+</dd>
+</dl>
+<div class="math notranslate nohighlight">
+\[HitRate&#64;K(i) = \max_{j \in [1..K]}\mathbb{1}_{r_{ij}}\]</div>
+<div class="math notranslate nohighlight">
+\[HitRate&#64;K = \frac {\sum_{i=1}^{N}HitRate&#64;K(i)}{N}\]</div>
+<p><span class="math notranslate nohighlight">\(\mathbb{1}_{r_{ij}}\)</span> – indicator function stating that user <span class="math notranslate nohighlight">\(i\)</span> interacted with item <span class="math notranslate nohighlight">\(j\)</span></p>
+</dd></dl>
+
+</div>
+<div class="section" id="precision">
+<h2>Precision<a class="headerlink" href="#precision" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.metrics.Precision">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.metrics.</span></span><span class="sig-name descname"><span class="pre">Precision</span></span><a class="headerlink" href="#replay.metrics.Precision" title="Permalink to this definition"></a></dt>
+<dd><p>Mean percentage of relevant items among top <code class="docutils literal notranslate"><span class="pre">K</span></code> recommendations.</p>
+<div class="math notranslate nohighlight">
+\[Precision&#64;K(i) = \frac {\sum_{j=1}^{K}\mathbb{1}_{r_{ij}}}{K}\]</div>
+<div class="math notranslate nohighlight">
+\[Precision&#64;K = \frac {\sum_{i=1}^{N}Precision&#64;K(i)}{N}\]</div>
+<p><span class="math notranslate nohighlight">\(\mathbb{1}_{r_{ij}}\)</span> – indicator function showing that user <span class="math notranslate nohighlight">\(i\)</span> interacted with item <span class="math notranslate nohighlight">\(j\)</span></p>
+</dd></dl>
+
+</div>
+<div class="section" id="map">
+<h2>MAP<a class="headerlink" href="#map" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.metrics.MAP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.metrics.</span></span><span class="sig-name descname"><span class="pre">MAP</span></span><a class="headerlink" href="#replay.metrics.MAP" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Mean Average Precision – average the <code class="docutils literal notranslate"><span class="pre">Precision</span></code> at relevant positions for each user,</dt><dd><p>and then calculate the mean across all users.</p>
+</dd>
+</dl>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}&amp;AP&#64;K(i) = \frac 1K \sum_{j=1}^{K}\mathbb{1}_{r_{ij}}Precision&#64;j(i)\\&amp;MAP&#64;K = \frac {\sum_{i=1}^{N}AP&#64;K(i)}{N}\end{aligned}\end{align} \]</div>
+<p><span class="math notranslate nohighlight">\(\mathbb{1}_{r_{ij}}\)</span> – indicator function showing if user <span class="math notranslate nohighlight">\(i\)</span> interacted with item <span class="math notranslate nohighlight">\(j\)</span></p>
+</dd></dl>
+
+</div>
+<div class="section" id="recall">
+<h2>Recall<a class="headerlink" href="#recall" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.metrics.Recall">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.metrics.</span></span><span class="sig-name descname"><span class="pre">Recall</span></span><a class="headerlink" href="#replay.metrics.Recall" title="Permalink to this definition"></a></dt>
+<dd><p>Mean percentage of relevant items, that was shown among top <code class="docutils literal notranslate"><span class="pre">K</span></code> recommendations.</p>
+<div class="math notranslate nohighlight">
+\[Recall&#64;K(i) = \frac {\sum_{j=1}^{K}\mathbb{1}_{r_{ij}}}{|Rel_i|}\]</div>
+<div class="math notranslate nohighlight">
+\[Recall&#64;K = \frac {\sum_{i=1}^{N}Recall&#64;K(i)}{N}\]</div>
+<p><span class="math notranslate nohighlight">\(\mathbb{1}_{r_{ij}}\)</span> – indicator function showing that user <span class="math notranslate nohighlight">\(i\)</span> interacted with item <span class="math notranslate nohighlight">\(j\)</span></p>
+<p><span class="math notranslate nohighlight">\(|Rel_i|\)</span> – the number of relevant items for user <span class="math notranslate nohighlight">\(i\)</span></p>
+</dd></dl>
+
+</div>
+<div class="section" id="roc-auc">
+<h2>ROC-AUC<a class="headerlink" href="#roc-auc" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.metrics.RocAuc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.metrics.</span></span><span class="sig-name descname"><span class="pre">RocAuc</span></span><a class="headerlink" href="#replay.metrics.RocAuc" title="Permalink to this definition"></a></dt>
+<dd><p>Receiver Operating Characteristic/Area Under the Curve is the aggregated performance measure,
+that depends only on the order of recommended items.
+It can be interpreted as the fraction of object pairs (object of class 1, object of class 0)
+that were correctly ordered by the model.
+The bigger the value of AUC, the better the classification model.</p>
+<div class="math notranslate nohighlight">
+\[ROCAUC&#64;K(i) = \frac {\sum_{s=1}^{K}\sum_{t=1}^{K}
+\mathbb{1}_{r_{si}&lt;r_{ti}}
+\mathbb{1}_{gt_{si}&lt;gt_{ti}}}
+{\sum_{s=1}^{K}\sum_{t=1}^{K} \mathbb{1}_{gt_{si}&lt;gt_{tj}}}\]</div>
+<p><span class="math notranslate nohighlight">\(\mathbb{1}_{r_{si}&lt;r_{ti}}\)</span> – indicator function showing that recommendation score for
+user <span class="math notranslate nohighlight">\(i\)</span> for item <span class="math notranslate nohighlight">\(s\)</span> is bigger than for item <span class="math notranslate nohighlight">\(t\)</span></p>
+<p><span class="math notranslate nohighlight">\(\mathbb{1}_{gt_{si}&lt;gt_{ti}}\)</span> –  indicator function showing that
+user <span class="math notranslate nohighlight">\(i\)</span> values item <span class="math notranslate nohighlight">\(s\)</span> more than item <span class="math notranslate nohighlight">\(t\)</span>.</p>
+<p>Metric is averaged by all users.</p>
+<div class="math notranslate nohighlight">
+\[ROCAUC&#64;K = \frac {\sum_{i=1}^{N}ROCAUC&#64;K(i)}{N}\]</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">true</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+<span class="gp">... </span>                   <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span>
+<span class="gp">... </span>                   <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pred</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+<span class="gp">... </span>                   <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span>
+<span class="gp">... </span>                   <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mi">0</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">roc</span> <span class="o">=</span> <span class="n">RocAuc</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">roc</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+<span class="go">0.75</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="mrr">
+<h2>MRR<a class="headerlink" href="#mrr" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.metrics.MRR">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.metrics.</span></span><span class="sig-name descname"><span class="pre">MRR</span></span><a class="headerlink" href="#replay.metrics.MRR" title="Permalink to this definition"></a></dt>
+<dd><p>Mean Reciprocal Rank –
+Reciprocal Rank is the inverse position of the first relevant item among top-k recommendations,
+<span class="math notranslate nohighlight">\(\frac {1}{rank_i}\)</span>. This value is averaged by all users.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pred</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span> <span class="p">,</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">true</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">MRR</span><span class="p">()(</span><span class="n">pred</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="go">0.5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">MRR</span><span class="p">()(</span><span class="n">pred</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="go">0.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">MRR</span><span class="p">()(</span><span class="n">true</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="go">1.0</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="ndcg">
+<h2>NDCG<a class="headerlink" href="#ndcg" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.metrics.NDCG">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.metrics.</span></span><span class="sig-name descname"><span class="pre">NDCG</span></span><a class="headerlink" href="#replay.metrics.NDCG" title="Permalink to this definition"></a></dt>
+<dd><p>Normalized Discounted Cumulative Gain is a metric
+that takes into account positions of relevant items.</p>
+<p>This is the binary version, it takes into account
+whether the item was consumed or not, relevance value is ignored.</p>
+<div class="math notranslate nohighlight">
+\[DCG&#64;K(i) = \sum_{j=1}^{K}\frac{\mathbb{1}_{r_{ij}}}{\log_2 (j+1)}\]</div>
+<p><span class="math notranslate nohighlight">\(\mathbb{1}_{r_{ij}}\)</span> – indicator function showing that user <span class="math notranslate nohighlight">\(i\)</span> interacted with item <span class="math notranslate nohighlight">\(j\)</span></p>
+<p>To get from <span class="math notranslate nohighlight">\(DCG\)</span> to <span class="math notranslate nohighlight">\(nDCG\)</span> we calculate the biggest possible value of <cite>DCG</cite>
+for user <span class="math notranslate nohighlight">\(i\)</span> and recommendation length <span class="math notranslate nohighlight">\(K\)</span>.</p>
+<div class="math notranslate nohighlight">
+\[IDCG&#64;K(i) = max(DCG&#64;K(i)) = \sum_{j=1}^{K}\frac{\mathbb{1}_{j\le|Rel_i|}}{\log_2 (j+1)}\]</div>
+<div class="math notranslate nohighlight">
+\[nDCG&#64;K(i) = \frac {DCG&#64;K(i)}{IDCG&#64;K(i)}\]</div>
+<p><span class="math notranslate nohighlight">\(|Rel_i|\)</span> – number of relevant items for user <span class="math notranslate nohighlight">\(i\)</span></p>
+<p>Metric is averaged by users.</p>
+<div class="math notranslate nohighlight">
+\[nDCG&#64;K = \frac {\sum_{i=1}^{N}nDCG&#64;K(i)}{N}\]</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pred</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+<span class="gp">... </span>                   <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span>
+<span class="gp">... </span>                   <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">true</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+<span class="gp">... </span>                   <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span>
+<span class="gp">... </span>                   <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ndcg</span> <span class="o">=</span> <span class="n">NDCG</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ndcg</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="go">0.5</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="surprisal">
+<h2>Surprisal<a class="headerlink" href="#surprisal" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.metrics.Surprisal">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.metrics.</span></span><span class="sig-name descname"><span class="pre">Surprisal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.metrics.Surprisal" title="Permalink to this definition"></a></dt>
+<dd><p>Measures how many surprising rare items are present in recommendations.</p>
+<div class="math notranslate nohighlight">
+\[\textit{Self-Information}(j)= -\log_2 \frac {u_j}{N}\]</div>
+<p><span class="math notranslate nohighlight">\(u_j\)</span> – number of users that interacted with item <span class="math notranslate nohighlight">\(j\)</span>.
+Cold items are treated as if they were rated by 1 user.
+That is, if they appear in recommendations it will be completely unexpected.</p>
+<p>Metric is normalized.</p>
+<p>Surprisal for item <span class="math notranslate nohighlight">\(j\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[Surprisal(j)= \frac {\textit{Self-Information}(j)}{log_2 N}\]</div>
+<p>Recommendation list surprisal is the average surprisal of items in it.</p>
+<div class="math notranslate nohighlight">
+\[Surprisal&#64;K(i) = \frac {\sum_{j=1}^{K}Surprisal(j)} {K}\]</div>
+<p>Final metric is averaged by users.</p>
+<div class="math notranslate nohighlight">
+\[Surprisal&#64;K = \frac {\sum_{i=1}^{N}Surprisal&#64;K(i)}{N}\]</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.metrics.Surprisal.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.metrics.Surprisal.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Here we calculate self-information for each item</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>log</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]) – historical data</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="unexpectedness">
+<h2>Unexpectedness<a class="headerlink" href="#unexpectedness" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.metrics.Unexpectedness">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.metrics.</span></span><span class="sig-name descname"><span class="pre">Unexpectedness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pred</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.metrics.Unexpectedness" title="Permalink to this definition"></a></dt>
+<dd><p>Fraction of recommended items that are not present in some baseline recommendations.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">replay.session_handler</span> <span class="kn">import</span> <span class="n">get_spark_session</span><span class="p">,</span> <span class="n">State</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spark</span> <span class="o">=</span> <span class="n">get_spark_session</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">state</span> <span class="o">=</span> <span class="n">State</span><span class="p">(</span><span class="n">spark</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">log</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">recs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;item_idx&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">metric</span> <span class="o">=</span> <span class="n">Unexpectedness</span><span class="p">(</span><span class="n">log</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">round</span><span class="p">(</span><span class="n">metric</span><span class="p">(</span><span class="n">recs</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+<span class="go">0.67</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.metrics.Unexpectedness.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pred</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.metrics.Unexpectedness.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>pred</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]) – model predictions</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="coverage">
+<h2>Coverage<a class="headerlink" href="#coverage" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.metrics.Coverage">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.metrics.</span></span><span class="sig-name descname"><span class="pre">Coverage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.metrics.Coverage" title="Permalink to this definition"></a></dt>
+<dd><p>Metric calculation is as follows:</p>
+<ul class="simple">
+<li><p>take <code class="docutils literal notranslate"><span class="pre">K</span></code> recommendations with the biggest <code class="docutils literal notranslate"><span class="pre">relevance</span></code> for each <code class="docutils literal notranslate"><span class="pre">user_id</span></code></p></li>
+<li><p>count the number of distinct <code class="docutils literal notranslate"><span class="pre">item_id</span></code> in these recommendations</p></li>
+<li><p>devide it by the number of items in the whole data set</p></li>
+</ul>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.metrics.Coverage.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.metrics.Coverage.__init__" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>log</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]) – pandas or Spark DataFrame
+It is important for <code class="docutils literal notranslate"><span class="pre">log</span></code> to contain all available items.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<hr class="docutils" id="new-metric" />
+<div class="section" id="custom-metric">
+<h2>Custom Metric<a class="headerlink" href="#custom-metric" title="Permalink to this headline"></a></h2>
+<p>Your metric should be inherited from <code class="docutils literal notranslate"><span class="pre">Metric</span></code> class and implement following methods:</p>
+<ul class="simple">
+<li><p><strong>__init__</strong></p></li>
+<li><p><strong>_get_enriched_recommendations</strong></p></li>
+<li><p><strong>_get_metric_value_by_user</strong></p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">get_enriched_recommendations</span></code> is already implemented, but you can change it if it is required for your metric.
+<code class="docutils literal notranslate"><span class="pre">_get_metric_value_by_user</span></code> is required for every metric because this is where the actual calculations happen.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="replay.metrics.base_metric.get_enriched_recommendations">
+<span class="sig-prename descclassname"><span class="pre">replay.metrics.base_metric.</span></span><span class="sig-name descname"><span class="pre">get_enriched_recommendations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recommendations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ground_truth</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.metrics.base_metric.get_enriched_recommendations" title="Permalink to this definition"></a></dt>
+<dd><p>Merge recommendations and ground truth into a single DataFrame
+and aggregate items into lists so that each user has only one record.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>recommendations</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]) – recommendation list</p></li>
+<li><p><strong>ground_truth</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]) – test data</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">[user_id,</span> <span class="pre">pred,</span> <span class="pre">ground_truth]</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.metrics.base_metric.Metric">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.metrics.base_metric.</span></span><span class="sig-name descname"><span class="pre">Metric</span></span><a class="headerlink" href="#replay.metrics.base_metric.Metric" title="Permalink to this definition"></a></dt>
+<dd><p>Base metric class</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="replay.metrics.base_metric.Metric._get_metric_value_by_user">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_get_metric_value_by_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ground_truth</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.metrics.base_metric.Metric._get_metric_value_by_user" title="Permalink to this definition"></a></dt>
+<dd><p>Metric calculation for one user.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> – depth cut-off</p></li>
+<li><p><strong>pred</strong> – recommendations</p></li>
+<li><p><strong>ground_truth</strong> – test data</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>metric value for current user</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="replay.metrics.base_metric.RecOnlyMetric">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">replay.metrics.base_metric.</span></span><span class="sig-name descname"><span class="pre">RecOnlyMetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#replay.metrics.base_metric.RecOnlyMetric" title="Permalink to this definition"></a></dt>
+<dd><p>Base class for metrics that do not need holdout data</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="splitters.html" class="btn btn-neutral float-left" title="Splitters" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="experiment.html" class="btn btn-neutral float-right" title="Compare Results" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Sberbank AI Laboratory.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

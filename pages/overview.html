@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Get Started &mdash; RePlay  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Settings" href="spark.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> RePlay
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Get Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#data-format">Data Format</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id-requirements">ID requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#timestamp-requirements">Timestamp requirements</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spark.html">Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="useful.html">Useful Info</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">RePlay</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Get Started</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/pages/overview.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="get-started">
+<h1>Get Started<a class="headerlink" href="#get-started" title="Permalink to this headline"></a></h1>
+<div class="section" id="data-format">
+<h2>Data Format<a class="headerlink" href="#data-format" title="Permalink to this headline"></a></h2>
+<p>RePlay uses PySpark for internal data representation.
+To convert Pandas dataframe into a spark one you can use <code class="docutils literal notranslate"><span class="pre">replay.utils.convert2spark</span></code> function.</p>
+<p>By default you don’t have to think about Spark session at all because it will be created automatically.
+If you want to use custom session, refer to <a class="reference internal" href="spark.html"><span class="doc std std-doc">this</span></a> page.</p>
+<p>There are also requirements regarding column names.</p>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Entity</p></th>
+<th class="head"><p>Name</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>User identificator</p></td>
+<td><p>user_idx</p></td>
+</tr>
+<tr class="row-odd"><td><p>Item identificator</p></td>
+<td><p>item_idx</p></td>
+</tr>
+<tr class="row-even"><td><p>Date info</p></td>
+<td><p>timestamp</p></td>
+</tr>
+<tr class="row-odd"><td><p>Rating/weight</p></td>
+<td><p>relevance</p></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="id-requirements">
+<h3>ID requirements<a class="headerlink" href="#id-requirements" title="Permalink to this headline"></a></h3>
+<p>user_idx and item_idx should be numerical indexes starting at zero without gaps.
+This is important for models that use sparse matrices and estimate their dimensions on biggest seen index.</p>
+<p>You should convert your data with <a class="reference internal" href="modules/data_preparator.html"><span class="doc std std-doc">Indexer</span></a> class.
+It will store label encoders for you to convert raw id to idx and back.</p>
+</div>
+<div class="section" id="timestamp-requirements">
+<h3>Timestamp requirements<a class="headerlink" href="#timestamp-requirements" title="Permalink to this headline"></a></h3>
+<p>timestamp can be integer, but it is preferable if it is a datetime timestamp.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="spark.html" class="btn btn-neutral float-right" title="Settings" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Sberbank AI Laboratory.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
