@@ -40,7 +40,6 @@ class Unexpectedness(RecOnlyMetric):
             return 0
         return 1.0 - len(set(pred[:k]) & set(base_pred[:k])) / k
 
-    # pylint: disable=arguments-differ
     def _get_enriched_recommendations(
         self, recommendations: DataFrame, ground_truth: DataFrame
     ) -> DataFrame:

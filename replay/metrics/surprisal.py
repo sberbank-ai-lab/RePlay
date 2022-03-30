@@ -62,7 +62,6 @@ class Surprisal(RecOnlyMetric):
         weigths = args[0]
         return sum(weigths[:k]) / k
 
-    # pylint: disable=arguments-differ
     def _get_enriched_recommendations(
         self, recommendations: DataFrame, ground_truth: DataFrame
     ) -> DataFrame:
