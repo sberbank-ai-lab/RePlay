@@ -146,7 +146,6 @@ class MultVAE(TorchRecommender):
         "dropout": {"type": "uniform", "args": [0, 0.5]},
         "anneal": {"type": "uniform", "args": [0.2, 1]},
         "l2_reg": {"type": "loguniform", "args": [1e-9, 5]},
-        "gamma": {"type": "uniform", "args": [0.8, 0.99]},
     }
 
     # pylint: disable=too-many-arguments
@@ -159,7 +158,6 @@ class MultVAE(TorchRecommender):
         dropout: float = 0.3,
         anneal: float = 0.1,
         l2_reg: float = 0,
-        gamma: float = 0.99,
     ):
         """
         :param learning_rate: learning rate
@@ -169,7 +167,6 @@ class MultVAE(TorchRecommender):
         :param dropout: dropout coefficient
         :param anneal: anneal coefficient [0,1]
         :param l2_reg: l2 regularization term
-        :param gamma: reduce learning rate by this coefficient per epoch
         """
         super().__init__()
         self.learning_rate = learning_rate
@@ -179,7 +176,6 @@ class MultVAE(TorchRecommender):
         self.dropout = dropout
         self.anneal = anneal
         self.l2_reg = l2_reg
-        self.gamma = gamma
 
     @property
     def _init_args(self):
@@ -191,7 +187,6 @@ class MultVAE(TorchRecommender):
             "dropout": self.dropout,
             "anneal": self.anneal,
             "l2_reg": self.l2_reg,
-            "gamma": self.gamma,
         }
 
     def _get_data_loader(
@@ -247,7 +242,6 @@ class MultVAE(TorchRecommender):
             hidden_dim=self.hidden_dim,
             dropout=self.dropout,
         ).to(self.device)
-
         optimizer = Adam(
             self.model.parameters(),
             lr=self.learning_rate,
@@ -255,49 +249,14 @@ class MultVAE(TorchRecommender):
         )
         lr_scheduler = ReduceLROnPlateau(optimizer, factor=0.5, patience=3)
 
-        def _run_train_step(batch):
-            self.model.train()
-            optimizer.zero_grad()
-            model_result = self._batch_pass(batch, self.model)
-            loss = self._loss(**model_result)
-            loss.backward()
-            optimizer.step()
-            return loss.item()
-
-        def _run_val_step(batch):
-            self.model.eval()
-            with torch.no_grad():
-                model_result = self._batch_pass(batch, self.model)
-                return self._loss(**model_result)
-
-        for epoch in range(self.epochs):
-            for batch in train_data_loader:
-                train_loss = _run_train_step(batch)
-            train_debug_message = f"""Epoch[{epoch}] current loss:
-                                    {train_loss:.5f}"""
-            self.logger.debug(train_debug_message)
-
-            valid_loss = 0
-            best_valid_loss = np.inf
-            for batch in valid_data_loader:
-                valid_loss += _run_val_step(batch)
-            valid_loss /= len(valid_data_loader)
-            valid_debug_message = f"""Epoch[{epoch}] validation
-                                    average loss: {valid_loss:.5f}"""
-            self.logger.debug(valid_debug_message)
-
-            if valid_loss < best_valid_loss:
-                best_checkpoint = "/".join(
-                    [
-                        self.checkpoint_path,
-                        f"/best_multvae_{epoch+1}_loss=-{valid_loss}.pt",
-                    ]
-                )
-                self._save_model(best_checkpoint)
-                best_valid_loss = valid_loss
-
-            lr_scheduler.step(valid_loss)
-        self._load_model(best_checkpoint)
+        self.train(
+            train_data_loader,
+            valid_data_loader,
+            optimizer,
+            lr_scheduler,
+            self.epochs,
+            "multvae",
+        )
 
     # pylint: disable=arguments-differ
     def _loss(self, y_pred, y_true, mu_latent, logvar_latent):

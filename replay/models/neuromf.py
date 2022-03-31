@@ -13,7 +13,7 @@ from pyspark.sql import DataFrame
 from sklearn.model_selection import train_test_split
 from torch import LongTensor, Tensor, nn
 from torch.optim import Adam
-from torch.optim.lr_scheduler import ExponentialLR
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader, TensorDataset
 
 from replay.models.base_torch_rec import TorchRecommender
@@ -230,7 +230,6 @@ class NeuroMF(TorchRecommender):
         "embedding_mlp_dim": {"type": "int", "args": [EMBED_DIM, EMBED_DIM]},
         "learning_rate": {"type": "loguniform", "args": [0.0001, 0.5]},
         "l2_reg": {"type": "loguniform", "args": [1e-9, 5]},
-        "gamma": {"type": "uniform", "args": [0.8, 0.99]},
         "count_negative_sample": {"type": "int", "args": [1, 20]},
     }
 
@@ -243,7 +242,6 @@ class NeuroMF(TorchRecommender):
         embedding_mlp_dim: Optional[int] = None,
         hidden_mlp_dims: Optional[List[int]] = None,
         l2_reg: float = 0,
-        gamma: float = 0.99,
         count_negative_sample: int = 1,
     ):
         """
@@ -257,7 +255,6 @@ class NeuroMF(TorchRecommender):
         :param embedding_mlp_dim: embedding size for mlp
         :param hidden_mlp_dims: list of hidden dimension sized for mlp
         :param l2_reg: l2 regularization term
-        :param gamma: decrease learning rate by this coefficient per epoch
         :param count_negative_sample: number of negative samples to use
         """
         super().__init__()
@@ -277,7 +274,6 @@ class NeuroMF(TorchRecommender):
         self.embedding_mlp_dim = embedding_mlp_dim
         self.hidden_mlp_dims = hidden_mlp_dims
         self.l2_reg = l2_reg
-        self.gamma = gamma
         self.count_negative_sample = count_negative_sample
 
     @property
@@ -289,7 +285,6 @@ class NeuroMF(TorchRecommender):
             "embedding_mlp_dim": self.embedding_mlp_dim,
             "hidden_mlp_dims": self.hidden_mlp_dims,
             "l2_reg": self.l2_reg,
-            "gamma": self.gamma,
             "count_negative_sample": self.count_negative_sample,
         }
 
@@ -343,58 +338,23 @@ class NeuroMF(TorchRecommender):
             embedding_mlp_dim=self.embedding_mlp_dim,
             hidden_mlp_dims=self.hidden_mlp_dims,
         ).to(self.device)
-
         optimizer = Adam(
             self.model.parameters(),
             lr=self.learning_rate,
             weight_decay=self.l2_reg / self.batch_size_users,
         )
-        lr_scheduler = ExponentialLR(optimizer, gamma=self.gamma)
+        lr_scheduler = ReduceLROnPlateau(optimizer, factor=0.5, patience=3)
 
-        def _run_train_step(batch):
-            self.model.train()
-            optimizer.zero_grad()
-            y_pred, y_true = self._batch_pass(batch, self.model)
-            loss = self._loss(y_pred, y_true)
-            loss.backward()
-            optimizer.step()
-            return loss.item()
+        self.train(
+            train_data_loader,
+            valid_data_loader,
+            optimizer,
+            lr_scheduler,
+            self.epochs,
+            "neuromf",
+        )
 
-        def _run_val_step(batch):
-            self.model.eval()
-            with torch.no_grad():
-                y_pred, y_true = self._batch_pass(batch, self.model)
-                return self._loss(y_pred, y_true)
-
-        for epoch in range(self.epochs):
-            for batch in train_data_loader:
-                train_loss = _run_train_step(batch)
-            train_debug_message = f"""Epoch[{epoch}] current loss:
-                                    {train_loss:.5f}"""
-            self.logger.debug(train_debug_message)
-
-            valid_loss = 0
-            best_valid_loss = np.inf
-            for batch in valid_data_loader:
-                valid_loss += _run_val_step(batch)
-            valid_loss /= len(valid_data_loader)
-            valid_debug_message = f"""Epoch[{epoch}] validation
-                                    average loss: {valid_loss:.5f}"""
-            self.logger.debug(valid_debug_message)
-
-            if valid_loss < best_valid_loss:
-                best_checkpoint = "/".join(
-                    [
-                        self.checkpoint_path,
-                        f"/best_neuromf_{epoch+1}_loss=-{valid_loss}.pt",
-                    ]
-                )
-                self._save_model(best_checkpoint)
-                best_valid_loss = valid_loss
-
-            lr_scheduler.step()
-        self._load_model(best_checkpoint)
-
+    # pylint: disable=arguments-differ
     @staticmethod
     def _loss(y_pred, y_true):
         return F.binary_cross_entropy(y_pred, y_true).mean()
@@ -414,7 +374,7 @@ class NeuroMF(TorchRecommender):
         y_true_neg = torch.zeros_like(neg_item_batch).to(self.device)
         y_true = torch.cat((y_true_pos, y_true_neg), 0).float()
 
-        return y_pred, y_true
+        return {"y_pred": y_pred, "y_true": y_true}
 
     @staticmethod
     def _predict_pairs_inner(
