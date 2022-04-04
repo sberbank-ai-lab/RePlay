@@ -146,6 +146,8 @@ class MultVAE(TorchRecommender):
         "dropout": {"type": "uniform", "args": [0, 0.5]},
         "anneal": {"type": "uniform", "args": [0.2, 1]},
         "l2_reg": {"type": "loguniform", "args": [1e-9, 5]},
+        "factor": {"type": "float", "args": [0.2, 0.2]},
+        "patience": {"type": "int", "args": [3, 3]},
     }
 
     # pylint: disable=too-many-arguments
@@ -158,6 +160,8 @@ class MultVAE(TorchRecommender):
         dropout: float = 0.3,
         anneal: float = 0.1,
         l2_reg: float = 0,
+        factor: float = 0.2,
+        patience: int = 3,
     ):
         """
         :param learning_rate: learning rate
@@ -167,6 +171,8 @@ class MultVAE(TorchRecommender):
         :param dropout: dropout coefficient
         :param anneal: anneal coefficient [0,1]
         :param l2_reg: l2 regularization term
+        :param factor: ReduceLROnPlateau reducing factor. new_lr = lr * factor
+        :param patience: number of non-improved epochs before reducing lr
         """
         super().__init__()
         self.learning_rate = learning_rate
@@ -176,6 +182,8 @@ class MultVAE(TorchRecommender):
         self.dropout = dropout
         self.anneal = anneal
         self.l2_reg = l2_reg
+        self.factor = factor
+        self.patience = patience
 
     @property
     def _init_args(self):
@@ -187,6 +195,8 @@ class MultVAE(TorchRecommender):
             "dropout": self.dropout,
             "anneal": self.anneal,
             "l2_reg": self.l2_reg,
+            "factor": self.factor,
+            "patience": self.patience,
         }
 
     def _get_data_loader(
@@ -247,7 +257,9 @@ class MultVAE(TorchRecommender):
             lr=self.learning_rate,
             weight_decay=self.l2_reg / self.batch_size_users,
         )
-        lr_scheduler = ReduceLROnPlateau(optimizer, factor=0.5, patience=3)
+        lr_scheduler = ReduceLROnPlateau(
+            optimizer, factor=self.factor, patience=self.patience
+        )
 
         self.train(
             train_data_loader,

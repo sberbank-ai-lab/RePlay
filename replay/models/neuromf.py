@@ -231,6 +231,8 @@ class NeuroMF(TorchRecommender):
         "learning_rate": {"type": "loguniform", "args": [0.0001, 0.5]},
         "l2_reg": {"type": "loguniform", "args": [1e-9, 5]},
         "count_negative_sample": {"type": "int", "args": [1, 20]},
+        "factor": {"type": "float", "args": [0.2, 0.2]},
+        "patience": {"type": "int", "args": [3, 3]},
     }
 
     # pylint: disable=too-many-arguments
@@ -243,6 +245,8 @@ class NeuroMF(TorchRecommender):
         hidden_mlp_dims: Optional[List[int]] = None,
         l2_reg: float = 0,
         count_negative_sample: int = 1,
+        factor: float = 0.2,
+        patience: int = 3,
     ):
         """
         MLP or GMF model can be ignored if
@@ -256,6 +260,8 @@ class NeuroMF(TorchRecommender):
         :param hidden_mlp_dims: list of hidden dimension sized for mlp
         :param l2_reg: l2 regularization term
         :param count_negative_sample: number of negative samples to use
+        :param factor: ReduceLROnPlateau reducing factor. new_lr = lr * factor
+        :param patience: number of non-improved epochs before reducing lr
         """
         super().__init__()
         if not embedding_gmf_dim and not embedding_mlp_dim:
@@ -275,6 +281,8 @@ class NeuroMF(TorchRecommender):
         self.hidden_mlp_dims = hidden_mlp_dims
         self.l2_reg = l2_reg
         self.count_negative_sample = count_negative_sample
+        self.factor = factor
+        self.patience = patience
 
     @property
     def _init_args(self):
@@ -286,6 +294,8 @@ class NeuroMF(TorchRecommender):
             "hidden_mlp_dims": self.hidden_mlp_dims,
             "l2_reg": self.l2_reg,
             "count_negative_sample": self.count_negative_sample,
+            "factor": self.factor,
+            "patience": self.patience,
         }
 
     def _data_loader(
@@ -343,7 +353,9 @@ class NeuroMF(TorchRecommender):
             lr=self.learning_rate,
             weight_decay=self.l2_reg / self.batch_size_users,
         )
-        lr_scheduler = ReduceLROnPlateau(optimizer, factor=0.5, patience=3)
+        lr_scheduler = ReduceLROnPlateau(
+            optimizer, factor=self.factor, patience=self.patience
+        )
 
         self.train(
             train_data_loader,
