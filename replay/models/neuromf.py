@@ -315,12 +315,11 @@ class NeuroMF(TorchRecommender):
         return loader
 
     def _get_neg_batch(self, batch: Tensor) -> Tensor:
-        negative_items = torch.randint(
-            0,
-            self._item_dim,
-            (batch.shape[0] * self.count_negative_sample,),
+        return torch.from_numpy(
+            np.random.choice(
+                self._fit_items_np, batch.shape[0] * self.count_negative_sample
+            )
         )
-        return negative_items
 
     def _fit(
         self,
@@ -336,7 +335,7 @@ class NeuroMF(TorchRecommender):
             hidden_mlp_dims=self.hidden_mlp_dims,
         ).to(self.device)
 
-        self.logger.debug("Create batch")
+        self.logger.debug("Create DataLoaders")
         tensor_data = log.select("user_idx", "item_idx").toPandas()
         train_tensor_data, valid_tensor_data = train_test_split(
             tensor_data,
@@ -345,6 +344,8 @@ class NeuroMF(TorchRecommender):
         )
         train_data_loader = self._data_loader(train_tensor_data)
         val_data_loader = self._data_loader(valid_tensor_data)
+        # pylint: disable=attribute-defined-outside-init
+        self._fit_items_np = self.fit_items.toPandas().to_numpy().ravel()
 
         self.logger.debug("Train NeuroMF")
         optimizer = torch.optim.Adam(
@@ -362,6 +363,7 @@ class NeuroMF(TorchRecommender):
         )
 
         nmf_trainer.run(train_data_loader, max_epochs=self.epochs)
+        del self._fit_items_np
 
     # pylint: disable=arguments-differ
     def _loss(self, y_pred, y_true):
