@@ -328,14 +328,6 @@ class NeuroMF(TorchRecommender):
         user_features: Optional[DataFrame] = None,
         item_features: Optional[DataFrame] = None,
     ) -> None:
-        self.model = NMF(
-            user_count=self._user_dim,
-            item_count=self._item_dim,
-            embedding_gmf_dim=self.embedding_gmf_dim,
-            embedding_mlp_dim=self.embedding_mlp_dim,
-            hidden_mlp_dims=self.hidden_mlp_dims,
-        ).to(self.device)
-
         self.logger.debug("Create DataLoaders")
         tensor_data = log.select("user_idx", "item_idx").toPandas()
         train_tensor_data, valid_tensor_data = train_test_split(
@@ -356,7 +348,6 @@ class NeuroMF(TorchRecommender):
             embedding_mlp_dim=self.embedding_mlp_dim,
             hidden_mlp_dims=self.hidden_mlp_dims,
         ).to(self.device)
-
         optimizer = Adam(
             self.model.parameters(),
             lr=self.learning_rate,
