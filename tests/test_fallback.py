@@ -7,7 +7,7 @@ from replay.utils import fallback, convert2spark
 from tests.utils import log, log2, spark
 
 
-def test_fallback():
+def test_fallback_():
     base = pd.DataFrame({"user_idx": [1], "item_idx": [1], "relevance": [1]})
     extra = pd.DataFrame(
         {"user_idx": [1, 1, 2], "item_idx": [1, 2, 1], "relevance": [1, 2, 1]}
